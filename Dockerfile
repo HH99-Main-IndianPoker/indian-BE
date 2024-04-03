@@ -12,7 +12,7 @@ COPY src src
 RUN ./gradlew build -x test
 
 # 런타임 이미지 준비
-FROM openjdk:17-jre-slim
+FROM openjdk:17
 VOLUME /tmp
 
 # 'dev' 프로파일로 설정
