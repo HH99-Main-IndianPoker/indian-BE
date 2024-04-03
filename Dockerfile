@@ -8,6 +8,9 @@ COPY gradle gradle
 COPY build.gradle .
 COPY src src
 
+# gradlew 파일에 실행 권한 부여
+RUN chmod +x ./gradlew
+
 # 애플리케이션 빌드
 RUN ./gradlew clean build -x test
 
