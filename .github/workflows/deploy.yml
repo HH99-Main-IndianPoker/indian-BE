@@ -47,9 +47,11 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
+      # Docker 이미지 빌드
       - name: Build Docker image
         run: docker build . -t myapp:${{ github.sha }}
 
+      # ECR에 docker image push
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
