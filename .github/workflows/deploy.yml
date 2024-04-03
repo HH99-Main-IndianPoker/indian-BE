@@ -70,7 +70,6 @@ jobs:
     # needs를 통해 build job 성공시에 작업되도록 설정
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Decode SSH Key
         run: |
