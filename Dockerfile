@@ -24,5 +24,8 @@ ENV SPRING_PROFILES_ACTIVE=dev
 ARG JAR_FILE=/workspace/app/build/libs/*.jar
 COPY --from=build ${JAR_FILE} app.jar
 
+# 애플리케이션이 사용하는 포트 노출
+EXPOSE 8080
+
 # 환경 변수를 사용하여 실행 시 Spring 프로파일 지정
 ENTRYPOINT ["java","-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}","-jar","/app.jar"]
