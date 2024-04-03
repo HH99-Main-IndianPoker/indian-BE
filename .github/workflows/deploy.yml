@@ -12,8 +12,6 @@ jobs:
   build-and-deploy:
     # 실행 환경 지정
     runs-on: ubuntu-latest
-    env:
-      AWS_DEFAULT_REGION: ap-northeast-2
 
     # Task sequence 명시
     steps:
@@ -53,7 +51,9 @@ jobs:
 
       # ECR에 docker image push
       - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
+        env:
+          AWS_DEFAULT_REGION: ap-northeast-2
 
       - name: Push image to Amazon ECR
         run: |
