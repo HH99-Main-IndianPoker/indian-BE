@@ -9,7 +9,7 @@ on:
       - develop
 # 사용할 인프라의 이름을 변수 형태로 저장
 jobs:
-  build-and-deploy:
+  build:
     # 실행 환경 지정
     runs-on: ubuntu-latest
 
@@ -57,11 +57,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REPOSITORY_URL }}
+
       - name: Push image to Amazon ECR
         run: |
           docker tag myapp:${{ github.sha }} ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
           docker push ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
 
+  deploy:
+    # needs를 통해 build job 성공시에 작업되도록 설정
+    needs: build
+    runs-on: ubuntu-latest
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
