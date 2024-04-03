@@ -32,6 +32,8 @@ public class User extends Timestamped {
 
     private int points = 100;
 
+    private int wins;
+    private int losses;
 
     @Builder
     public User(Long id, String nickname, String email, String password, AuthorityType authority) {
@@ -44,5 +46,13 @@ public class User extends Timestamped {
 
     public void setPoints(int point) {
         this.points = point;
+    }
+
+    public void incrementWins() {
+        this.wins++;
+    }
+
+    public void incrementLosses() {
+        this.losses++;
     }
 }
