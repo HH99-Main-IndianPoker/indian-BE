@@ -9,7 +9,7 @@ COPY build.gradle .
 COPY src src
 
 # 애플리케이션 빌드
-RUN ./gradlew build -x test
+RUN ./gradlew clean build -x test
 
 # 런타임 이미지 준비
 FROM openjdk:17
