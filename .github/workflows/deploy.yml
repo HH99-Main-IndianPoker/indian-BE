@@ -78,7 +78,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker pull ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
-            docker stop myapp || true
-            docker rm myapp || true
-            docker run -d --name myapp -p 80:8080 ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
+            sudo docker pull ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
+            sudo docker stop myapp || true
+            sudo docker rm myapp || true
+            sudo docker run -d --name myapp -p 80:8080 ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
