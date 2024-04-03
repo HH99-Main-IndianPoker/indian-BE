@@ -1,5 +1,6 @@
 package com.example.socketpractice.domain.user.entity;
 
+import com.example.socketpractice.domain.game.entity.Card;
 import com.example.socketpractice.domain.user.entity.type.AuthorityType;
 import com.example.socketpractice.global.entity.Timestamped;
 import jakarta.persistence.*;
@@ -28,6 +29,8 @@ public class User extends Timestamped {
     @Column(name = "authority", nullable = false)
     @Enumerated(EnumType.STRING)
     private AuthorityType authority;
+
+    private int points = 100;
 
 
     @Builder

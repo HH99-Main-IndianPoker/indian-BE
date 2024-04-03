@@ -1,5 +1,6 @@
 package com.example.socketpractice.domain.game.entity;
 
+import com.example.socketpractice.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -19,6 +20,13 @@ public class GameRoom {
     @Column(name = "room_name")
     private String roomName;
 
+    /* 유저 및 게임 관련*/
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User playerOne;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User playerTwo;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Game currentGame;
 
     public void setRoomId(Long roomId) {
         this.roomId = roomId;
@@ -32,5 +40,7 @@ public class GameRoom {
         this.roomName = roomName;
     }
 
-
+    public void startNewGame(User playerOne, User playerTwo) {
+        this.currentGame = new Game(playerOne, playerTwo);
+    }
 }
