@@ -41,4 +41,8 @@ public class User extends Timestamped {
         this.password = password;
         this.authority = authority;
     }
+
+    public void setPoints(int point) {
+        this.points = point;
+    }
 }

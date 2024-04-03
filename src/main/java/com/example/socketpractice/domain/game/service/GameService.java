@@ -6,12 +6,13 @@ import com.example.socketpractice.domain.game.entity.GameRoom;
 import com.example.socketpractice.domain.game.repository.GameRepository;
 import com.example.socketpractice.domain.game.repository.GameRoomRepository;
 import com.example.socketpractice.domain.user.entity.User;
+import com.example.socketpractice.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -19,10 +20,12 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final GameRoomRepository gameRoomRepository;
+    private final UserRepository userRepository;
     private static final EnumSet<Card> ALL_CARDS = EnumSet.allOf(Card.class);
-    public GameService(GameRepository gameRepository, GameRoomRepository gameRoomRepository) {
+    public GameService(GameRepository gameRepository, GameRoomRepository gameRoomRepository, UserRepository userRepository) {
         this.gameRepository = gameRepository;
         this.gameRoomRepository = gameRoomRepository;
+        this.userRepository = userRepository;
     }
 
     /* 게임 실행 관련 로직
@@ -71,8 +74,35 @@ public class GameService {
         // 게임 상태 업데이트, 채팅 시간 관리는 클라이언트 단에서 처리
     }
 
-    public void playerAction(Long gameRoomId, String username, String gameState) {
+    @Transactional
+    public void playerAction(Long gameRoomId, String nickname, String gameState) {
         // 플레이어 행동 처리(채팅, 배팅)
+        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId)
+                .orElseThrow(() -> new EntityNotFoundException("Game room not found with ID: " + gameRoomId));
+
+        Game game = gameRoom.getCurrentGame();
+        if (game == null) {
+            throw new IllegalStateException("Game not started or already ended.");
+        }
+
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + nickname));
+
+        switch (gameState.toUpperCase()) {
+            case "CHECK":
+                performCheckAction(game, user);
+                break;
+            case "RAISE":
+                performRaiseAction(game, user);
+                break;
+            case "DIE":
+                performDieAction(game, user);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown action: " + gameState);
+        }
+
+        gameRoomRepository.save(gameRoom);
     }
 
     public void endRound(Long gameRoomId) {
@@ -88,5 +118,40 @@ public class GameService {
         int playerTwoPoints = playerTwo.getPoints();
         int lowerPoints = Math.min(playerOnePoints, playerTwoPoints);
         return lowerPoints / 10; // 10%의 포인트를 초기 베팅 금액으로 설정
+    }
+
+    private void performCheckAction(Game game, User user) {
+        // 첫 번째 플레이어가 '체크'할 경우 현재 베팅 금액에 변화를 주지 않습니다.
+        boolean isFirstPlayer = game.getPlayerOne().equals(user);
+        if (!isFirstPlayer) {
+            // 두 번째 플레이어는 현재 베팅 금액을 팟에 추가합니다.
+            int userPoints = user.getPoints();
+            int currentBet = game.getBetAmount();
+            if (userPoints >= currentBet) {
+                user.setPoints(userPoints - currentBet); // 유저의 포인트를 감소시킵니다.
+                game.setPot(game.getPot() + currentBet); // 팟을 증가시킵니다.
+            } else {
+                // 유저의 포인트가 현재 베팅 금액보다 적다면 예외를 발생시킵니다.
+                throw new IllegalStateException("User does not have enough points to check.");
+            }
+        }
+    }
+
+    private void performRaiseAction(Game game, User user) {
+        int raiseAmount = game.getBetAmount() * 2;
+        int userPoints = user.getPoints();
+
+        // The user can only raise if they have enough points.
+        if (userPoints >= raiseAmount) {
+            game.setBetAmount(raiseAmount);
+            user.setPoints(userPoints - raiseAmount);
+        } else {
+            throw new IllegalStateException("User does not have enough points to raise.");
+        }
+    }
+
+    private void performDieAction(Game game, User user) {
+        // The user forfeits the round and possibly the game.
+        game.setFoldedUser(user);
     }
 }

@@ -36,6 +36,11 @@ public class Game {
 
     private int betAmount;
 
+    private int pot;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User foldedUser;
+
     // Constructor and methods
     public Game(User playerOne, User playerTwo) {
         this.playerOne = playerOne;
@@ -58,5 +63,18 @@ public class Game {
     public void setBetAmount(int betAmount) {
         this.betAmount = betAmount;
     }
+    // 게임 팟을 가져옵니다.
+    public int getPot() {
+        return pot;
+    }
 
+    // 게임 팟을 설정합니다.
+    public void setPot(int pot) {
+        this.pot = pot;
+    }
+
+    // 게임에서 포기한 유저를 설정합니다.
+    public void setFoldedUser(User user) {
+        this.foldedUser = user;
+    }
 }
