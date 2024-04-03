@@ -49,9 +49,8 @@ jobs:
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-        with:
-          # AWS 리전 설정
-          region: ap-northeast-2
+        env:
+          AWS_DEFAULT_REGION: ap-northeast-2
 
       - name: Push image to Amazon ECR
         run: |
