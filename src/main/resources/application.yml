@@ -1,4 +1,18 @@
 spring:
   profiles:
+    default: local
+---
+spring:
+  config:
+    import:
+      - classpath:/yml/application-local.yml
+  profiles:
+    active: local
+---
+spring:
+  config:
+    import:
+      - classpath:/yml/application-dev.yml
+  profiles:
     active: dev
-
+---
