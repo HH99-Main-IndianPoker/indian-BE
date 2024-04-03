@@ -24,6 +24,22 @@ jobs:
       - name: Generate application-secret.yml
         run: echo "${{ secrets.APPLICATION_SECRET_CONTENT }}" > ./src/main/resources/yml/application-secret.yml
 
+      # Gradle 빌드 할 때, 이미 저장한 데이터를 캐싱하여 빌드시 이를 사용하도록함.
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Github Actions 워크플로우 가상환경이 grdlew 실행할 수 있도록 ./gradlew 파일에 실행 권한을 부여
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+        shell: bash
+      # Gradle build (Test 제외)
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
