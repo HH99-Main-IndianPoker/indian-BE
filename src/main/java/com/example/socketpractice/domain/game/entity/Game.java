@@ -46,6 +46,9 @@ public class Game {
     private int playerOneRoundPoints;
     private int playerTwoRoundPoints;
 
+    // 라운드 정보
+    private int round;
+
     // Constructor and methods
     public Game(User playerOne, User playerTwo) {
         this.playerOne = playerOne;
@@ -55,6 +58,10 @@ public class Game {
 
     public void addUsedCard(Card card) {
         this.usedCards.add(card);
+    }
+
+    public void incrementRound() {
+        this.round++;
     }
 
     public void setPlayerOneCard(Card card) {
@@ -122,5 +129,6 @@ public class Game {
 
         // 기타 필요한 상태 초기화 로직
         // 예: 라운드 수, 게임의 상태, 시간 제한 등을 초기화할 수 있습니다.
+        round = 0;
     }
 }

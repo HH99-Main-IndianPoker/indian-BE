@@ -1,10 +1,14 @@
 package com.example.socketpractice.domain.game.controller;
 
 import com.example.socketpractice.domain.chat.entity.ChatMessage;
+import com.example.socketpractice.domain.game.dto.GameDto;
+import com.example.socketpractice.domain.game.entity.Game;
 import com.example.socketpractice.domain.game.service.GameRoomService;
 import com.example.socketpractice.domain.game.service.GameService;
+import com.example.socketpractice.domain.game.service.StartGameService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -19,19 +23,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class GameController {
 
     private final SimpMessageSendingOperations messagingTemplate;
-    private final GameRoomService gameRoomService;
     private final GameService gameService;
-    public GameController(SimpMessageSendingOperations messagingTemplate, GameRoomService gameRoomService, GameService gameService) {
+    private final StartGameService startGameService;
+    public GameController(SimpMessageSendingOperations messagingTemplate, GameService gameService, StartGameService startGameService) {
         this.messagingTemplate = messagingTemplate;
-        this.gameRoomService = gameRoomService;
         this.gameService = gameService;
+        this.startGameService = startGameService;
     }
 
     @MessageMapping("/{gameRoomId}/{gameState}")
-    public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState, @Payload ChatMessage chatMessage) {
+    public ResponseEntity<?> handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState, @Payload ChatMessage chatMessage) {
         switch (gameState) {
             case "START":
-                gameService.startRound(gameRoomId);
+                startGameService.startRound(gameRoomId);
                 break;
             case "ACTION":
                 gameService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
@@ -44,5 +48,7 @@ public class GameController {
         /* 게임 상태 업데이트 메시지를 클라이언트에 전송 */
         String destination = "/topic/gameRoom/" + gameRoomId;
         messagingTemplate.convertAndSend(destination, chatMessage);
+
+        return null;
     }
 }
