@@ -3,6 +3,7 @@ package com.example.socketpractice.domain.game.controller;
 import com.example.socketpractice.domain.chat.entity.ChatMessage;
 import com.example.socketpractice.domain.game.dto.GameDto;
 import com.example.socketpractice.domain.game.entity.Game;
+import com.example.socketpractice.domain.game.service.EndGameService;
 import com.example.socketpractice.domain.game.service.GameRoomService;
 import com.example.socketpractice.domain.game.service.GameService;
 import com.example.socketpractice.domain.game.service.StartGameService;
@@ -25,10 +26,12 @@ public class GameController {
     private final SimpMessageSendingOperations messagingTemplate;
     private final GameService gameService;
     private final StartGameService startGameService;
-    public GameController(SimpMessageSendingOperations messagingTemplate, GameService gameService, StartGameService startGameService) {
+    private final EndGameService endGameService;
+    public GameController(SimpMessageSendingOperations messagingTemplate, GameService gameService, StartGameService startGameService, EndGameService endGameService) {
         this.messagingTemplate = messagingTemplate;
         this.gameService = gameService;
         this.startGameService = startGameService;
+        this.endGameService = endGameService;
     }
 
     @MessageMapping("/{gameRoomId}/{gameState}")
@@ -41,7 +44,10 @@ public class GameController {
                 gameService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
                 break;
             case "END":
-                gameService.endRound(gameRoomId);
+                endGameService.endRound(gameRoomId);
+                break;
+            case "GAME_END":
+                endGameService.endGame(gameRoomId);
                 break;
         }
 

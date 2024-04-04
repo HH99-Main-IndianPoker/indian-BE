@@ -30,6 +30,7 @@ public class GameValidator {
         return game;
     }
 
+    /* 게임 룸 정보 업데이트 로직 팀원과 의논을 통해 수정 필요*/
     public void saveGameRoomState(GameRoom gameRoom) {
         repositoryHolder.gameRoomRepository.save(gameRoom);
     }

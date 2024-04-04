@@ -75,6 +75,7 @@ public class Game {
     public void setBetAmount(int betAmount) {
         this.betAmount = betAmount;
     }
+
     // 게임 팟을 가져옵니다.
     public int getPot() {
         return pot;
@@ -104,31 +105,21 @@ public class Game {
     }
 
     public void resetRound() {
-        // 라운드 관련 정보를 초기화하는 메서드
-        // 카드를 초기화하고, 포트를 다음 라운드로 이월하며, 현재 라운드의 포트를 다음 라운드의 포트로 설정합니다.
-        this.pot = this.nextRoundPot; // 다음 라운드로 이월된 포트 금액을 현재 포트로 설정합니다.
-        this.nextRoundPot = 0; // 다음 라운드 포트 초기화
-        // 추가로 필요한 라운드 관련 정보 초기화 로직을 여기에 구현합니다.
+        /* 라운드 정보 초기화
+        * 베팅액, 각 플레이어 카드 정보 초기화*/
+        this.pot = 0;
+        this.playerOneCard = null;
+        this.playerTwoCard = null;
     }
 
     // 게임과 관련된 상태를 초기화하는 메서드
     public void resetGame() {
-        // 사용된 카드 목록을 비우고, 각 플레이어의 라운드별 획득 포인트를 0으로 리셋합니다.
+        /* 게임에 사용된 카드 정보,
+        * 게임에서 각 유저가 획득한 포인트,
+        * 라운드 정보 초기화*/
         usedCards.clear();
         playerOneRoundPoints = 0;
         playerTwoRoundPoints = 0;
-
-        // 초기 베팅 금액과 팟을 리셋합니다.
-        pot = 0;
-        nextRoundPot = 0;
-
-        // 각 플레이어의 카드를 null 또는 초기 상태로 설정할 수 있습니다.
-        // 예를 들어, 플레이어의 카드 필드가 있다면 이를 초기화합니다.
-        // playerOneCard = null;
-        // playerTwoCard = null;
-
-        // 기타 필요한 상태 초기화 로직
-        // 예: 라운드 수, 게임의 상태, 시간 제한 등을 초기화할 수 있습니다.
         round = 0;
     }
 }
