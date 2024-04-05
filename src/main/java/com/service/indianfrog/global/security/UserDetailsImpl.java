@@ -15,11 +15,11 @@ import java.util.Collection;
 @Getter
 public class UserDetailsImpl implements UserDetails {
 
-    private final User member;
+    private final User user;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        AuthorityType role = member.getAuthority();
+        AuthorityType role = user.getAuthority();
         String authority = role.getAuthority();
 
         SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(authority);
@@ -30,12 +30,12 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getPassword() {
-        return member.getPassword();
+        return user.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return member.getEmail();
+        return user.getEmail();
     }
 
     @Override

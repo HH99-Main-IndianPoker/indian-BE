@@ -1,13 +1,14 @@
 package com.service.indianfrog.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.service.indianfrog.domain.user.dto.UserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.LoginRequestDto;
 import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import com.service.indianfrog.global.exception.LoginException;
 import com.service.indianfrog.global.jwt.JwtUtil;
-import com.service.indianfrog.global.util.CustomResponseUtil;
+import com.service.indianfrog.global.security.dto.GeneratedToken;
+import com.service.indianfrog.global.security.filter.CustomResponseUtil;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 
 @Slf4j
@@ -55,13 +58,18 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) {
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws UnsupportedEncodingException {
         String email = ((UserDetailsImpl) authResult.getPrincipal()).getUsername();
-        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getMember().getAuthority();
+        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getAuthority();
 
-        String token = jwtUtil.createToken(email, role);
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, token);
-        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, token);
+        GeneratedToken tokens = jwtUtil.generateToken(email, String.valueOf(role));
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+
+        String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
+        //.replaceAll("\\+", "%20") bearer prefix빼고 테스트중
+        Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
+        response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
 
         CustomResponseUtil.success(response, null);
     }
@@ -73,5 +81,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         } else {
             CustomResponseUtil.fail(response, "아이디 또는 비밀번호가 틀렸습니다.", HttpStatus.FORBIDDEN);
         }
+    }
+
+    private Cookie createCookie(String key, String value) {
+
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(24*60*60);
+        //cookie.setSecure(true); https에 추가
+        cookie.setPath("/");
+
+        return cookie;
     }
 }

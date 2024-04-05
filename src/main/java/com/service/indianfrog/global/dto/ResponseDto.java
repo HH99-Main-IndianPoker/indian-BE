@@ -1,6 +1,5 @@
 package com.service.indianfrog.global.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
