@@ -13,7 +13,10 @@ public class UserResponseDto {
     public record CheckUserNicknameResponseDto(Boolean isExist) {
     }
 
-    public record SignupResponseDto(String email, LocalDateTime createdAt){}
+    public record SignupResponseDto(
+            String email,
+            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime createdAt) { }
 
     public record GetUserResponseDto(
             Long id,

@@ -1,6 +1,7 @@
 package com.service.indianfrog.domain.user.repository;
 
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -13,5 +14,9 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
     boolean existsByNickname(String nickname);
 
-    Optional<User> findByKakaoId(Long kakaoId);
+    Optional<User> findBySocialId(Long kakaoId);
+
+    User findByNickname(String nickname);
+
+    String findByAuthority(AuthorityType authorityType);
 }

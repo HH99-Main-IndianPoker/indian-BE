@@ -2,6 +2,7 @@ package com.service.indianfrog.domain.user.dto;
 
 
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -26,13 +27,15 @@ public class UserRequestDto {
 
             @NotBlank(message = "닉네임을 입력해주세요.", groups = NicknameBlankGroup.class)
             @Pattern(regexp = "^[가-힣a-zA-Z0-9]{2,10}$", message = "닉네임은 특수문자를 제외한 2~10자리를 입력 해주세요.", groups = NicknamePatternGroup.class)
-            String nickname
+            String nickname,
+            AuthorityType authority
     ) {
         public User toEntity(String encodedPassword) {
             return User.builder()
                     .email(email)
                     .password(encodedPassword)
                     .nickname(nickname)
+                    .authority(authority)
                     .build();
         }
     }

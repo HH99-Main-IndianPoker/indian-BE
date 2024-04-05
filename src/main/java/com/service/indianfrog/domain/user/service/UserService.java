@@ -1,6 +1,7 @@
 package com.service.indianfrog.domain.user.service;
 
 import com.service.indianfrog.domain.user.dto.UserRequestDto;
+import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
 import com.service.indianfrog.domain.user.entity.User;
@@ -10,6 +11,8 @@ import com.service.indianfrog.global.exception.RestApiException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 public class UserService {
@@ -24,7 +27,7 @@ public class UserService {
 
     // 회원가입
     @Transactional
-    public SignupResponseDto signup(UserRequestDto.SignupUserRequestDto requestDto) {
+    public SignupResponseDto signup(SignupUserRequestDto requestDto) {
         if (userRepository.existsByEmail(requestDto.email())) {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());
         }
@@ -35,7 +38,8 @@ public class UserService {
 
         String password = passwordEncoder.encode(requestDto.password());
         User member = userRepository.save(requestDto.toEntity(password));
-        return new SignupResponseDto(member.getEmail(), member.getCreatedAt());
+        LocalDateTime now = LocalDateTime.now();
+        return new SignupResponseDto(member.getEmail(), now);
     }
 
     // 회원 정보 조회

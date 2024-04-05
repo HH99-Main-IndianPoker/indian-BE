@@ -1,20 +1,15 @@
 package com.service.indianfrog.domain.user.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.service.indianfrog.domain.user.controller.docs.UserControllerDocs;
 import com.service.indianfrog.domain.user.dto.UserRequestDto;
-import com.service.indianfrog.domain.user.dto.UserResponseDto;
+import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
-import com.service.indianfrog.domain.user.service.SocialLoginService;
 import com.service.indianfrog.domain.user.service.UserService;
 import com.service.indianfrog.domain.user.valid.UserValidationGroup;
 import com.service.indianfrog.domain.user.valid.UserValidationSequence;
 import com.service.indianfrog.global.dto.ResponseDto;
-import com.service.indianfrog.global.jwt.JwtUtil;
 import com.service.indianfrog.global.security.UserDetailsImpl;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -28,26 +23,24 @@ import static com.service.indianfrog.domain.user.valid.UserValidationGroup.*;
 
 
 @RestController
-@RequestMapping("/user")
+//@RequestMapping("/user")
 @Validated(UserValidationSequence.class)
 public class UserController implements UserControllerDocs {
 
     private final UserService userService;
-    private final SocialLoginService socialLoginService;
 
-    public UserController(UserService userService, SocialLoginService socialLoginService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.socialLoginService = socialLoginService;
     }
 
     // 회원가입
-    @PostMapping("/signup")
-    public ResponseDto<SignupResponseDto> signup(@RequestBody @Valid UserRequestDto.SignupUserRequestDto requestDto) {
+    @PostMapping("/user/signup")
+    public ResponseDto<SignupResponseDto> signup(@RequestBody @Valid SignupUserRequestDto requestDto) {
         SignupResponseDto responseDto = userService.signup(requestDto);
         return ResponseDto.success("회원가입 성공", responseDto);
     }
 
-    @GetMapping("/email/check")
+    @GetMapping("/user/email/check")
     public ResponseEntity emailCheck(
             @RequestParam
             @NotBlank(message = "이메일을 입력해주세요.", groups = UserValidationGroup.class)
@@ -58,7 +51,7 @@ public class UserController implements UserControllerDocs {
     }
 
     @Valid
-    @GetMapping("/nickname/check")
+    @GetMapping("/user/nickname/check")
     public ResponseEntity nicknameCheck(
             @RequestParam
             @NotBlank(message = "닉네임을 입력해주세요.", groups = NotBlankGroup.class)
@@ -70,18 +63,10 @@ public class UserController implements UserControllerDocs {
     }
 
     /*My-page*/
-    @GetMapping("/mypage")
+    @GetMapping("/member/mypage")
     public ResponseDto<GetUserResponseDto> getUser(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         GetUserResponseDto responseDto = userService.getMember(userDetails.getUsername());
         return ResponseDto.success("회원 정보 조회 성공", responseDto);
     }
 
-    @GetMapping("/kakao/callback")
-    public String kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        String token = socialLoginService.kakaoLogin(code);
-        Cookie cookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, token.substring(7));
-        cookie.setPath("/");
-        response.addCookie(cookie);
-        return "redirect:/";
-    }
 }
