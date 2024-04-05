@@ -1,7 +1,6 @@
 package com.service.indianfrog.global.exception;
 
 import com.service.indianfrog.global.dto.ResponseDto;
-import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
