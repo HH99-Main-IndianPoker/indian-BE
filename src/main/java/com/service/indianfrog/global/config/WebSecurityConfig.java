@@ -110,7 +110,7 @@ public class WebSecurityConfig {
                 authorizeHttpRequests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() // resources 접근 허용 설정
-                        .requestMatchers("/","/user/**","/oauth2/**", "/token/**").permitAll() // 메인 페이지 요청 허가
+                        .requestMatchers("/","/user/**","/login/**","/oauth2/**", "/token/**").permitAll() // 메인 페이지 요청 허가
                         .requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );

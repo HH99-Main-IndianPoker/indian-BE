@@ -2,7 +2,9 @@ package com.service.indianfrog.global.security.oauth2;
 
 import com.service.indianfrog.global.jwt.JwtUtil;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
+import com.service.indianfrog.global.security.filter.CustomResponseUtil;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -10,10 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.net.URLEncoder;
 
 @Component
 @Slf4j
@@ -43,35 +44,40 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 .orElseThrow(IllegalAccessError::new) // 존재하지 않을 시 예외를 던진다.
                 .getAuthority(); // Role을 가져온다.
 
+
         // 회원이 존재할경우
         if (isExist) {
-            // 회원이 존재하면 jwt token 발행을 시작한다.
-            GeneratedToken token = jwtUtil.generateToken(email, role);
 
-            log.info("accessToken = {}", token.getAccessToken());
+            GeneratedToken tokens = jwtUtil.generateToken(email, role);
+            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
-            // accessToken을 쿼리스트링에 담는 url을 만들어준다.
-            String targetUrl = UriComponentsBuilder.fromUriString("https://pet-hub.site/loginSuccess")
-                    .queryParam("accessToken", token.getAccessToken())
-                    .build()
-                    .encode(StandardCharsets.UTF_8)
-                    .toUriString();
+            String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
+            Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
+            response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
 
-            // 로그인 확인 페이지로 리다이렉트 시킨다.
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
-
-
+            CustomResponseUtil.success(response, null);
         } else {
+            // 새로 생성된 사용자의 토큰 생성 및 전달
+            GeneratedToken tokens = jwtUtil.generateToken(email, role);
+            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
-            // 회원이 존재하지 않을경우, 서비스 제공자와 email을 쿼리스트링으로 전달하는 url을 만들어준다.
-            String targetUrl = UriComponentsBuilder.fromUriString("https://pet-hub.site/loginSuccess")
-                    .queryParam("email", (String) oAuth2User.getAttribute("email"))
-                    .queryParam("provider", provider)
-                    .build()
-                    .encode(StandardCharsets.UTF_8)
-                    .toUriString();
-            // 회원가입 페이지로 리다이렉트 시킨다.
-            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+            String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
+            Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
+            response.addCookie(refreshTokenCookie);
+
+            CustomResponseUtil.success(response, null);
         }
+    }
+
+    private Cookie createCookie(String key, String value) {
+
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(24 * 60 * 60);
+        //cookie.setSecure(true); https에 추가
+        cookie.setPath("/");
+
+        return cookie;
     }
 }

@@ -1,6 +1,7 @@
 package com.service.indianfrog.global.security.oauth2;
 
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -34,8 +35,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuth2User oAuth2User = oAuth2UserService.loadUser(userRequest);
 
         /*클라이언트 등록 ID(google, naver, kakao)와 사용자 이름 속성을 가져온다.
-        * OAuth2UserService를 사용하여 가져온 OAuth2User 정보로 OAuth2Attribute 객체를 만든다.
-        * OAuth2Attribute의 속성값들을 Map으로 반환 받는다.*/
+         * OAuth2UserService를 사용하여 가져온 OAuth2User 정보로 OAuth2Attribute 객체를 만든다.
+         * OAuth2Attribute의 속성값들을 Map으로 반환 받는다.*/
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         String userNameAttributeName = userRequest.getClientRegistration()
                 .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
@@ -55,6 +56,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             // 회원이 존재하지 않을경우, memberAttribute의 exist 값을 false로 넣어준다.
             memberAttribute.put("exist", false);
             // 회원의 권한(회원이 존재하지 않으므로 기본권한인 ROLE_USER를 넣어준다), 회원속성, 속성이름을 이용해 DefaultOAuth2User 객체를 생성해 반환한다.
+            userRepository.save(User.builder()
+                    .email(email)
+                    .authority(AuthorityType.USER)
+                    .build());
             return new DefaultOAuth2User(
                     Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
                     memberAttribute, "email");

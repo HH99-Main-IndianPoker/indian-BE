@@ -8,6 +8,7 @@ import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +20,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder, OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
         this.userRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     }
 
     // 회원가입
@@ -64,5 +67,9 @@ public class UserService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
         }
         return userRepository.existsByNickname(nickname);
+    }
+
+    public void OAuth2Signup() {
+
     }
 }

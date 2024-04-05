@@ -25,7 +25,7 @@ public class OAuth2Attribute {
             case "google":
                 return ofGoogle(provider, attributeKey, attributes);
             case "kakao":
-                return ofKakao(provider,"email", attributes);
+                return ofKakao(provider, "email", attributes);
             case "naver":
                 return ofNaver(provider, "id", attributes);
             default:
