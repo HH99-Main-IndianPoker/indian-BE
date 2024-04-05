@@ -29,6 +29,11 @@ jobs:
       - name: Generate application-oauth.yml
         run: echo "${{ secrets.APPLICATION_OAUTH }}" > ./src/main/resources/yml/application-oauth.yml
 
+      - name: Grant execute permission for script
+        run: |
+          chmod +x ./src/main/resources/yml/application-secret.yml
+          chmod +x ./src/main/resources/yml/application-secret.yml
+
       # Gradle 빌드 할 때, 이미 저장한 데이터를 캐싱하여 빌드시 이를 사용하도록함.
       - name: Gradle Caching
         uses: actions/cache@v3
@@ -77,5 +82,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            sudo docker login -u AWS -p $(aws ecr get-login-password --region ap-northeast-2) ${{ secrets.AWS_ECR_REPOSITORY_URL }}
+            sudo docker pull ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
             sudo docker-compose up -d
             sudo docker image prune -f
