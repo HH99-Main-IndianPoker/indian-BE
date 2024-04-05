@@ -37,7 +37,7 @@ public class GameController {
     }
 
     @MessageMapping("/{gameRoomId}/{gameState}")
-    public ResponseEntity<?> handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
+    public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
                                              @Payload ChatMessage chatMessage, @Payload(required = false) UserChoices userChoices) {
         switch (gameState) {
             case "START":
@@ -60,7 +60,5 @@ public class GameController {
         /* 게임 상태 업데이트 메시지를 클라이언트에 전송 */
         String destination = "/topic/gameRoom/" + gameRoomId;
         messagingTemplate.convertAndSend(destination, chatMessage);
-
-        return null;
     }
 }

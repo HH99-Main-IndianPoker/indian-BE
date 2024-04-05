@@ -4,6 +4,7 @@ import com.example.socketpractice.domain.game.dto.GameDto.StartRoundResponse;
 import com.example.socketpractice.domain.game.entity.Card;
 import com.example.socketpractice.domain.game.entity.Game;
 import com.example.socketpractice.domain.game.entity.GameRoom;
+import com.example.socketpractice.domain.game.entity.Turn;
 import com.example.socketpractice.domain.game.utils.GameValidator;
 import com.example.socketpractice.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,9 +20,11 @@ public class StartGameService {
 
     /* 생성자를 통한 필드 주입 */
     private final GameValidator gameValidator;
+    private final GameTurnService gameTurnService;
 
-    public StartGameService(GameValidator gameValidator) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService) {
         this.gameValidator = gameValidator;
+        this.gameTurnService = gameTurnService;
     }
 
     public StartRoundResponse startRound(Long gameRoomId) {
@@ -36,7 +39,7 @@ public class StartGameService {
     }
 
     private void performRoundStart(Game game) {
-        /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급*/
+        /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         game.incrementRound();
 
         int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
@@ -44,6 +47,8 @@ public class StartGameService {
 
         List<Card> availableCards = prepareAvailableCards(game);
         assignRandomCardsToPlayers(game, availableCards);
+
+        initializeTurnForGame(game);
     }
 
     private int calculateInitialBet(User playerOne, User playerTwo) {
@@ -75,5 +80,14 @@ public class StartGameService {
 
         game.addUsedCard(playerOneCard);
         game.addUsedCard(playerTwoCard);
+    }
+
+    private void initializeTurnForGame(Game game) {
+        List<User> players = new ArrayList<>();
+        players.add(game.getPlayerOne());
+        players.add(game.getPlayerTwo());
+
+        Turn turn = new Turn(players);
+        gameTurnService.setTurn(game.getId(), turn);
     }
 }

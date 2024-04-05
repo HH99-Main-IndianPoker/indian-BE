@@ -2,6 +2,7 @@ package com.example.socketpractice.domain.game.utils;
 
 import com.example.socketpractice.domain.game.entity.Game;
 import com.example.socketpractice.domain.game.entity.GameRoom;
+import com.example.socketpractice.domain.user.entity.User;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -33,5 +34,10 @@ public class GameValidator {
     /* 게임 룸 정보 업데이트 로직 팀원과 의논을 통해 수정 필요*/
     public void saveGameRoomState(GameRoom gameRoom) {
         repositoryHolder.gameRoomRepository.save(gameRoom);
+    }
+
+    public User findUserByNickname(String nickname) {
+        return repositoryHolder.userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 유저입니다."));
     }
 }
