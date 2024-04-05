@@ -6,13 +6,17 @@ spring:
   config:
     import:
       - classpath:/yml/application-local.yml
+      - classpath:/yml/application-oauth.yml
   profiles:
     active: local
+    include: oauth
 ---
 spring:
   config:
     import:
       - classpath:/yml/application-dev.yml
+      - classpath:/yml/application-oauth.yml
   profiles:
     active: dev
+    include: oauth
 ---

@@ -18,6 +18,8 @@ spring:
           format_sql: true
           use_sql_comments: true
       show-sql: true
+
+
   data:
       redis:
         host: ${local-redis.host}

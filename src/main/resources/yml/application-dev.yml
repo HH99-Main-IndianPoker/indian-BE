@@ -29,4 +29,6 @@ springdoc:
   show-login-endpoint: true
 jwt:
   secret:
-    key: ${secret.key}
+    key:
+      access: ${jwt.secret.key.access}
+      refresh: ${jwt.secret.key.refresh}

@@ -74,6 +74,9 @@ dependencies {
 
     //junit
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+
+    //oauth2
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
 
 test {
