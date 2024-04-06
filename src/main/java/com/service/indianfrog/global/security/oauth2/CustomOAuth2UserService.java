@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -57,6 +58,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             // 회원의 권한(회원이 존재하지 않으므로 기본권한인 ROLE_USER를 넣어준다), 회원속성, 속성이름을 이용해 DefaultOAuth2User 객체를 생성해 반환한다.
             userRepository.save(User.builder()
                     .email(email)
+                    .password(UUID.randomUUID().toString())
+                    .nickname(UUID.randomUUID().toString())
 //                    .authority(AuthorityType.USER)
                     .build());
             return new DefaultOAuth2User(
