@@ -53,7 +53,7 @@ jobs:
 
       # Docker 이미지 빌드
       - name: Build Docker image
-        run: docker build --build-arg JAR_FILE=build/libs/myapp.jar -t myapp .
+        run: docker build . -t myapp:${{ github.sha }}
 
       # ECR에 docker image push
       - name: Configure AWS credentials
