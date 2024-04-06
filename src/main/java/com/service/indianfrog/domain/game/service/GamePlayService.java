@@ -25,6 +25,9 @@ public class GamePlayService {
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
         User user = gameValidator.findUserByNickname(nickname);
         Turn turn = gameTurnService.getTurn(game.getId());
+        if (turn == null || turn.getCurrentPlayer() == null) {
+            throw new IllegalStateException("No turn information available");
+        }
 
         Betting betting = Betting.valueOf(action.toUpperCase());
         return switch (betting) {
