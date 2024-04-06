@@ -1,7 +1,6 @@
 package com.service.indianfrog.global.security.token;
 
 import com.service.indianfrog.domain.user.entity.User;
-import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
