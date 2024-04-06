@@ -8,6 +8,7 @@ import com.service.indianfrog.domain.game.service.GameSessionService;
 import com.service.indianfrog.domain.game.service.StartGameService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.api.ErrorMessage;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -39,26 +40,18 @@ public class GameController {
     @MessageMapping("/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
                                              @Payload ChatMessage chatMessage, @Payload(required = false) UserChoices userChoices) {
-        switch (gameState) {
-            case "START":
-                startGameService.startRound(gameRoomId);
-                break;
-            case "ACTION":
-                gamePlayService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
-                break;
-            case "END":
-                endGameService.endRound(gameRoomId);
-                break;
-            case "GAME_END":
-                endGameService.endGame(gameRoomId);
-                break;
-            case "USER_CHOICE":
-                gameSessionService.processUserChoices(userChoices);
-                break;
-        }
+        Object response = switch (gameState) {
+            case "START" -> startGameService.startRound(gameRoomId);
+            case "ACTION" ->
+                    gamePlayService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
+            case "END" -> endGameService.endRound(gameRoomId);
+            case "GAME_END" -> endGameService.endGame(gameRoomId);
+            case "USER_CHOICE" -> gameSessionService.processUserChoices(userChoices);
+            default -> new ErrorMessage("올바른 게임 상태가 아닙니다");
+        };
 
         /* 게임 상태 업데이트 메시지를 클라이언트에 전송 */
         String destination = "/topic/gameRoom/" + gameRoomId;
-        messagingTemplate.convertAndSend(destination, chatMessage);
+        messagingTemplate.convertAndSend(destination, response);
     }
 }

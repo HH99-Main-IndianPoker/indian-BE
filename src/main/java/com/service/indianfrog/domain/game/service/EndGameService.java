@@ -20,11 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class EndGameService {
 
     private final GameValidator gameValidator;
-    private final RepositoryHolder repositoryHolder;
 
-    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder) {
+    public EndGameService(GameValidator gameValidator) {
         this.gameValidator = gameValidator;
-        this.repositoryHolder = repositoryHolder;
     }
 
     /* 라운드 종료 로직*/
