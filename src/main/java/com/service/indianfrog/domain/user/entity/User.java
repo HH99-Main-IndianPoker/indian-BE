@@ -1,6 +1,5 @@
 package com.service.indianfrog.domain.user.entity;
 
-import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import com.service.indianfrog.global.entity.Timestamped;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -25,25 +24,26 @@ public class User extends Timestamped {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "authority", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AuthorityType authority;
+//    @Column(name = "authority", nullable = false)
+//    @Enumerated(EnumType.STRING)
+//    private AuthorityType authority;
 
     private Long socialId;
 
 
     @Builder
-    public User(Long id, String nickname, String email, String password, AuthorityType authority) {
+    public User(Long id, String nickname, String email, String password) {
         this.id = id;
         this.nickname = nickname;
         this.email = email;
         this.password = password;
-        this.authority = authority;
+//        this.authority = authority;
     }
 
     public User(String nickname, String encodedPassword, String email, Long socialId) {
         super();
     }
+
     public User(String nickname, String email, String socialId) {
         super();
     }

@@ -2,7 +2,6 @@ package com.service.indianfrog.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.LoginRequestDto;
-import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import com.service.indianfrog.global.exception.LoginException;
 import com.service.indianfrog.global.jwt.JwtUtil;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
@@ -60,8 +59,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws UnsupportedEncodingException {
         String email = ((UserDetailsImpl) authResult.getPrincipal()).getUsername();
-        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getAuthority();
-
+//        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getAuthority();
+        String role = "USER";
         GeneratedToken tokens = jwtUtil.generateToken(email, String.valueOf(role));
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
