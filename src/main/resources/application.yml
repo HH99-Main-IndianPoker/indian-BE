@@ -5,5 +5,5 @@ spring:
       - classpath:/yml/application-oauth.yml
       - classpath:/yml/application-dev.yml
   profiles:
-    active: local
+    active: dev
     include: oauth
