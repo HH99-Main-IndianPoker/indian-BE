@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -88,5 +89,28 @@ public class GamePlayServiceTest {
 
         assertEquals(GameState.END, result);
         verify(game).setFoldedUser(user);
+    }
+
+    @Test
+    @DisplayName("플레이어 액션 실패 - 게임 룸 검증 실패")
+    @Disabled
+    void testPlayerActionWithInvalidGameRoom() {
+        Long gameRoomId = 1L;
+        when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(null);
+
+        assertThrows(NullPointerException.class, () -> gamePlayService.playerAction(gameRoomId, "nickname", "check"));
+    }
+
+    @Test
+    @DisplayName("플레이어 액션 실패 - 턴 정보 가져오기 실패")
+    @Disabled
+    void testPlayerActionWithInvalidTurnInfo() {
+        Long gameRoomId = 1L;
+        when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(mock(GameRoom.class));
+        when(gameValidator.initializeOrRetrieveGame(any(GameRoom.class))).thenReturn(mock(Game.class));
+        when(gameValidator.findUserByNickname(anyString())).thenReturn(mock(User.class));
+        when(gameTurnService.getTurn(anyLong())).thenReturn(null);
+
+        assertThrows(IllegalStateException.class, () -> gamePlayService.playerAction(gameRoomId, "nickname", "raise"));
     }
 }

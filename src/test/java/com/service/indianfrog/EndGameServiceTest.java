@@ -15,8 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
@@ -49,8 +48,12 @@ public class EndGameServiceTest {
         game.setPlayerOneCard(playerOneCard);
         game.setPlayerTwoCard(playerTwoCard);
 
-        when(gameValidator.validateAndRetrieveGameRoom(anyLong())).thenReturn(gameRoom);
-        when(gameValidator.initializeOrRetrieveGame(any(GameRoom.class))).thenReturn(game);
+        // 성공 테스트 용
+//        when(gameValidator.validateAndRetrieveGameRoom(anyLong())).thenReturn(gameRoom);
+//        when(gameValidator.initializeOrRetrieveGame(any(GameRoom.class))).thenReturn(game);
+
+        // 실패 테스트 용
+        when(gameValidator.validateAndRetrieveGameRoom(anyLong())).thenReturn(null);
     }
 
     @Test
@@ -78,5 +81,17 @@ public class EndGameServiceTest {
 
         assertNotNull(response);
         assertEquals("USER_CHOICE", response.getGameState());
+    }
+
+    @Test
+    @DisplayName("라운드 종료 실패 테스트")
+    void endRoundFail() {
+        assertThrows(Exception.class, () -> endGameService.endRound(1L));
+    }
+
+    @Test
+    @DisplayName("게임 종료 실패 테스트")
+    void endGameFail() {
+        assertThrows(Exception.class, () -> endGameService.endGame(1L));
     }
 }

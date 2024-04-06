@@ -15,8 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 
@@ -41,7 +40,7 @@ public class StartGameServiceTest {
     @Test
     @Disabled
     @DisplayName("라운드 시작 성공 테스트")
-    public void testStartRound() {
+    void testStartRound() {
         // Given
         Long gameRoomId = 1L;
         GameRoom gameRoom = new GameRoom();
@@ -60,5 +59,22 @@ public class StartGameServiceTest {
 
         assertNotNull(response);
         assertEquals("ACTION", response.getGameState());
+    }
+
+    @Test
+    @DisplayName("라운드 시작 실패 테스트 - 게임 룸 검증 실패")
+    @Disabled
+    void testStartRoundGameRoomValidationFails() {
+        // Given
+        Long gameRoomId = 1L;
+        when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(null); // 검증 실패 시나리오
+
+        // When
+        Exception exception = assertThrows(Exception.class, () -> startGameService.startRound(gameRoomId));
+
+        // Then
+        assertNotNull(exception);
+        verify(gameValidator, times(1)).validateAndRetrieveGameRoom(gameRoomId);
+        // startRound 메서드에서 예외 발생 확인
     }
 }

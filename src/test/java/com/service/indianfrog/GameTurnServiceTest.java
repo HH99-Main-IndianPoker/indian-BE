@@ -13,8 +13,7 @@ import org.mockito.Mock;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GameTurnServiceTest {
 
@@ -30,6 +29,9 @@ public class GameTurnServiceTest {
 
     private List<User> players = new ArrayList<>();
 
+    private Long validGameId;
+    private Long invalidGameId;
+
     @BeforeEach
     void setUp() {
         gameTurnService = new GameTurnService();
@@ -37,6 +39,10 @@ public class GameTurnServiceTest {
         players.add(playerOne);
         players.add(playerTwo);
         turn = new Turn(players);
+
+        // 실패 테스트 용
+        validGameId = 1L;
+        invalidGameId = 2L;
     }
 
     @Test
@@ -48,5 +54,12 @@ public class GameTurnServiceTest {
 
         Turn retrievedTurn = gameTurnService.getTurn(gameId);
         assertEquals(turn, retrievedTurn);
+    }
+
+    @Test
+    @DisplayName("잘못된 게임 ID로 턴 조회 실패 테스트")
+    @Disabled
+    void getTurnWithInvalidGameId() {
+        assertNull(gameTurnService.getTurn(invalidGameId));
     }
 }
