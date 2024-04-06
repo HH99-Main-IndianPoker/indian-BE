@@ -8,6 +8,7 @@ import com.service.indianfrog.domain.game.utils.GameValidator;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class GameSessionService {
         this.gameValidator = gameValidator;
     }
 
+    @Transactional
     public List<GameStatus> processUserChoices(UserChoices choices) {
         gameValidator.validateAndRetrieveGameRoom(choices.getGameRoomId());
 

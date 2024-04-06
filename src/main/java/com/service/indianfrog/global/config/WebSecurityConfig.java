@@ -100,17 +100,17 @@ public class WebSecurityConfig {
         );
 
         /*oauth2*/
-        http
-                .oauth2Login((oauth2) -> oauth2
-                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-                                .userService(customOAuth2UserService))// OAuth2 로그인 성공 이후 사용자 정보를 가져올 때 설정 담당
-                        .successHandler(customSuccessHandler));// OAuth2 로그인 성공 시, 후작업을 진행할 UserService 인터페이스 구현체 등록
+//        http
+//                .oauth2Login((oauth2) -> oauth2
+//                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+//                                .userService(customOAuth2UserService))// OAuth2 로그인 성공 이후 사용자 정보를 가져올 때 설정 담당
+//                        .successHandler(customSuccessHandler));// OAuth2 로그인 성공 시, 후작업을 진행할 UserService 인터페이스 구현체 등록
 
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() // resources 접근 허용 설정
-                        .requestMatchers("/","/user/**","/login/**","/oauth2/**", "/token/**").permitAll() // 메인 페이지 요청 허가
+                        .requestMatchers("/","/user/**","/login/**","/oauth2/**", "/token/**", "/**").permitAll() // 메인 페이지 요청 허가
                         .requestMatchers("/ws/**").permitAll() // WebSocket 경로 허가
                         .requestMatchers("/topic/**").permitAll() // WebSocket 메시지 브로커 경로 허가
                         .requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()

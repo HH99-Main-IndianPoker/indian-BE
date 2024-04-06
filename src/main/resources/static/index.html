@@ -1,3 +1,53 @@
-<a href="/oauth2/authorization/github">Github Login</a><br>
-<a href="/oauth2/authorization/google">Google Login</a><br>
-<a href="/oauth2/authorization/naver">Naver Login</a><br>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Indian Frog Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h1>Indian Frog Game</h1>
+Username: <input type="text" id="username"><br>
+Action Content: <input type="text" id="actionContent"><br>
+<button onclick="startGame()">Start Game</button>
+<button onclick="performAction()">Perform Action</button>
+<button onclick="endRound()">End Round</button>
+<button onclick="endGame()">End Game</button>
+
+<script>
+    var stompClient = null;
+    var username = document.getElementById('username');
+    var actionContent = document.getElementById('actionContent');
+
+    function connect() {
+        var socket = new SockJS('/ws'); // WebSocket 연결 주소
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function(frame) {
+            console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/gameRoom/1', function(response) {
+                console.log("Received: " + response.body);
+            });
+        });
+    }
+
+    function startGame() {
+        stompClient.send("/app/gameRoom/1/START", {}, JSON.stringify({sender: username.value, content: 'START'}));
+    }
+
+    function performAction() {
+        stompClient.send("/app/gameRoom/1/ACTION", {}, JSON.stringify({sender: username.value, content: actionContent.value}));
+    }
+
+    function endRound() {
+        stompClient.send("/app/gameRoom/1/END", {}, JSON.stringify({sender: username.value, content: 'END'}));
+    }
+
+    function endGame() {
+        stompClient.send("/app/gameRoom/1/GAME_END", {}, JSON.stringify({sender: username.value, content: 'GAME_END'}));
+    }
+
+    connect(); // 웹 페이지 로드 시 WebSocket 연결 시작
+</script>
+</body>
+</html>

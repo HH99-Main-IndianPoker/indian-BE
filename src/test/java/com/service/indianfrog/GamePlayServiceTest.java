@@ -1,12 +1,12 @@
 package com.service.indianfrog;
 
 import com.service.indianfrog.domain.game.entity.Game;
-import com.service.indianfrog.domain.game.entity.GameRoom;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.service.GamePlayService;
 import com.service.indianfrog.domain.game.service.GameTurnService;
 import com.service.indianfrog.domain.game.utils.GameValidator;
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;

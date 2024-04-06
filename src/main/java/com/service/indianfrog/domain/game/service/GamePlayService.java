@@ -1,11 +1,16 @@
 package com.service.indianfrog.domain.game.service;
 
-import com.service.indianfrog.domain.game.entity.*;
+import com.service.indianfrog.domain.game.entity.Betting;
+import com.service.indianfrog.domain.game.entity.Game;
+import com.service.indianfrog.domain.game.entity.GameState;
+import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Tag(name = "게임 플레이 서비스", description = "게임 플레이 서비스 로직")
 @Slf4j
@@ -20,6 +25,7 @@ public class GamePlayService {
         this.gameTurnService = gameTurnService;
     }
 
+    @Transactional
     public GameState playerAction(Long gameRoomId, String nickname, String action) {
         GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);

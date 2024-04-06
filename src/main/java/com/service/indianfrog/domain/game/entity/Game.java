@@ -22,10 +22,10 @@ public class Game {
     @Enumerated(EnumType.STRING) // Enum 타입을 저장
     private Set<Card> usedCards = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     private User playerOne;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     private User playerTwo;
 
     @Enumerated(EnumType.STRING) // 카드 Enum을 저장
@@ -39,7 +39,7 @@ public class Game {
     private int pot; // 현재 라운드의 포트
     private int nextRoundPot; // 다음 라운드로 이월할 포트
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     private User foldedUser;
 
     // 플레이어가 라운드에서 획득한 포인트

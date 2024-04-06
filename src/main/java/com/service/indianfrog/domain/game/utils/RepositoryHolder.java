@@ -1,6 +1,6 @@
 package com.service.indianfrog.domain.game.utils;
 
-import com.service.indianfrog.domain.game.repository.GameRoomRepository;
+import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Component;
 

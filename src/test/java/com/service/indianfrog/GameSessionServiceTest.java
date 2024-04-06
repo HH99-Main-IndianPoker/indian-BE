@@ -2,11 +2,11 @@ package com.service.indianfrog;
 
 import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
-import com.service.indianfrog.domain.game.entity.GameRoom;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.UserChoice;
 import com.service.indianfrog.domain.game.service.GameSessionService;
 import com.service.indianfrog.domain.game.utils.GameValidator;
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;

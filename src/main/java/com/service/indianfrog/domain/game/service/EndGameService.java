@@ -5,11 +5,12 @@ import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
 import com.service.indianfrog.domain.game.dto.GameResult;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
-import com.service.indianfrog.domain.game.entity.GameRoom;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.game.utils.RepositoryHolder;
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class EndGameService {
 
     private final GameValidator gameValidator;
+    private final RepositoryHolder repositoryHolder;
 
-    public EndGameService(GameValidator gameValidator) {
+    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder) {
         this.gameValidator = gameValidator;
+        this.repositoryHolder = repositoryHolder;
     }
 
     /* 라운드 종료 로직*/
@@ -44,7 +47,7 @@ public class EndGameService {
         /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
         String gameState = determineGameState(game);
 
-        return new EndRoundResponse(gameState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot);
+        return new EndRoundResponse(gameState, game.getRound(), gameResult.getWinnerId(), gameResult.getLoserId(), roundPot);
     }
 
     /* 게임 종료 로직*/
@@ -57,7 +60,7 @@ public class EndGameService {
         GameResult gameResult = processGameResults(game);
 
         /* 유저 선택 상태 반환*/
-        return new EndGameResponse("USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
+        return new EndGameResponse("USER_CHOICE", gameResult.getWinnerId(), gameResult.getLoserId(),
                 gameResult.getWinnerPot(), gameResult.getLoserPot());
     }
 
@@ -83,24 +86,24 @@ public class EndGameService {
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
-        User winner = gameResult.getWinner();
-        if (winner != null) {
-            int pointsToAdd = game.getPot();
-            if (winner.equals(game.getPlayerOne())) {
-                game.addPlayerOneRoundPoints(pointsToAdd);
-            } else {
-                game.addPlayerTwoRoundPoints(pointsToAdd);
-            }
+        User winner = repositoryHolder.userRepository.findById(gameResult.getWinnerId())
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+
+        int pointsToAdd = game.getPot();
+        if (winner.equals(game.getPlayerOne())) {
+            game.addPlayerOneRoundPoints(pointsToAdd);
+        } else {
+            game.addPlayerTwoRoundPoints(pointsToAdd);
         }
     }
 
     /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드*/
     private String determineGameState(Game game) {
         /* 한 게임의 라운드는 현재 3라운드 까지임
-        * 라운드 정보를 확인해 3 라운드일 경우 게임 종료 상태를 반환
-        * 라운드 정보가 3보다 적은 경우 다음 라운드 시작을 위한 상태 반환
-        * game.getRound >= 3 비교 과정을 게임 시작 시 유저의 입력 값을 통해
-        * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능*/
+         * 라운드 정보를 확인해 3 라운드일 경우 게임 종료 상태를 반환
+         * 라운드 정보가 3보다 적은 경우 다음 라운드 시작을 위한 상태 반환
+         * game.getRound >= 3 비교 과정을 게임 시작 시 유저의 입력 값을 통해
+         * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능*/
         if (game.getRound() >= 3) {
             return "GAME_END";
         }

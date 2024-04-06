@@ -1,10 +1,11 @@
 package com.service.indianfrog.domain.game.utils;
 
 import com.service.indianfrog.domain.game.entity.Game;
-import com.service.indianfrog.domain.game.entity.GameRoom;
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GameValidator {
@@ -21,6 +22,7 @@ public class GameValidator {
 
     }
 
+    @Transactional
     public Game initializeOrRetrieveGame(GameRoom gameRoom) {
         Game game = gameRoom.getCurrentGame();
         if (game == null) {
@@ -32,6 +34,7 @@ public class GameValidator {
     }
 
     /* 게임 룸 정보 업데이트 로직 팀원과 의논을 통해 수정 필요*/
+    @Transactional
     public void saveGameRoomState(GameRoom gameRoom) {
         repositoryHolder.gameRoomRepository.save(gameRoom);
     }

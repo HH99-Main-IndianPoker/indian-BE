@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Tag(name = "게임 실행 컨트롤러", description = "인디언 포커 게임 실행 및 종료 컨트롤러입니다.")
 @Slf4j
 @Controller
-@RequestMapping("/gameRoom")
 public class GameController {
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -37,7 +36,7 @@ public class GameController {
         this.gameSessionService = gameSessionService;
     }
 
-    @MessageMapping("/{gameRoomId}/{gameState}")
+    @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
                                              @Payload ChatMessage chatMessage, @Payload(required = false) UserChoices userChoices) {
         Object response = switch (gameState) {
