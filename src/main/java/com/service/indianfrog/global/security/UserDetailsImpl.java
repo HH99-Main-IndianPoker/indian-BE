@@ -1,7 +1,6 @@
 package com.service.indianfrog.global.security;
 
 import com.service.indianfrog.domain.user.entity.User;
-import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,12 +14,13 @@ import java.util.Collection;
 @Getter
 public class UserDetailsImpl implements UserDetails {
 
-    private final User member;
+    private final User user;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        AuthorityType role = member.getAuthority();
-        String authority = role.getAuthority();
+//        AuthorityType role = user.getAuthority();
+//        String authority = role.getAuthority();
+        String authority = "USER";
 
         SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(authority);
         Collection<GrantedAuthority> authorities = new ArrayList<>();
@@ -30,12 +30,12 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getPassword() {
-        return member.getPassword();
+        return user.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return member.getEmail();
+        return user.getEmail();
     }
 
     @Override

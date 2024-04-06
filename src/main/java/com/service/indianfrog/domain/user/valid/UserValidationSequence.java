@@ -1,9 +1,10 @@
 package com.service.indianfrog.domain.user.valid;
 
-import com.service.indianfrog.domain.user.valid.UserValidationGroup.NotBlankGroup;
+import com.service.indianfrog.domain.user.valid.UserValidationGroup.PasswordPatternGroup;
 import jakarta.validation.GroupSequence;
 
 import static com.service.indianfrog.domain.user.valid.UserValidationGroup.*;
+
 
 @GroupSequence({
         NotBlankGroup.class,

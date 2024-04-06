@@ -1,0 +1,36 @@
+spring:
+  config:
+    import:
+    - classpath:/yml/application-secret.yml
+    activate:
+      on-profile: local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${local-db.url}
+    username: ${local-db.username}
+    password: ${local-db.password}
+  jpa:
+      hibernate:
+        ddl-auto: update
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.MySQL8Dialect
+          format_sql: true
+          use_sql_comments: true
+      show-sql: true
+
+
+  data:
+      redis:
+        host: ${local-redis.host}
+        port: ${local-redis.port}
+logging:
+    level:
+      root: DEBUG
+springdoc:
+  show-login-endpoint: true
+jwt:
+  secret:
+    key:
+      access: 7JWI64WV7ZWY7IS47JqU6rmA7IiY7ZmY7J6F64uI64uk
+      refresh: 888I64WV7ZWY7IS47JqU6rmA7IiY7ZmY7J6F64uI64uk

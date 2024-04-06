@@ -1,56 +1,75 @@
 package com.service.indianfrog.domain.user.service;
 
+import com.service.indianfrog.domain.user.dto.UserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
+import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 public class UserService {
 
-    private final UserRepository memberRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder) {
-        this.memberRepository = memberRepository;
+    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder, OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
+        this.userRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     }
 
     // 회원가입
     @Transactional
-    public void signup(SignupUserRequestDto requestDto) {
-        if (memberRepository.existsByEmail(requestDto.email())) {
-            throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMsg());
+    public SignupResponseDto signup(SignupUserRequestDto requestDto) {
+        if (userRepository.existsByEmail(requestDto.email())) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());
         }
 
-        if (memberRepository.existsByNickname(requestDto.nickname())) {
-            throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMsg());
+        if (userRepository.existsByNickname(requestDto.nickname())) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
         }
 
         String password = passwordEncoder.encode(requestDto.password());
-        User member = memberRepository.save(requestDto.toEntity(password));
+        User member = userRepository.save(requestDto.toEntity(password));
+        LocalDateTime now = LocalDateTime.now();
+        return new SignupResponseDto(member.getEmail(), now);
     }
 
     // 회원 정보 조회
     @Transactional(readOnly = true)
     public GetUserResponseDto getMember(String email) {
-        User member = memberRepository.findByEmail(email).orElseThrow(() ->
-                new RestApiException(ErrorCode.NOT_FOUND_MEMBER.getMsg()));
+        User member = userRepository.findByEmail(email).orElseThrow(() ->
+                new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         return new GetUserResponseDto(member);
     }
 
     // 이메일 중복 체크
     public boolean emailCheck(String email) {
-        return memberRepository.existsByEmail(email);
+        if (userRepository.existsByEmail(email)) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());
+        }
+        return userRepository.existsByEmail(email);
     }
 
     // 닉네임 중복체크
     public boolean nicknameCheck(String nickname) {
-        return memberRepository.existsByNickname(nickname);
+        if(userRepository.existsByNickname(nickname)) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
+        }
+        return userRepository.existsByNickname(nickname);
+    }
+
+    public void OAuth2Signup() {
+
     }
 }

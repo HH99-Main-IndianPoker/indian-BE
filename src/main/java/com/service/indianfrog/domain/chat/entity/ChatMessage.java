@@ -1,6 +1,7 @@
 package com.service.indianfrog.domain.chat.entity;
 
 import lombok.Getter;
+
 @Getter
 
 public class ChatMessage {

@@ -1,7 +1,7 @@
 package com.service.indianfrog.domain.user.dto;
 
-import com.service.indianfrog.domain.user.entity.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.service.indianfrog.domain.user.entity.User;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +12,11 @@ public class UserResponseDto {
 
     public record CheckUserNicknameResponseDto(Boolean isExist) {
     }
+
+    public record SignupResponseDto(
+            String email,
+            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime createdAt) { }
 
     public record GetUserResponseDto(
             Long id,

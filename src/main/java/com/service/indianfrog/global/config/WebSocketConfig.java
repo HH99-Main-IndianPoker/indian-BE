@@ -16,6 +16,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*") // allowedOrigins 하니까 안돼서 바꿈.
                 .withSockJS();
+
     }
 
     @Override

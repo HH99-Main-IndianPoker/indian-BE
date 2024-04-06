@@ -1,7 +1,7 @@
 package com.service.indianfrog.domain.chat.controller;
 
 import com.service.indianfrog.domain.chat.entity.ChatMessage;
-import com.service.indianfrog.domain.game.service.GameRoomService;
+import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -16,6 +16,7 @@ public class ChatController {
 
     private SimpMessageSendingOperations messagingTemplate; //이 심플메세지프로토콜을 이용하면 목적지와,메세지를 지정할수 있음!!
     private GameRoomService gameRoomService;
+
     public ChatController(SimpMessageSendingOperations messagingTemplate, GameRoomService gameRoomService) {
         this.messagingTemplate = messagingTemplate;
         this.gameRoomService = gameRoomService;
