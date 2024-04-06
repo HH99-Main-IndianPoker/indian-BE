@@ -77,5 +77,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            sudo docker login -u AWS -p $(aws ecr get-login-password --region ap-northeast-2) ${{ secrets.AWS_ECR_REPOSITORY_URL }}
+            sudo docker pull ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
             sudo docker-compose up -d
             sudo docker image prune -f
