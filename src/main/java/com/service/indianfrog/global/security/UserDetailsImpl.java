@@ -1,7 +1,6 @@
 package com.service.indianfrog.global.security;
 
 import com.service.indianfrog.domain.user.entity.User;
-import com.service.indianfrog.domain.user.entity.type.AuthorityType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,8 +18,9 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        AuthorityType role = user.getAuthority();
-        String authority = role.getAuthority();
+//        AuthorityType role = user.getAuthority();
+//        String authority = role.getAuthority();
+        String authority = "USER";
 
         SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(authority);
         Collection<GrantedAuthority> authorities = new ArrayList<>();
