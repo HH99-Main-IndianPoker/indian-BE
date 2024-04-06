@@ -5,7 +5,7 @@ FROM openjdk:17
 WORKDIR /app
 
 # 수정된 COPY 명령. ARG로 받은 JAR_FILE 변수 사용
-COPY ${JAR_FILE} app.jar
+COPY ${JAR_FILE} /app/app.jar
 
 EXPOSE 8080
 
