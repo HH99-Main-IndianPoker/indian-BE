@@ -9,6 +9,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,17 @@ public class GameRoomService {
     public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
+    }
+    public GameRoomDto getGameRoomById(Long roomId) {
+        Optional<GameRoom> optionalGameRoom = gameRoomRepository.findById(roomId);
+        return optionalGameRoom.map(this::convertToDto).orElse(null);
+    }
+
+    public List<GameRoomDto> getAllGameRooms() {
+        List<GameRoom> gameRooms = gameRoomRepository.findAll();
+        return gameRooms.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     public GameRoomDto createGameRoom(GameRoomDto gameroomdto) {
@@ -71,21 +84,26 @@ public class GameRoomService {
 
     @Transactional
     public GameRoomDto removeParticipant(Long roomId, String participant) {
-        ValidateRoom validateRoom = validateRoomRepository.findByGameRoomRoomIdAndParticipants(roomId, participant)
-                .orElseThrow(() -> new IllegalArgumentException("Participant not found in room!"));
-        validateRoomRepository.delete(validateRoom);
+        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomIdAndParticipants(roomId, participant);
+        if (validateRooms.isEmpty()) {
+            throw new IllegalArgumentException("Participant not found in room!");
+        }
 
-        //if (gameRoom.getValidateRooms().isEmpty()) 이걸 썼었는데 지연로딩 문제가 발생... jpa를 이용하는 방식으로 변경해서 지연로딩 방지.
-        boolean isEmpty = validateRoomRepository.existsByGameRoomRoomId(roomId);
-        if (!isEmpty) {
+        validateRooms.forEach(validateRoomRepository::delete);
+
+        boolean isRoomEmpty = !validateRoomRepository.existsByGameRoomRoomId(roomId);
+        if (isRoomEmpty) {
             gameRoomRepository.deleteById(roomId);
-            return null;
+            return null; // 방이 비었으니 삭제하고 null 반환
         }
 
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
-        return convertToDto(gameRoom);
+        return convertToDto(gameRoom); // 수정된 게임방 정보 반환
     }
+
+
+
 
     private GameRoomDto convertToDto(GameRoom gameRoom) {
         Set<String> participants = gameRoom.getValidateRooms().stream()
