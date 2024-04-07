@@ -23,11 +23,13 @@ jobs:
 
       # Github Actions 워크플로우가 실행되는 가상 환경내에 application-dev 설정
       - name: Generate application-secret.yml
-        run: echo "${{ secrets.APPLICATION_SECRET_CONTENT }}" > ./src/main/resources/yml/application-secret.yml
+        run: |
+          echo "${{ secrets.APPLICATION_SECRET_CONTENT }}" > ./src/main/resources/yml/application-secret.yml
 
       # Github Actions 워크플로우가 실행되는 가상 환경내에 application-dev 설정
       - name: Generate application-oauth.yml
-        run: echo "${{ secrets.APPLICATION_OAUTH }}" > ./src/main/resources/yml/application-oauth.yml
+        run: |
+          echo "${{ secrets.APPLICATION_OAUTH }}" > ./src/main/resources/yml/application-oauth.yml
 
       # Gradle 빌드 할 때, 이미 저장한 데이터를 캐싱하여 빌드시 이를 사용하도록함.
       - name: Gradle Caching
@@ -51,7 +53,7 @@ jobs:
 
       # Docker 이미지 빌드
       - name: Build Docker image
-        run: docker build . -t myapp:${{ github.sha }}
+        run: docker build -f Dockerfile -t myapp:${{ github.sha }} .
 
       # ECR에 docker image push
       - name: Configure AWS credentials
@@ -76,6 +78,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          port: 22
           script: |
             sudo docker login -u AWS -p $(aws ecr get-login-password --region ap-northeast-2) ${{ secrets.AWS_ECR_REPOSITORY_URL }}
             sudo docker pull ${{ secrets.AWS_ECR_REPOSITORY_URL }}:latest
