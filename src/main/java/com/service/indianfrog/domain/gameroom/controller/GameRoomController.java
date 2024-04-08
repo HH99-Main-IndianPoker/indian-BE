@@ -5,6 +5,9 @@ import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import com.service.indianfrog.global.security.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -14,7 +17,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.List;
 
 
 @RestController
@@ -32,8 +34,8 @@ public class GameRoomController {
 
 
     @GetMapping("/")
-    public ResponseEntity<List<GameRoomDto>> getAllGameRooms() {
-        List<GameRoomDto> gameRooms = gameRoomService.getAllGameRooms();
+    public ResponseEntity<Page<GameRoomDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
+        Page<GameRoomDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
         return ResponseEntity.ok(gameRooms);
     }
 

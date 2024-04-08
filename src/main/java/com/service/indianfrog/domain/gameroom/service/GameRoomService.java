@@ -6,6 +6,8 @@ import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -29,11 +31,9 @@ public class GameRoomService {
         return optionalGameRoom.map(this::convertToDto).orElse(null);
     }
 
-    public List<GameRoomDto> getAllGameRooms() {
-        List<GameRoom> gameRooms = gameRoomRepository.findAll();
-        return gameRooms.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+    public Page<GameRoomDto> getAllGameRooms(Pageable pageable) {
+        Page<GameRoom> gameRoomPage = gameRoomRepository.findAll(pageable);
+        return gameRoomPage.map(this::convertToDto);
     }
 
     public GameRoomDto createGameRoom(GameRoomDto gameRoomDto, String creatorEmail) {
