@@ -36,8 +36,9 @@ public class StartGameService {
         performRoundStart(game);
         gameValidator.saveGameRoomState(gameRoom);
         int round = game.getRound();
+        Card card = opponentCard(game);
 
-        return new StartRoundResponse("ACTION", round);
+        return new StartRoundResponse("ACTION", round, card);
     }
 
     private void performRoundStart(Game game) {
@@ -93,5 +94,13 @@ public class StartGameService {
 
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);
+    }
+
+    private Card opponentCard(Game game) {
+        Turn turn = gameTurnService.getTurn(game.getId());
+        User currentPlayer = turn.getCurrentPlayer();
+
+        return currentPlayer.equals(game.getPlayerOne())
+                ? game.getPlayerTwoCard() : game.getPlayerOneCard();
     }
 }
