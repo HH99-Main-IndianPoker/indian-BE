@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long> {
     boolean existsByGameRoomRoomId(Long roomId);
+    Optional<ValidateRoom> findByGameRoomRoomIdAndParticipants(Long roomId, String participant);
 
     List<ValidateRoom> findAllByGameRoomRoomIdAndParticipants(Long roomId, String participant);
 }

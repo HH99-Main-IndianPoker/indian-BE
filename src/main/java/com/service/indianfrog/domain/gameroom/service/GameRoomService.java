@@ -75,6 +75,12 @@ public class GameRoomService {
             throw new IllegalStateException("The game room is full.");
         }
 
+        // 중복 참가자 확인
+        Optional<ValidateRoom> existingValidateRoom = validateRoomRepository.findByGameRoomRoomIdAndParticipants(roomId, participant);
+        if (existingValidateRoom.isPresent()) {
+            throw new IllegalStateException("This participant has already joined the room.");
+        }
+
         ValidateRoom validateRoom = new ValidateRoom();
         validateRoom.setParticipants(participant);
         validateRoom.setGameRoom(gameRoom);
@@ -83,6 +89,7 @@ public class GameRoomService {
 
         return convertToDto(gameRoom);
     }
+
 
 
     @Transactional
