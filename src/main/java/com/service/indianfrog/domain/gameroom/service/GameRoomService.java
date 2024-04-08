@@ -71,6 +71,10 @@ public class GameRoomService {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
 
+        if (gameRoom.getValidateRooms().size() >= 2) {
+            throw new IllegalStateException("The game room is full.");
+        }
+
         if (validateRoomRepository.findByGameRoomAndParticipants(gameRoom, participant).isPresent()) {
             throw new IllegalStateException("Participant has already joined the room.");
         }
@@ -102,7 +106,6 @@ public class GameRoomService {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
 
-        // 직접적으로 GameRoomDto를 생성하여 반환
         return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
     }
 

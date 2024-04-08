@@ -26,11 +26,6 @@ public class GameRoom {
     private Set<ValidateRoom> validateRooms = new HashSet<>();
 
 
-
-    public void setRoomId(Long roomId) {
-        this.roomId = roomId;
-    }
-
     public void setCreateAt(Date createAt) {
         this.createAt = createAt;
     }

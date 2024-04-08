@@ -2,17 +2,16 @@ package com.service.indianfrog.global.config;
 
 import com.service.indianfrog.domain.gameroom.dto.AuthenticatedUser;
 import com.service.indianfrog.global.jwt.JwtUtil;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
-import org.springframework.messaging.support.ChannelInterceptor;
 
 import java.util.Collections;
 
