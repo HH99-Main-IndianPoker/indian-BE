@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 
@@ -46,18 +47,15 @@ public class GameRoomController {
         }
     }
 
-
-
     @PostMapping("/create")
-    public ResponseEntity<GameRoomDto> createGameRoom(@RequestBody GameRoomDto gameRoomDto, @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        if (userDetails == null) {
+    public ResponseEntity<GameRoomDto> createGameRoom(@RequestBody GameRoomDto gameRoomDto, Principal principal) {
+        if (principal == null) {
             // 사용자가 로그인하지 않은 경우 접근을 거부합니다.
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        // 게임방 생성 로직을 호출합니다.
-        GameRoomDto createdGameRoom = gameRoomService.createGameRoom(gameRoomDto);
-        // 생성된 게임방 정보를 반환합니다.
-        return ResponseEntity.ok(createdGameRoom);
+        String email = principal.getName(); // 게임방 생성자의 이메일을 가져옵니다.
+        GameRoomDto createdGameRoom = gameRoomService.createGameRoom(gameRoomDto, email); // 게임방 생성 로직을 호출하면서 생성자의 이메일을 전달합니다.
+        return ResponseEntity.ok(createdGameRoom); // 생성된 게임방 정보를 반환합니다.
     }
 
     @DeleteMapping("/delete/{roomId}")
@@ -73,21 +71,36 @@ public class GameRoomController {
     }
 
     @MessageMapping("/game.join/{roomId}")
-    public void joinGame(@DestinationVariable Long roomId, String participant) {
+    public void joinGame(@DestinationVariable Long roomId, Principal principal) {
+        if (principal == null) {
+            logger.error("Principal is null. User is not authenticated.");
+            return;
+        }
+        String email = principal.getName();
+        logger.info("User email: " + email);
         try {
-            GameRoomDto gameRoom = gameRoomService.addParticipant(roomId, participant);
+            GameRoomDto gameRoom = gameRoomService.addParticipant(roomId, email);
             messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, gameRoom.getParticipants());
         } catch (IllegalStateException e) {
-            // 게임방이 꽉 찼을 때의 예외 처리
-            // 적절한 예외 처리 로직 추가 예정
+            logger.error("Failed to join game room: " + roomId, e);
         }
     }
 
     @MessageMapping("/game.leave/{roomId}")
-    public void leaveGame(@DestinationVariable Long roomId, String participant) {
-        GameRoomDto gameRoom = gameRoomService.removeParticipant(roomId, participant);
-        if (gameRoom != null) {
-            messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, gameRoom.getParticipants());
+    public void leaveGame(@DestinationVariable Long roomId, Principal principal) {
+        if (principal == null) {
+
+            logger.error("Principal is null. User is not authenticated.");
+            return;
+        }
+        String email = principal.getName();
+        try {
+            GameRoomDto gameRoom = gameRoomService.removeParticipant(roomId, email);
+            if (gameRoom != null) {
+                messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, gameRoom.getParticipants());
+            }
+        } catch (Exception e) {
+            logger.error("Failed to leave game room: " + roomId, e);
         }
     }
 

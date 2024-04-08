@@ -36,15 +36,18 @@ public class GameRoomService {
                 .collect(Collectors.toList());
     }
 
-    public GameRoomDto createGameRoom(GameRoomDto gameroomdto) {
+    public GameRoomDto createGameRoom(GameRoomDto gameRoomDto, String creatorEmail) {
         GameRoom gameRoom = new GameRoom();
-        gameRoom.setRoomName(gameroomdto.getRoomName());
+        gameRoom.setRoomName(gameRoomDto.getRoomName());
         gameRoom.setCreateAt(new Date());
         gameRoom = gameRoomRepository.save(gameRoom);
 
-        // 나중에 게임방 생성하면 생성자가 자동으로 접속하는 로직.  ,String creatorParticipant
-//        gameRoom.getParticipants().add(creatorParticipant);
-//        gameRoom = gameRoomRepository.save(gameRoom);
+        // 게임방 생성자를 바로 참가자로 추가합니다.
+        ValidateRoom validateRoom = new ValidateRoom();
+        validateRoom.setParticipants(creatorEmail); // 게임방 생성자의 이메일을 참가자로 설정
+        validateRoom.setGameRoom(gameRoom); // 생성된 게임방을 설정
+        validateRoomRepository.save(validateRoom); // 참가자 정보를 저장
+
         return convertToDto(gameRoom);
     }
 
@@ -101,8 +104,6 @@ public class GameRoomService {
                 .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
         return convertToDto(gameRoom); // 수정된 게임방 정보 반환
     }
-
-
 
 
     private GameRoomDto convertToDto(GameRoom gameRoom) {
