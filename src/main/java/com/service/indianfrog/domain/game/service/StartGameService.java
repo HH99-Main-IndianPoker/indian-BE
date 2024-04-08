@@ -50,7 +50,9 @@ public class StartGameService {
         List<Card> availableCards = prepareAvailableCards(game);
         assignRandomCardsToPlayers(game, availableCards);
 
-        initializeTurnForGame(game);
+        if (game.getRound() == 1) {
+            initializeTurnForGame(game);
+        }
     }
 
     private int calculateInitialBet(User playerOne, User playerTwo) {

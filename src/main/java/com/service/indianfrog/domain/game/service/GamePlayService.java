@@ -31,14 +31,16 @@ public class GamePlayService {
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
         User user = gameValidator.findUserByNickname(nickname);
         Turn turn = gameTurnService.getTurn(game.getId());
-        if (turn == null || turn.getCurrentPlayer() == null) {
-            throw new IllegalStateException("No turn information available");
+
+        /* 유저의 턴이 맞는지 확인*/
+        if (!turn.getCurrentPlayer().equals(user)) {
+            throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
         }
 
         Betting betting = Betting.valueOf(action.toUpperCase());
         return switch (betting) {
             case CHECK -> performCheckAction(game, user, turn);
-            case RAISE -> performRaiseAction(game, user);
+            case RAISE -> performRaiseAction(game, user, turn);
             case DIE -> performDieAction(game, user);
         };
     }
@@ -63,10 +65,11 @@ public class GamePlayService {
         /* 선턴 유저 CHECK*/
         user.setPoints(user.getPoints() - game.getBetAmount());
         game.setPot(game.getPot() + game.getBetAmount());
+        turn.nextTurn();
         return GameState.ACTION;
     }
 
-    private GameState performRaiseAction(Game game, User user) {
+    private GameState performRaiseAction(Game game, User user, Turn turn) {
         int userPoints = user.getPoints();
 
         if (userPoints <= 0) {
@@ -81,6 +84,7 @@ public class GamePlayService {
         game.setPot(game.getPot() + raiseAmount);
         game.setBetAmount(raiseAmount);
 
+        turn.nextTurn();
         return GameState.ACTION;
     }
 

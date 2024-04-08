@@ -5,6 +5,7 @@ import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
 import com.service.indianfrog.domain.game.dto.GameResult;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
+import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.game.utils.RepositoryHolder;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
@@ -15,6 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Tag(name = "게임/라운드 종료 서비스", description = "게임/라운드 종료 서비스 로직")
 @Slf4j
 @Service
@@ -22,10 +26,12 @@ public class EndGameService {
 
     private final GameValidator gameValidator;
     private final RepositoryHolder repositoryHolder;
+    private final GameTurnService gameTurnService;
 
-    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder) {
+    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder, GameTurnService gameTurnService) {
         this.gameValidator = gameValidator;
         this.repositoryHolder = repositoryHolder;
+        this.gameTurnService = gameTurnService;
     }
 
     /* 라운드 종료 로직*/
@@ -40,6 +46,9 @@ public class EndGameService {
         GameResult gameResult = determineGameResult(game);
         assignRoundPointsToWinner(game, gameResult);
         int roundPot = game.getPot();
+
+        /* 라운드 승자가 선턴을 가지도록 설정*/
+        initializeTurnForGame(game, gameResult.getWinnerId());
 
         /* 라운드 정보 초기화*/
         game.resetRound();
@@ -90,6 +99,9 @@ public class EndGameService {
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         int pointsToAdd = game.getPot();
+
+        winner.setPoints(winner.getPoints() + pointsToAdd);
+
         if (winner.equals(game.getPlayerOne())) {
             game.addPlayerOneRoundPoints(pointsToAdd);
         } else {
@@ -130,5 +142,21 @@ public class EndGameService {
         game.resetGame();
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
+    }
+
+    /* 1라운드 이후 턴 설정 메서드*/
+    private void initializeTurnForGame(Game game, Long winnerId) {
+        List<User> players = new ArrayList<>();
+
+        /* 전 라운드 승자를 해당 첫 턴으로 설정*/
+        User roundWinner = repositoryHolder.userRepository.findById(winnerId)
+                        .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+        players.add(roundWinner);
+
+        User player = (!roundWinner.equals(game.getPlayerOne()))
+                ? game.getPlayerTwo() : game.getPlayerOne();
+        players.add(player);
+
+        gameTurnService.setTurn(game.getId(), new Turn(players));
     }
 }
