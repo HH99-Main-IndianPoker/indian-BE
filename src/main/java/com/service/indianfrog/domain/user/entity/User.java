@@ -30,6 +30,10 @@ public class User extends Timestamped {
 
     private Long socialId;
 
+    private int points = 100;
+
+    private int wins;
+    private int losses;
 
     @Builder
     public User(Long id, String nickname, String email, String password) {
@@ -56,5 +60,17 @@ public class User extends Timestamped {
     public void updateInfo(String email, String oauthId) {
         this.email = email;
         this.oauthId = oauthId;
+    }
+
+    public void setPoints(int point) {
+        this.points = point;
+    }
+
+    public void incrementWins() {
+        this.wins++;
+    }
+
+    public void incrementLosses() {
+        this.losses++;
     }
 }
