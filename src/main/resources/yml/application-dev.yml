@@ -4,11 +4,13 @@ spring:
     - classpath:/yml/application-secret.yml
     activate:
       on-profile: dev
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${dev-db.url}
     username: ${dev-db.username}
     password: ${dev-db.password}
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -18,17 +20,17 @@ spring:
         format_sql: true
         use_sql_comments: true
     show-sql: true
+
   data:
     redis:
       host: ${dev-redis.host}
       port: ${dev-redis.port}
-logging:
-  level:
-    root: DEBUG
+
 springdoc:
   show-login-endpoint: true
+
 jwt:
   secret:
     key:
-      access: ${jwt.secret.key.access}
-      refresh: ${jwt.secret.key.refresh}
+      access: ${secret.key.access}
+      refresh: ${secret.key.refresh}
