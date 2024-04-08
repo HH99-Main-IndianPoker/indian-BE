@@ -1,6 +1,7 @@
 package com.service.indianfrog.domain.gameroom.service;
 
 import com.service.indianfrog.domain.gameroom.dto.GameRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
@@ -12,43 +13,26 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class GameRoomService {
 
-    private GameRoomRepository gameRoomRepository;
-    private ValidateRoomRepository validateRoomRepository;
+    private final GameRoomRepository gameRoomRepository;
+    private final ValidateRoomRepository validateRoomRepository;
 
     public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
     }
+
     public GameRoomDto getGameRoomById(Long roomId) {
-        Optional<GameRoom> optionalGameRoom = gameRoomRepository.findById(roomId);
-        return optionalGameRoom.map(this::convertToDto).orElse(null);
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
+        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
     }
 
     public Page<GameRoomDto> getAllGameRooms(Pageable pageable) {
-        Page<GameRoom> gameRoomPage = gameRoomRepository.findAll(pageable);
-        return gameRoomPage.map(this::convertToDto);
-    }
-
-    public GameRoomDto createGameRoom(GameRoomDto gameRoomDto, String creatorEmail) {
-        GameRoom gameRoom = new GameRoom();
-        gameRoom.setRoomName(gameRoomDto.getRoomName());
-        gameRoom.setCreateAt(new Date());
-        gameRoom = gameRoomRepository.save(gameRoom);
-
-        // 게임방 생성자를 바로 참가자로 추가합니다.
-        ValidateRoom validateRoom = new ValidateRoom();
-        validateRoom.setParticipants(creatorEmail); // 게임방 생성자의 이메일을 참가자로 설정
-        validateRoom.setGameRoom(gameRoom); // 생성된 게임방을 설정
-        validateRoomRepository.save(validateRoom); // 참가자 정보를 저장
-
-        return convertToDto(gameRoom);
+        return gameRoomRepository.findAll(pageable).map(gameRoom -> new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName()));
     }
 
     public void deleteGameRoom(Long roomId) {
@@ -66,31 +50,38 @@ public class GameRoomService {
         // 욕설 필터링
         return message.replaceAll("(씨발|병신|ㅅㅂ)", "**");
     }
+
     @Transactional
-    public GameRoomDto addParticipant(Long roomId, String participant) {
+    public GameRoomDto createGameRoom(GameRoomDto gameRoomDto, String email) {
+        GameRoom gameRoom = new GameRoom();
+        gameRoom.setRoomName(gameRoomDto.getRoomName());
+        gameRoom.setCreateAt(new Date());
+        gameRoom = gameRoomRepository.save(gameRoom);
+
+        ValidateRoom validateRoom = new ValidateRoom();
+        validateRoom.setParticipants(email);
+        validateRoom.setGameRoom(gameRoom);
+        validateRoomRepository.save(validateRoom);
+
+        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+    }
+
+    @Transactional
+    public ValidateRoomDto addParticipant(Long roomId, String participant) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
 
-        if (gameRoom.getValidateRooms().size() >= 2) {
-            throw new IllegalStateException("The game room is full.");
-        }
-
-        // 중복 참가자 확인
-        Optional<ValidateRoom> existingValidateRoom = validateRoomRepository.findByGameRoomRoomIdAndParticipants(roomId, participant);
-        if (existingValidateRoom.isPresent()) {
-            throw new IllegalStateException("This participant has already joined the room.");
+        if (validateRoomRepository.findByGameRoomAndParticipants(gameRoom, participant).isPresent()) {
+            throw new IllegalStateException("Participant has already joined the room.");
         }
 
         ValidateRoom validateRoom = new ValidateRoom();
         validateRoom.setParticipants(participant);
         validateRoom.setGameRoom(gameRoom);
+        validateRoom = validateRoomRepository.save(validateRoom);
 
-        validateRoomRepository.save(validateRoom);
-
-        return convertToDto(gameRoom);
+        return new ValidateRoomDto(validateRoom.getValidId(), validateRoom.getParticipants());
     }
-
-
 
     @Transactional
     public GameRoomDto removeParticipant(Long roomId, String participant) {
@@ -103,22 +94,18 @@ public class GameRoomService {
 
         boolean isRoomEmpty = !validateRoomRepository.existsByGameRoomRoomId(roomId);
         if (isRoomEmpty) {
+            // 방이 비었으므로 삭제하고 null 반환
             gameRoomRepository.deleteById(roomId);
-            return null; // 방이 비었으니 삭제하고 null 반환
+            return null;
         }
 
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
-        return convertToDto(gameRoom); // 수정된 게임방 정보 반환
+
+        // 직접적으로 GameRoomDto를 생성하여 반환
+        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
     }
 
 
-    private GameRoomDto convertToDto(GameRoom gameRoom) {
-        Set<String> participants = gameRoom.getValidateRooms().stream()
-                .map(ValidateRoom::getParticipants)
-                .collect(Collectors.toSet());
-
-        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participants);
-    }
 
 }
