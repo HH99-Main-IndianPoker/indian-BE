@@ -116,17 +116,6 @@ public class JwtUtil {
         return false;
     }
 
-
-    // 토큰에서 Email을 추출한다.
-    public String getUid(String token) {
-        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody().getSubject();
-    }
-
-    // 토큰에서 ROLE(권한)만 추출한다.
-    public String getRole(String token) {
-        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody().get("role", String.class);
-    }
-
     // 토큰에서 사용자 정보 가져오기
     public Claims getUserInfoFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token).getBody();

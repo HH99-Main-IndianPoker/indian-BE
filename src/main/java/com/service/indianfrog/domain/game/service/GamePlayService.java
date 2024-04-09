@@ -12,6 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 @Tag(name = "게임 플레이 서비스", description = "게임 플레이 서비스 로직")
 @Slf4j
 @Service
@@ -75,10 +79,20 @@ public class GamePlayService {
         if (userPoints <= 0) {
             return GameState.END;
         }
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int raiseAmount=0;
 
         /* RAISE 베팅 액 설정*/
-        int raiseAmount = game.getBetAmount() * 2;
-        raiseAmount = Math.min(raiseAmount, userPoints);
+        try {
+            System.out.print("베팅할 금액을 입력하세요: ");
+            String input = br.readLine();
+            raiseAmount = Integer.parseInt(input);
+        } catch (IOException e) {
+            log.error("입력 오류가 발생했습니다.");
+            raiseAmount = Math.min(raiseAmount, userPoints);
+            e.printStackTrace();
+        }
+
 
         user.setPoints(userPoints - raiseAmount);
         game.setPot(game.getPot() + raiseAmount);
