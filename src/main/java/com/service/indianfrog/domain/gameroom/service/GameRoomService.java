@@ -27,20 +27,22 @@ public class GameRoomService {
 
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
+    private final UserRepository userRepository;
 
-    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository) {
+    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
+        this.userRepository = userRepository;
     }
 
-    public GameRoomDto getGameRoomById(Long roomId) {
+    public GetGameRoomResponseDto getGameRoomById(Long roomId) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
-        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName());
     }
 
-    public Page<GameRoomDto> getAllGameRooms(Pageable pageable) {
-        return gameRoomRepository.findAll(pageable).map(gameRoom -> new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName()));
+    public Page<GetGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
+        return gameRoomRepository.findAll(pageable).map(gameRoom -> new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName()));
     }
 
     public void deleteGameRoom(Long roomId) {
@@ -60,31 +62,37 @@ public class GameRoomService {
     }
 
     @Transactional
-    public GameRoomDto createGameRoom(GameRoomDto gameRoomDto, String email) {
-        GameRoom gameRoom = new GameRoom();
-        gameRoom.setRoomName(gameRoomDto.getRoomName());
-        gameRoom.setCreateAt(new Date());
-        gameRoom = gameRoomRepository.save(gameRoom);
+    public GameRoomCreateResponseDto createGameRoom(GameRoomCreateRequestDto gameRoomDto, Principal principal) {
+        String email = principal.getName();
+        userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+
+        LocalDateTime now = LocalDateTime.now();
+        GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
 
         ValidateRoom validateRoom = new ValidateRoom();
         validateRoom.setParticipants(email);
-        validateRoom.setGameRoom(gameRoom);
+        validateRoom.setGameRoom(savedGameRoom);
         validateRoomRepository.save(validateRoom);
 
-        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(),now);
     }
 
     @Transactional
-    public ValidateRoomDto addParticipant(Long roomId, String participant) {
+    public ValidateRoomDto addParticipant(Long roomId, Principal participant) {
+        String email = participant.getName();
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
         if (gameRoom.getValidateRooms().size() >= 2) {
-            throw new IllegalStateException("The game room is full.");
+            throw new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage());
         }
 
-        if (validateRoomRepository.findByGameRoomAndParticipants(gameRoom, participant).isPresent()) {
-            throw new IllegalStateException("Participant has already joined the room.");
+        if (validateRoomRepository.findByGameRoomAndParticipants(gameRoom, email).isPresent()) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_USER.getMessage());
         }
 
         ValidateRoom validateRoom = new ValidateRoom();
@@ -96,14 +104,19 @@ public class GameRoomService {
     }
 
     @Transactional
-    public GameRoomDto removeParticipant(Long roomId, String participant) {
-        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomIdAndParticipants(roomId, participant);
+    public GetGameRoomResponseDto removeParticipant(Long roomId, Principal participant) {
+        String email = participant.getName();
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomIdAndParticipants(roomId, email);
         if (validateRooms.isEmpty()) {
-            throw new IllegalArgumentException("Participant not found in room!");
+            throw new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage());
         }
 
         validateRooms.forEach(validateRoomRepository::delete);
 
+        //방이 비었는지 검사해서 없으면 방 없애버림.
         boolean isRoomEmpty = !validateRoomRepository.existsByGameRoomRoomId(roomId);
         if (isRoomEmpty) {
             // 방이 비었으므로 삭제하고 null 반환
@@ -112,9 +125,9 @@ public class GameRoomService {
         }
 
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
-        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName());
     }
 
 }

@@ -1,14 +1,14 @@
 package com.service.indianfrog.domain.gameroom.controller;
 
-import com.service.indianfrog.domain.gameroom.dto.GameRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
 import com.service.indianfrog.domain.gameroom.service.GameRoomService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.service.indianfrog.global.dto.ResponseDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -17,11 +17,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
+import static com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.*;
+
+@Slf4j
 @RestController
 @RequestMapping("/gameRoom")
 public class GameRoomController {
 
-    private static final Logger logger = LoggerFactory.getLogger(GameRoomController.class);
     private final GameRoomService gameRoomService;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -31,29 +33,21 @@ public class GameRoomController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<Page<GameRoomDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
-        Page<GameRoomDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
-        return ResponseEntity.ok(gameRooms);
+    public ResponseDto<Page<GetGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
+        Page<GetGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
+        return ResponseDto.success("모든 게임방 조회 기능",gameRooms);
     }
 
     @GetMapping("/{roomId}")
-    public ResponseEntity<GameRoomDto> getGameRoomById(@PathVariable Long roomId) {
-        GameRoomDto gameRoom = gameRoomService.getGameRoomById(roomId);
-        if (gameRoom != null) {
-            return ResponseEntity.ok(gameRoom);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseDto<GetGameRoomResponseDto> getGameRoomById(@PathVariable Long roomId) {
+        GetGameRoomResponseDto gameRoom = gameRoomService.getGameRoomById(roomId);
+        return ResponseDto.success("게임방건단  조회 기능",gameRoom);
     }
 
     @PostMapping("/create")
-    public ResponseEntity<GameRoomDto> createGameRoom(@RequestBody GameRoomDto gameRoomDto, Principal principal) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        String email = principal.getName();
-        GameRoomDto createdGameRoom = gameRoomService.createGameRoom(gameRoomDto, email);
-        return ResponseEntity.ok(createdGameRoom);
+    public ResponseDto<GameRoomCreateResponseDto> createGameRoom(@RequestBody GameRoomCreateRequestDto gameRoomDto, Principal principal) {
+        GameRoomCreateResponseDto gameRoom = gameRoomService.createGameRoom(gameRoomDto, principal);
+        return ResponseDto.success("게임방 생성 기능", gameRoom);
     }
 
     @DeleteMapping("/delete/{roomId}")
@@ -64,23 +58,13 @@ public class GameRoomController {
 
     @MessageMapping("/game.join/{roomId}")
     public void joinGame(@DestinationVariable Long roomId, Principal principal) {
-        if (principal == null) {
-            logger.error("Principal is null. User is not authenticated.");
-            return;
-        }
-        String email = principal.getName();
-        ValidateRoomDto newParticipant = gameRoomService.addParticipant(roomId, email);
+        ValidateRoomDto newParticipant = gameRoomService.addParticipant(roomId, principal);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId + "/join", newParticipant);
     }
 
     @MessageMapping("/game.leave/{roomId}")
     public void leaveGame(@DestinationVariable Long roomId, Principal principal) {
-        if (principal == null) {
-            logger.error("Principal is null. User is not authenticated.");
-            return;
-        }
-        String email = principal.getName();
-        gameRoomService.removeParticipant(roomId, email);
-        messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId + "/leave", email);
+        gameRoomService.removeParticipant(roomId, principal);
+        messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId + "/leave", principal.getName());
     }
 }

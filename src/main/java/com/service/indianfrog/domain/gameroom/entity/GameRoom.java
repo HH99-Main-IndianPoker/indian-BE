@@ -8,7 +8,9 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,14 +18,14 @@ import java.util.Set;
 @Entity
 @Getter
 @Table(name = "Game_room")
-public class GameRoom {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class GameRoom extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "room_id")
     private Long roomId;
-    @Column(name = "create_at")
-    private Date createAt;
+
     @Column(name = "room_name")
     private String roomName;
 
@@ -50,10 +52,6 @@ public class GameRoom {
 
     public void setRoomId(Long roomId) {
         this.roomId = roomId;
-    }
-
-    public void setCreateAt(Date createAt) {
-        this.createAt = createAt;
     }
 
     public void setRoomName(String roomName) {
