@@ -1,7 +1,11 @@
 package com.service.indianfrog.domain.game.controller;
 
 import com.service.indianfrog.domain.chat.entity.ChatMessage;
+import com.service.indianfrog.domain.game.dto.GameDto;
+import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
+import com.service.indianfrog.domain.game.dto.GameInfo;
 import com.service.indianfrog.domain.game.dto.UserChoices;
+import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.service.EndGameService;
 import com.service.indianfrog.domain.game.service.GamePlayService;
 import com.service.indianfrog.domain.game.service.GameSessionService;
@@ -39,18 +43,45 @@ public class GameController {
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
                                              @Payload ChatMessage chatMessage, @Payload(required = false) UserChoices userChoices) {
-        Object response = switch (gameState) {
-            case "START" -> startGameService.startRound(gameRoomId);
-            case "ACTION" ->
-                    gamePlayService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
-            case "END" -> endGameService.endRound(gameRoomId);
-            case "GAME_END" -> endGameService.endGame(gameRoomId);
-            case "USER_CHOICE" -> gameSessionService.processUserChoices(userChoices);
-            default -> new ErrorMessage("올바른 게임 상태가 아닙니다");
-        };
 
-        /* 게임 상태 업데이트 메시지를 클라이언트에 전송 */
-        String destination = "/topic/gameRoom/" + gameRoomId;
-        messagingTemplate.convertAndSend(destination, response);
+        switch (gameState) {
+            case "START" -> {
+                StartRoundResponse response = startGameService.startRound(gameRoomId);
+                sendUserGameMessage(response); // 유저별 메시지 전송
+            }
+            case "ACTION", "END", "GAME_END", "USER_CHOICE" -> {
+                Object response = switch (gameState) {
+                    case "ACTION" ->
+                            gamePlayService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
+                    case "END" -> endGameService.endRound(gameRoomId);
+                    case "GAME_END" -> endGameService.endGame(gameRoomId);
+                    case "USER_CHOICE" -> gameSessionService.processUserChoices(userChoices);
+                    default -> throw new IllegalStateException("Unexpected value: " + gameState);
+                };
+                // 공통 메시지 전송
+                String destination = "/topic/gameRoom/" + gameRoomId;
+                messagingTemplate.convertAndSend(destination, response);
+            }
+            default -> throw new IllegalStateException("Invalid game state: " + gameState);
+        }
+    }
+
+    private void sendUserGameMessage(StartRoundResponse response) {
+        /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
+        String playerOneId = response.getPlayerOneInfo().getId();
+        Card playerTwoCard = response.getPlayerTwoInfo().getCard();
+        messagingTemplate.convertAndSendToUser(
+                playerOneId,
+                "/queue/gameInfo",
+                new GameInfo(playerTwoCard, response.getTurn())
+        );
+
+        String playerTwoId = response.getPlayerTwoInfo().getId();
+        Card playerOneCard = response.getPlayerOneInfo().getCard();
+        messagingTemplate.convertAndSendToUser(
+                playerTwoId,
+                "/queue/gameInfo",
+                new GameInfo(playerOneCard, response.getTurn())
+        );
     }
 }
