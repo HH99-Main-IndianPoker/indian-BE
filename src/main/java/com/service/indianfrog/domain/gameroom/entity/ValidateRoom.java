@@ -32,9 +32,9 @@ public class ValidateRoom {
         this.gameRoom = gameRoom;
     }
 
+
     public void setHost(boolean host) {
         this.host = host;
     }
-
 
 }
