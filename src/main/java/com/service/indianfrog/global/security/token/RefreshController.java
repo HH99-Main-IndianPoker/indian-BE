@@ -15,14 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RefreshController {
 
-    private final RefreshTokenRepository tokenRepository;
     private final RefreshTokenService tokenService;
-    private final JwtUtil jwtUtil;
 
-    public RefreshController(RefreshTokenRepository tokenRepository, RefreshTokenService tokenService, JwtUtil jwtUtil) {
-        this.tokenRepository = tokenRepository;
+    public RefreshController(RefreshTokenService tokenService) {
         this.tokenService = tokenService;
-        this.jwtUtil = jwtUtil;
     }
 
     @DeleteMapping("token/logout")

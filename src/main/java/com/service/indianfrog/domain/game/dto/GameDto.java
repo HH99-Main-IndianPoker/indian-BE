@@ -1,5 +1,7 @@
 package com.service.indianfrog.domain.game.dto;
 
+import com.service.indianfrog.domain.game.entity.Card;
+import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.user.entity.User;
 import lombok.Getter;
 
@@ -10,10 +12,17 @@ public class GameDto {
     public static class StartRoundResponse {
         private String gameState;
         private int round;
+        private PlayerInfo playerOneInfo;
+        private PlayerInfo playerTwoInfo;
+        private Turn turn;
 
-        public StartRoundResponse(String gameState, int round) {
+        public StartRoundResponse(String gameState, int round, User playerOne, User playerTwo,
+                                  Card playerOneCard, Card playerTwoCard, Turn turn) {
             this.gameState = gameState;
             this.round = round;
+            this.playerOneInfo = new PlayerInfo(playerOne, playerOneCard);
+            this.playerTwoInfo = new PlayerInfo(playerTwo, playerTwoCard);
+            this.turn = turn;
         }
     }
 
