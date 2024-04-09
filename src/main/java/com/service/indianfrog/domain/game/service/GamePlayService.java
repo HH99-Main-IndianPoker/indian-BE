@@ -7,6 +7,8 @@ import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,7 +38,7 @@ public class GamePlayService {
         User user = gameValidator.findUserByNickname(nickname);
         Turn turn = gameTurnService.getTurn(game.getId());
         if (turn == null || turn.getCurrentPlayer() == null) {
-            throw new IllegalStateException("No turn information available");
+            throw new RestApiException(ErrorCode.GAME_USER_HAS_GONE.getMessage());
         }
 
         Betting betting = Betting.valueOf(action.toUpperCase());
@@ -85,7 +87,7 @@ public class GamePlayService {
             String input = br.readLine();
             raiseAmount = Integer.parseInt(input);
         } catch (IOException e) {
-            System.out.println("입력 오류가 발생했습니다.");
+            log.error("입력 오류가 발생했습니다.");
             raiseAmount = Math.min(raiseAmount, userPoints);
             e.printStackTrace();
         }

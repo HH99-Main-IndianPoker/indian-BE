@@ -9,6 +9,8 @@ import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.game.utils.RepositoryHolder;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +89,7 @@ public class EndGameService {
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
         User winner = repositoryHolder.userRepository.findById(gameResult.getWinnerId())
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         int pointsToAdd = game.getPot();
         if (winner.equals(game.getPlayerOne())) {
