@@ -5,6 +5,8 @@ import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -29,9 +31,6 @@ public class GameRoomService {
         gameRoom.setCreateAt(new Date());
         gameRoom = gameRoomRepository.save(gameRoom);
 
-        // 나중에 게임방 생성하면 생성자가 자동으로 접속하는 로직.  ,String creatorParticipant
-//        gameRoom.getParticipants().add(creatorParticipant);
-//        gameRoom = gameRoomRepository.save(gameRoom);
         return convertToDto(gameRoom);
     }
 
@@ -53,10 +52,10 @@ public class GameRoomService {
     @Transactional
     public GameRoomDto addParticipant(Long roomId, String participant) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
         if (gameRoom.getValidateRooms().size() >= 2) {
-            throw new IllegalStateException("The game room is full.");
+            throw new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage());
         }
 
         ValidateRoom validateRoom = new ValidateRoom();
@@ -72,7 +71,7 @@ public class GameRoomService {
     @Transactional
     public GameRoomDto removeParticipant(Long roomId, String participant) {
         ValidateRoom validateRoom = validateRoomRepository.findByGameRoomRoomIdAndParticipants(roomId, participant)
-                .orElseThrow(() -> new IllegalArgumentException("Participant not found in room!"));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
         validateRoomRepository.delete(validateRoom);
 
         //if (gameRoom.getValidateRooms().isEmpty()) 이걸 썼었는데 지연로딩 문제가 발생... jpa를 이용하는 방식으로 변경해서 지연로딩 방지.
@@ -83,7 +82,7 @@ public class GameRoomService {
         }
 
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found!"));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
         return convertToDto(gameRoom);
     }
 
