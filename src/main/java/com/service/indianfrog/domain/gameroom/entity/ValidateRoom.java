@@ -31,4 +31,10 @@ public class ValidateRoom {
     public void setGameRoom(GameRoom gameRoom) {
         this.gameRoom = gameRoom;
     }
+
+    public void setHost(boolean host) {
+        this.host = host;
+    }
+
+
 }

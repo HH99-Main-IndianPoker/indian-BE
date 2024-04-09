@@ -14,4 +14,5 @@ public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long
 
     Optional<ValidateRoom> findByGameRoomAndParticipants(GameRoom gameRoom, String participant);
 
+    List<ValidateRoom> findAllByGameRoomRoomId(Long roomId);
 }

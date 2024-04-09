@@ -66,17 +66,18 @@ public class GameRoomService {
         String email = principal.getName();
         userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-
         LocalDateTime now = LocalDateTime.now();
         GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
 
         ValidateRoom validateRoom = new ValidateRoom();
         validateRoom.setParticipants(email);
         validateRoom.setGameRoom(savedGameRoom);
+        validateRoom.setHost(true);
         validateRoomRepository.save(validateRoom);
 
-        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(),now);
+        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), now);
     }
+
 
     @Transactional
     public ValidateRoomDto addParticipant(Long roomId, Principal participant) {
@@ -113,8 +114,18 @@ public class GameRoomService {
         if (validateRooms.isEmpty()) {
             throw new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage());
         }
-
+        boolean wasHost = validateRooms.stream().anyMatch(ValidateRoom::isHost);
         validateRooms.forEach(validateRoomRepository::delete);
+
+        if (wasHost) {
+            // 방장이 방을 나가면 새 방장을 지정
+            List<ValidateRoom> remainParticipant = validateRoomRepository.findAllByGameRoomRoomId(roomId);
+            if (!remainParticipant.isEmpty()) {
+                ValidateRoom newHost = remainParticipant.get(0); //남아있는 첫번째 참가자를 방장으로 지정, 만약 참가자가 여러명이면 거의 랜덤?
+                newHost.setHost(true);
+                validateRoomRepository.save(newHost);
+            }
+        }
 
         //방이 비었는지 검사해서 없으면 방 없애버림.
         boolean isRoomEmpty = !validateRoomRepository.existsByGameRoomRoomId(roomId);
