@@ -7,8 +7,6 @@ import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
-import com.service.indianfrog.global.exception.ErrorCode;
-import com.service.indianfrog.global.exception.RestApiException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,14 +35,16 @@ public class GamePlayService {
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
         User user = gameValidator.findUserByNickname(nickname);
         Turn turn = gameTurnService.getTurn(game.getId());
-        if (turn == null || turn.getCurrentPlayer() == null) {
-            throw new RestApiException(ErrorCode.GAME_USER_HAS_GONE.getMessage());
+
+        /* 유저의 턴이 맞는지 확인*/
+        if (!turn.getCurrentPlayer().equals(user)) {
+            throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
         }
 
         Betting betting = Betting.valueOf(action.toUpperCase());
         return switch (betting) {
             case CHECK -> performCheckAction(game, user, turn);
-            case RAISE -> performRaiseAction(game, user);
+            case RAISE -> performRaiseAction(game, user, turn);
             case DIE -> performDieAction(game, user);
         };
     }
@@ -69,10 +69,11 @@ public class GamePlayService {
         /* 선턴 유저 CHECK*/
         user.setPoints(user.getPoints() - game.getBetAmount());
         game.setPot(game.getPot() + game.getBetAmount());
+        turn.nextTurn();
         return GameState.ACTION;
     }
 
-    private GameState performRaiseAction(Game game, User user) {
+    private GameState performRaiseAction(Game game, User user, Turn turn) {
         int userPoints = user.getPoints();
 
         if (userPoints <= 0) {
@@ -97,6 +98,7 @@ public class GamePlayService {
         game.setPot(game.getPot() + raiseAmount);
         game.setBetAmount(raiseAmount);
 
+        turn.nextTurn();
         return GameState.ACTION;
     }
 

@@ -13,7 +13,7 @@ public class Turn {
         this.currentPlayer = 0;
     }
 
-    public void NextTurn() {
+    public void nextTurn() {
         currentPlayer = (currentPlayer + 1) % players.size();
     }
 
