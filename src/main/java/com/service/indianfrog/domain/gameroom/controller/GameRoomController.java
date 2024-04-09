@@ -1,18 +1,30 @@
 package com.service.indianfrog.domain.gameroom.controller;
 
-import com.service.indianfrog.domain.gameroom.dto.GameRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
 import com.service.indianfrog.domain.gameroom.service.GameRoomService;
+import com.service.indianfrog.global.dto.ResponseDto;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
+import static com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.*;
+
+@Slf4j
 @RestController
 @RequestMapping("/gameRoom")
 public class GameRoomController {
 
-    private GameRoomService gameRoomService;
+    private final GameRoomService gameRoomService;
     private final SimpMessagingTemplate messagingTemplate;
 
     public GameRoomController(GameRoomService gameRoomService, SimpMessagingTemplate messagingTemplate) {
@@ -20,11 +32,22 @@ public class GameRoomController {
         this.messagingTemplate = messagingTemplate;
     }
 
+    @GetMapping("/")
+    public ResponseDto<Page<GetGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
+        Page<GetGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
+        return ResponseDto.success("모든 게임방 조회 기능",gameRooms);
+    }
+
+    @GetMapping("/{roomId}")
+    public ResponseDto<GetGameRoomResponseDto> getGameRoomById(@PathVariable Long roomId) {
+        GetGameRoomResponseDto gameRoom = gameRoomService.getGameRoomById(roomId);
+        return ResponseDto.success("게임방건단  조회 기능",gameRoom);
+    }
+
     @PostMapping("/create")
-    public ResponseEntity<GameRoomDto> createGameRoom(@RequestBody GameRoomDto gameRoomDto) {
-        GameRoomDto createdGameRoom = gameRoomService.createGameRoom(gameRoomDto);
-        // GameRoomDto createdGameRoom = gameRoomService.createGameRoom(gameRoomDto, creatorParticipant);  @RequestParam String creatorParticipant
-        return ResponseEntity.ok(createdGameRoom);
+    public ResponseDto<GameRoomCreateResponseDto> createGameRoom(@RequestBody GameRoomCreateRequestDto gameRoomDto, Principal principal) {
+        GameRoomCreateResponseDto gameRoom = gameRoomService.createGameRoom(gameRoomDto, principal);
+        return ResponseDto.success("게임방 생성 기능", gameRoom);
     }
 
     @DeleteMapping("/delete/{roomId}")
@@ -34,21 +57,14 @@ public class GameRoomController {
     }
 
     @MessageMapping("/game.join/{roomId}")
-    public void joinGame(@DestinationVariable Long roomId, String participant) {
-        try {
-            GameRoomDto gameRoom = gameRoomService.addParticipant(roomId, participant);
-            messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, gameRoom.getParticipants());
-        } catch (IllegalStateException e) {
-            // 게임방이 꽉 찼을 때의 예외 처리
-            // 적절한 예외 처리 로직 추가 예정
-        }
+    public void joinGame(@DestinationVariable Long roomId, Principal principal) {
+        ValidateRoomDto newParticipant = gameRoomService.addParticipant(roomId, principal);
+        messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId + "/join", newParticipant);
     }
 
     @MessageMapping("/game.leave/{roomId}")
-    public void leaveGame(@DestinationVariable Long roomId, String participant) {
-        GameRoomDto gameRoom = gameRoomService.removeParticipant(roomId, participant);
-        if (gameRoom != null) {
-            messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, gameRoom.getParticipants());
-        }
+    public void leaveGame(@DestinationVariable Long roomId, Principal principal) {
+        gameRoomService.removeParticipant(roomId, principal);
+        messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId + "/leave", principal.getName());
     }
 }

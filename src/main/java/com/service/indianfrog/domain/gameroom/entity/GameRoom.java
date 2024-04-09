@@ -3,9 +3,14 @@ package com.service.indianfrog.domain.gameroom.entity;
 
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.global.entity.Timestamped;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,14 +18,14 @@ import java.util.Set;
 @Entity
 @Getter
 @Table(name = "Game_room")
-public class GameRoom {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class GameRoom extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "room_id")
     private Long roomId;
-    @Column(name = "create_at")
-    private Date createAt;
+
     @Column(name = "room_name")
     private String roomName;
 
@@ -35,12 +40,18 @@ public class GameRoom {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Game currentGame;
 
-    public void setRoomId(Long roomId) {
+    @Builder
+    public GameRoom(Long roomId, Date createAt, String roomName, Set<ValidateRoom> validateRooms, User playerOne, User playerTwo, Game currentGame) {
         this.roomId = roomId;
+        this.roomName = roomName;
+        this.validateRooms = validateRooms;
+        this.playerOne = playerOne;
+        this.playerTwo = playerTwo;
+        this.currentGame = currentGame;
     }
 
-    public void setCreateAt(Date createAt) {
-        this.createAt = createAt;
+    public void setRoomId(Long roomId) {
+        this.roomId = roomId;
     }
 
     public void setRoomName(String roomName) {

@@ -1,37 +1,48 @@
 package com.service.indianfrog.domain.gameroom.service;
 
-import com.service.indianfrog.domain.gameroom.dto.GameRoomDto;
+import com.service.indianfrog.domain.game.dto.GameRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
+import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class GameRoomService {
 
-    private GameRoomRepository gameRoomRepository;
-    private ValidateRoomRepository validateRoomRepository;
+    private final GameRoomRepository gameRoomRepository;
+    private final ValidateRoomRepository validateRoomRepository;
+    private final UserRepository userRepository;
 
-    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository) {
+    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
+        this.userRepository = userRepository;
     }
 
-    public GameRoomDto createGameRoom(GameRoomDto gameroomdto) {
-        GameRoom gameRoom = new GameRoom();
-        gameRoom.setRoomName(gameroomdto.getRoomName());
-        gameRoom.setCreateAt(new Date());
-        gameRoom = gameRoomRepository.save(gameRoom);
+    public GetGameRoomResponseDto getGameRoomById(Long roomId) {
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+    }
 
-        return convertToDto(gameRoom);
+    public Page<GetGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
+        return gameRoomRepository.findAll(pageable).map(gameRoom -> new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName()));
     }
 
     public void deleteGameRoom(Long roomId) {
@@ -49,8 +60,30 @@ public class GameRoomService {
         // 욕설 필터링
         return message.replaceAll("(씨발|병신|ㅅㅂ)", "**");
     }
+
     @Transactional
-    public GameRoomDto addParticipant(Long roomId, String participant) {
+    public GameRoomCreateResponseDto createGameRoom(GameRoomCreateRequestDto gameRoomDto, Principal principal) {
+        String email = principal.getName();
+        userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+
+        LocalDateTime now = LocalDateTime.now();
+        GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
+
+        ValidateRoom validateRoom = new ValidateRoom();
+        validateRoom.setParticipants(email);
+        validateRoom.setGameRoom(savedGameRoom);
+        validateRoomRepository.save(validateRoom);
+
+        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(),now);
+    }
+
+    @Transactional
+    public ValidateRoomDto addParticipant(Long roomId, Principal participant) {
+        String email = participant.getName();
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
@@ -58,40 +91,43 @@ public class GameRoomService {
             throw new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage());
         }
 
+        if (validateRoomRepository.findByGameRoomAndParticipants(gameRoom, email).isPresent()) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_USER.getMessage());
+        }
+
         ValidateRoom validateRoom = new ValidateRoom();
-        validateRoom.setParticipants(participant);
+        validateRoom.setParticipants(email);
         validateRoom.setGameRoom(gameRoom);
+        validateRoom = validateRoomRepository.save(validateRoom);
 
-        validateRoomRepository.save(validateRoom);
-
-        return convertToDto(gameRoom);
+        return new ValidateRoomDto(validateRoom.getValidId(), validateRoom.getParticipants());
     }
 
-
     @Transactional
-    public GameRoomDto removeParticipant(Long roomId, String participant) {
-        ValidateRoom validateRoom = validateRoomRepository.findByGameRoomRoomIdAndParticipants(roomId, participant)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
-        validateRoomRepository.delete(validateRoom);
+    public GetGameRoomResponseDto removeParticipant(Long roomId, Principal participant) {
+        String email = participant.getName();
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-        //if (gameRoom.getValidateRooms().isEmpty()) 이걸 썼었는데 지연로딩 문제가 발생... jpa를 이용하는 방식으로 변경해서 지연로딩 방지.
-        boolean isEmpty = validateRoomRepository.existsByGameRoomRoomId(roomId);
-        if (!isEmpty) {
+        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomIdAndParticipants(roomId, email);
+        if (validateRooms.isEmpty()) {
+            throw new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage());
+        }
+
+        validateRooms.forEach(validateRoomRepository::delete);
+
+        //방이 비었는지 검사해서 없으면 방 없애버림.
+        boolean isRoomEmpty = !validateRoomRepository.existsByGameRoomRoomId(roomId);
+        if (isRoomEmpty) {
+            // 방이 비었으므로 삭제하고 null 반환
             gameRoomRepository.deleteById(roomId);
             return null;
         }
 
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
-        return convertToDto(gameRoom);
-    }
 
-    private GameRoomDto convertToDto(GameRoom gameRoom) {
-        Set<String> participants = gameRoom.getValidateRooms().stream()
-                .map(ValidateRoom::getParticipants)
-                .collect(Collectors.toSet());
-
-        return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participants);
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName());
     }
 
 }

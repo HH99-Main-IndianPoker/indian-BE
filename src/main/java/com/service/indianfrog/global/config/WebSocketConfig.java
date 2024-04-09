@@ -1,6 +1,9 @@
 package com.service.indianfrog.global.config;
 
+import com.service.indianfrog.global.jwt.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -9,6 +12,10 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -25,5 +32,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic");
         // 클라이언트에서 메시지를 전송할 때 /app으로 시작하는 경로로 라우팅
         registry.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new WebSocketAuthChannelInterceptor(jwtUtil));
     }
 }
