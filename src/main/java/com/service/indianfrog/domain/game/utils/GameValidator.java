@@ -2,10 +2,15 @@ package com.service.indianfrog.domain.game.utils;
 
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class GameValidator {
@@ -19,14 +24,19 @@ public class GameValidator {
     public GameRoom validateAndRetrieveGameRoom(Long gameRoomId) {
         return repositoryHolder.gameRoomRepository.findById(gameRoomId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게임방 입니다."));
-
     }
 
     @Transactional
     public Game initializeOrRetrieveGame(GameRoom gameRoom) {
         Game game = gameRoom.getCurrentGame();
+        String host = repositoryHolder.validateRoomRepository.findByHostTrue().getParticipants();
+        String participant = repositoryHolder.validateRoomRepository.findByHostFalse().getParticipants();
+
+        User playerOne = repositoryHolder.userRepository.findByEmail(host).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+        User playerTwo = repositoryHolder.userRepository.findByEmail(participant).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+
         if (game == null) {
-            gameRoom.startNewGame(gameRoom.getPlayerOne(), gameRoom.getPlayerTwo());
+            gameRoom.startNewGame(playerOne, playerTwo);
             repositoryHolder.gameRoomRepository.save(gameRoom);
             game = gameRoom.getCurrentGame();
         }
