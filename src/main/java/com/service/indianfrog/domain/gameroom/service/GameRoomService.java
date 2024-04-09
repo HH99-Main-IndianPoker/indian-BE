@@ -1,17 +1,25 @@
 package com.service.indianfrog.domain.gameroom.service;
 
-import com.service.indianfrog.domain.gameroom.dto.GameRoomDto;
+import com.service.indianfrog.domain.game.dto.GameRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
+import com.service.indianfrog.domain.user.repository.UserRepository;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -80,7 +88,7 @@ public class GameRoomService {
         }
 
         ValidateRoom validateRoom = new ValidateRoom();
-        validateRoom.setParticipants(participant);
+        validateRoom.setParticipants(email);
         validateRoom.setGameRoom(gameRoom);
         validateRoom = validateRoomRepository.save(validateRoom);
 
@@ -108,7 +116,5 @@ public class GameRoomService {
 
         return new GameRoomDto(gameRoom.getRoomId(), gameRoom.getRoomName());
     }
-
-
 
 }

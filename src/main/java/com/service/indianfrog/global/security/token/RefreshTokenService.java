@@ -2,6 +2,8 @@ package com.service.indianfrog.global.security.token;
 
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import com.service.indianfrog.global.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +39,6 @@ public class RefreshTokenService {
         log.info(String.valueOf(accessToken));
 
         if (refreshToken.isPresent() && jwtUtil.verifyRefreshToken(refreshToken.get().getRefreshToken())) {
-            /**/
             RefreshToken resultToken = refreshToken.get();
             Optional<User> user = userRepository.findByEmail(resultToken.getId());
             String role = String.valueOf(user);
@@ -48,6 +49,6 @@ public class RefreshTokenService {
             return newAccessToken;
         }
 
-        throw new IllegalArgumentException("리프레시 토큰 발급시 문제발생");
+        throw new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_REFRESH_TOKEN.getMessage());
     }
 }

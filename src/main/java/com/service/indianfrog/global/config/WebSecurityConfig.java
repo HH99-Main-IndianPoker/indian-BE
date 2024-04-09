@@ -74,17 +74,18 @@ public class WebSecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://*","https://*")); // 모든 HTTP와 HTTPS 출처 허용
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-        configuration.setAllowCredentials(true); // 자격 증명 허용
+        // 배포시 허용할 출처 추가하기
+        configuration.addAllowedOriginPattern("*");
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
         configuration.addExposedHeader("Authorization");
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control"));
+//        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -109,9 +110,10 @@ public class WebSecurityConfig {
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() // resources 접근 허용 설정
-                        .requestMatchers("/","/user/**","/login/**","/oauth2/**", "/token/**","/*","**","/**","*","/gameRoom/**").permitAll() // 메인 페이지 요청 허가
+                        .requestMatchers("/","/user/**","/login/**","/oauth2/**", "/token/**", "/**").permitAll() // 메인 페이지 요청 허가
+                        .requestMatchers("/ws/**").permitAll() // WebSocket 경로 허가
+                        .requestMatchers("/topic/**").permitAll() // WebSocket 메시지 브로커 경로 허가
                         .requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );

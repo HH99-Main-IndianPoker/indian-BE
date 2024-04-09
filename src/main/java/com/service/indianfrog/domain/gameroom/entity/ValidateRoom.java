@@ -13,8 +13,11 @@ public class ValidateRoom {
     @Column(name = "valid_id")
     private Long validId;
 
-    @Column(name = "participants")
+    @Column(name = "participant")
     private String participants;
+
+    @Column(name = "host")
+    private boolean host;
 
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)

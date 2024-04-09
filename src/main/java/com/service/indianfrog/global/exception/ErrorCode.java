@@ -8,7 +8,14 @@ public enum ErrorCode {
     NOT_FOUND_EMAIL("존재하지 않는 이메일 입니다."),
     ALREADY_EXIST_EMAIL("중복된 이메일입니다."),
     ALREADY_EXIST_NICKNAME("중복된 닉네임입니다."),
+    NOT_FOUND_GAME_USER("게임방에 회원이 존재하지 않습니다."),
+    GAME_USER_HAS_GONE("게임방을 상대방이 나갔습니다."),
     NOT_FOUND_USER("존재하지 않는 회원입니다."),
+    ALREADY_EXIST_USER("이미 방에 존재하는 유저입니다."),
+    NOT_FOUND_GAME_ROOM("존재하지 않는 게임 방입니다."),
+    BATTING_INPUT_EXCEPTION("베팅값의 오류가 발생했습니다."),
+    IMPOSSIBLE_UPDATE_REFRESH_TOKEN("리프레시 토큰 발급 오류!"),
+    GAME_ROOM_NOW_FULL("게임방이 가득 찼습니다.")
     ;
 
     private final String message;

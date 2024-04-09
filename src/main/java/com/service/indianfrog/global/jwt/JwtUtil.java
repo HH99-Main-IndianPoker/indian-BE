@@ -48,6 +48,16 @@ public class JwtUtil {
         refreshKey = Keys.hmacShaKeyFor(refreshBytes);
     }
 
+    // 토큰에서 Email을 추출한다.
+    public String getUid(String token) {
+        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody().getSubject();
+    }
+
+    // 토큰에서 ROLE(권한)만 추출한다.
+    public String getRole(String token) {
+        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody().get("role", String.class);
+    }
+
 
     public GeneratedToken generateToken(String email, String role) {
         String refreshToken = generateRefreshToken(email, role);
@@ -114,17 +124,6 @@ public class JwtUtil {
             log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
         }
         return false;
-    }
-
-
-    // 토큰에서 Email을 추출한다.
-    public String getUid(String token) {
-        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody().getSubject();
-    }
-
-    // 토큰에서 ROLE(권한)만 추출한다.
-    public String getRole(String token) {
-        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody().get("role", String.class);
     }
 
     // 토큰에서 사용자 정보 가져오기
