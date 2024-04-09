@@ -36,8 +36,10 @@ public class StartGameService {
         performRoundStart(game);
         gameValidator.saveGameRoomState(gameRoom);
         int round = game.getRound();
+        Turn turn = gameTurnService.getTurn(game.getId());
 
-        return new StartRoundResponse("ACTION", round);
+        return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
+                game.getPlayerOneCard(), game.getPlayerTwoCard(), turn);
     }
 
     private void performRoundStart(Game game) {
@@ -50,7 +52,9 @@ public class StartGameService {
         List<Card> availableCards = prepareAvailableCards(game);
         assignRandomCardsToPlayers(game, availableCards);
 
-        initializeTurnForGame(game);
+        if (game.getRound() == 1) {
+            initializeTurnForGame(game);
+        }
     }
 
     private int calculateInitialBet(User playerOne, User playerTwo) {
