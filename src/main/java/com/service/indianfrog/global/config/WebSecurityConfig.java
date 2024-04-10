@@ -77,12 +77,11 @@ public class WebSecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // 배포시 허용할 출처 추가하기
         configuration.addAllowedOriginPattern("*");
-        configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
-        configuration.addExposedHeader("Set-Cookie");
-        configuration.addExposedHeader("Authorization");
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control","Set-Cookie"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.addAllowedHeader("*");
+        configuration.setExposedHeaders(List.of("Authorization","Set-Cookie"));
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control","Set-Cookie"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
