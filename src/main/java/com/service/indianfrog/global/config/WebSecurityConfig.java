@@ -27,7 +27,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -76,14 +75,9 @@ public class WebSecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // 배포시 허용할 출처 추가하기
-        configuration.addAllowedOrigin("https://indianfrog.com");
-        configuration.addAllowedOrigin("https://api.indianfrog.com");
-        configuration.addAllowedOrigin("http://127.0.0.1:8080");
-        configuration.addAllowedOrigin("http://127.0.0.1:3000");
-        configuration.addAllowedOrigin("http://127.0.0.1:5000");
+        configuration.addAllowedOriginPattern("*");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
-        configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
         configuration.addExposedHeader("Authorization");
 //        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control"));
