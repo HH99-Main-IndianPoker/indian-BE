@@ -32,39 +32,21 @@ public class GameRoom extends Timestamped {
     @OneToMany(mappedBy = "gameRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ValidateRoom> validateRooms = new HashSet<>();
 
-    /* 유저 및 게임 관련*/
-    @ManyToOne(fetch = FetchType.LAZY)
-    private User playerOne;
-    @ManyToOne(fetch = FetchType.LAZY)
-    private User playerTwo;
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Game currentGame;
 
     @Builder
-    public GameRoom(Long roomId, Date createAt, String roomName, Set<ValidateRoom> validateRooms, User playerOne, User playerTwo, Game currentGame) {
+    public GameRoom(Long roomId, String roomName, Set<ValidateRoom> validateRooms, Game currentGame) {
         this.roomId = roomId;
         this.roomName = roomName;
         this.validateRooms = validateRooms;
-        this.playerOne = playerOne;
-        this.playerTwo = playerTwo;
         this.currentGame = currentGame;
-    }
-
-    public void setRoomId(Long roomId) {
-        this.roomId = roomId;
-    }
-
-    public void setRoomName(String roomName) {
-        this.roomName = roomName;
     }
 
     public void startNewGame(User playerOne, User playerTwo) {
         this.currentGame = new Game(playerOne, playerTwo);
     }
 
-    public void setCurrentGame(Game game) {
-        this.currentGame = game;
-    }
 
     // 게임을 종료할 때 호출하는 메서드입니다.
     public void endCurrentGame() {

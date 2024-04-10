@@ -22,7 +22,6 @@ public class ChatController {
         this.gameRoomService = gameRoomService;
     }
 
-
     @MessageMapping("/chat.sendMessage/{roomId}")
     public void sendMessage(@DestinationVariable Long roomId, @Payload ChatMessage chatMessage) {
 
