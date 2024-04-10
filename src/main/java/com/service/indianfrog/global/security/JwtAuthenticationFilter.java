@@ -93,7 +93,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         cookie.setMaxAge(24*60*60);
         cookie.setSecure(true); //https에 추가
         cookie.setAttribute("SameSite","None");
-        cookie.setHttpOnly(true);
         cookie.setPath("/");
 
         return cookie;
