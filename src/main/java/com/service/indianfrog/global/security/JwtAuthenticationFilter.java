@@ -98,7 +98,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         cookie.setSecure(true); //https에 추가
         cookie.setAttribute("SameSite","None");
 
-//      cookie.setHttpOnly(true);
+      cookie.setHttpOnly(true);
 
         cookie.setPath("/");
 
