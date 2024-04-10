@@ -78,7 +78,6 @@ public class WebSecurityConfig {
         configuration.addAllowedOriginPattern("*");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
-        configuration.addAllowedMethod("*");
         configuration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
         configuration.addExposedHeader("Authorization");
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control","Set-Cookie"));
