@@ -59,9 +59,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws UnsupportedEncodingException {
         String email = ((UserDetailsImpl) authResult.getPrincipal()).getUsername();
-//        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getAuthority();
+//        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getAuthority()
+        String nickname = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getNickname();
         String role = "USER";
-        GeneratedToken tokens = jwtUtil.generateToken(email, String.valueOf(role));
+        GeneratedToken tokens = jwtUtil.generateToken(email, String.valueOf(role), nickname);
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
@@ -91,8 +92,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(24*60*60);
         cookie.setSecure(true); //https에 추가
-        cookie.setDomain(".indianfrog.com");
         cookie.setAttribute("SameSite","None");
+        cookie.setHttpOnly(true);
         cookie.setPath("/");
 
         return cookie;
