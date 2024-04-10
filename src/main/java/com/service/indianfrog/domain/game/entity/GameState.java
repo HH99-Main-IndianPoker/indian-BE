@@ -7,6 +7,7 @@ public enum GameState {
     /* 게임 상태 Enum Class
     * ENTER : 게임방 입장
     * READY : 게임 준비
+    * ALL_READY : 모두 게임 준비
     * START : 게임 시작
     * ACTION : 유저 행동
     * BET : 배팅
@@ -16,6 +17,8 @@ public enum GameState {
     * USER_CHOICE : 유저 선택(게임 재시작, 게임 나가기)*/
     ENTER("ENTER"),
     READY("READY"),
+    NO_ONE_READY("NO_ONE_READY"),
+    ALL_READY("ALL_READY"),
     START("START"),
     ACTION("ACTION"),
     END("END"),
