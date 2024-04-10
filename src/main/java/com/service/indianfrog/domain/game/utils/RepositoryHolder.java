@@ -1,6 +1,7 @@
 package com.service.indianfrog.domain.game.utils;
 
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
+import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
@@ -8,9 +9,11 @@ import org.springframework.stereotype.Component;
 public class RepositoryHolder {
     public final GameRoomRepository gameRoomRepository;
     public final UserRepository userRepository;
+    public final ValidateRoomRepository validateRoomRepository;
 
-    public RepositoryHolder(GameRoomRepository gameRoomRepository, UserRepository userRepository) {
+    public RepositoryHolder(GameRoomRepository gameRoomRepository, UserRepository userRepository, ValidateRoomRepository validateRoomRepository) {
         this.gameRoomRepository = gameRoomRepository;
         this.userRepository = userRepository;
+        this.validateRoomRepository = validateRoomRepository;
     }
 }
