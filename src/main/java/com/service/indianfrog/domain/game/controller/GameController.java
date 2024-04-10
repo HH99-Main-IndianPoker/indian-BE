@@ -1,6 +1,7 @@
 package com.service.indianfrog.domain.game.controller;
 
 import com.service.indianfrog.domain.chat.entity.ChatMessage;
+import com.service.indianfrog.domain.game.dto.GameBetting;
 import com.service.indianfrog.domain.game.dto.GameDto;
 import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
 import com.service.indianfrog.domain.game.dto.GameInfo;
@@ -42,7 +43,7 @@ public class GameController {
 
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
-                                             @Payload ChatMessage chatMessage, @Payload(required = false) UserChoices userChoices) {
+                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
 
         switch (gameState) {
             case "START" -> {
@@ -52,7 +53,7 @@ public class GameController {
             case "ACTION", "END", "GAME_END", "USER_CHOICE" -> {
                 Object response = switch (gameState) {
                     case "ACTION" ->
-                            gamePlayService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
+                            gamePlayService.playerAction(gameRoomId, gameBetting.getNickname(), gameBetting.getAction());
                     case "END" -> endGameService.endRound(gameRoomId);
                     case "GAME_END" -> endGameService.endGame(gameRoomId);
                     case "USER_CHOICE" -> gameSessionService.processUserChoices(userChoices);
