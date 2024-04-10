@@ -1,24 +1,20 @@
 package com.service.indianfrog.domain.game.controller;
 
 import com.service.indianfrog.domain.chat.entity.ChatMessage;
+import com.service.indianfrog.domain.game.dto.GameBetting;
 import com.service.indianfrog.domain.game.dto.GameDto;
 import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
 import com.service.indianfrog.domain.game.dto.GameInfo;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.Card;
-import com.service.indianfrog.domain.game.service.EndGameService;
-import com.service.indianfrog.domain.game.service.GamePlayService;
-import com.service.indianfrog.domain.game.service.GameSessionService;
-import com.service.indianfrog.domain.game.service.StartGameService;
+import com.service.indianfrog.domain.game.service.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.api.ErrorMessage;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "게임 실행 컨트롤러", description = "인디언 포커 게임 실행 및 종료 컨트롤러입니다.")
 @Slf4j
@@ -30,29 +26,32 @@ public class GameController {
     private final GamePlayService gamePlayService;
     private final EndGameService endGameService;
     private final GameSessionService gameSessionService;
+    private final ReadyGameService readyGameService;
     public GameController(SimpMessageSendingOperations messagingTemplate,
                           StartGameService startGameService, GamePlayService gamePlayService,
-                          EndGameService endGameService, GameSessionService gameSessionService) {
+                          EndGameService endGameService, GameSessionService gameSessionService, ReadyGameService readyGameService) {
         this.messagingTemplate = messagingTemplate;
         this.startGameService = startGameService;
         this.gamePlayService = gamePlayService;
         this.endGameService = endGameService;
         this.gameSessionService = gameSessionService;
+        this.readyGameService = readyGameService;
     }
 
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
-                                             @Payload ChatMessage chatMessage, @Payload(required = false) UserChoices userChoices) {
+                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
 
         switch (gameState) {
             case "START" -> {
                 StartRoundResponse response = startGameService.startRound(gameRoomId);
                 sendUserGameMessage(response); // 유저별 메시지 전송
             }
-            case "ACTION", "END", "GAME_END", "USER_CHOICE" -> {
+            case "READY", "ACTION", "END", "GAME_END", "USER_CHOICE"-> {
                 Object response = switch (gameState) {
+                    case "READY" -> readyGameService.areTheyAllReady(userChoices);
                     case "ACTION" ->
-                            gamePlayService.playerAction(gameRoomId, chatMessage.getSender(), chatMessage.getContent());
+                            gamePlayService.playerAction(gameRoomId, gameBetting.getNickname(), gameBetting.getAction());
                     case "END" -> endGameService.endRound(gameRoomId);
                     case "GAME_END" -> endGameService.endGame(gameRoomId);
                     case "USER_CHOICE" -> gameSessionService.processUserChoices(userChoices);

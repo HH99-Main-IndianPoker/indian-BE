@@ -2,6 +2,7 @@ package com.service.indianfrog.domain.gameroom.repository;
 
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
+import com.service.indianfrog.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long
 
     List<ValidateRoom> findAllByGameRoomRoomId(Long roomId);
 
+    ValidateRoom findByHostTrue();
+    ValidateRoom findByHostFalse();
 }
