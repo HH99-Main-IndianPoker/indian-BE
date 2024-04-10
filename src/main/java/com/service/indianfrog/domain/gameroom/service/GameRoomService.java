@@ -1,8 +1,6 @@
 package com.service.indianfrog.domain.gameroom.service;
 
-import com.service.indianfrog.domain.game.dto.GameRoomDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
-import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
@@ -13,14 +11,24 @@ import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class GameRoomService {
@@ -28,6 +36,8 @@ public class GameRoomService {
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
+    private Set<String> badWords;
+    private Pattern pattern;
 
     public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository) {
         this.gameRoomRepository = gameRoomRepository;
@@ -53,13 +63,24 @@ public class GameRoomService {
         return gameRoomRepository.existsById(roomId);
     }
 
-    public String filterMessage(String message) {
-        if (message == null) {
-            return ""; //일단은 null이면 빈 메세지를 반환하게 해놨는데 이게 필요할지 더 고민 필요...
+
+    @PostConstruct
+    public void init() {
+        try {
+            pattern = Pattern.compile(
+                    Files.lines(Paths.get(new ClassPathResource("bad-words.txt").getURI()))
+                            .map(Pattern::quote)
+                            .collect(Collectors.joining("|")),
+                    Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
+            );
+        } catch (IOException e) {
+            pattern = Pattern.compile(""); // 비어있는 패턴
         }
-        // 욕설 필터링
-        return message.replaceAll("(씨발|병신|ㅅㅂ)", "**");
     }
+    public String filterMessage(String message) {
+        return (message == null || message.trim().isEmpty()) ? message : pattern.matcher(message).replaceAll("**");
+    }
+
 
     @Transactional
     public GameRoomCreateResponseDto createGameRoom(GameRoomCreateRequestDto gameRoomDto, Principal principal) {

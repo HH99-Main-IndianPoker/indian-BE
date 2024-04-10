@@ -41,7 +41,7 @@ public class GameRoom extends Timestamped {
     private Game currentGame;
 
     @Builder
-    public GameRoom(Long roomId, Date createAt, String roomName, Set<ValidateRoom> validateRooms, User playerOne, User playerTwo, Game currentGame) {
+    public GameRoom(Long roomId, String roomName, Set<ValidateRoom> validateRooms, User playerOne, User playerTwo, Game currentGame) {
         this.roomId = roomId;
         this.roomName = roomName;
         this.validateRooms = validateRooms;
@@ -50,24 +50,9 @@ public class GameRoom extends Timestamped {
         this.currentGame = currentGame;
     }
 
-    public void setRoomId(Long roomId) {
-        this.roomId = roomId;
-    }
-
-    public void setRoomName(String roomName) {
-        this.roomName = roomName;
-    }
-
     public void startNewGame(User playerOne, User playerTwo) {
         this.currentGame = new Game(playerOne, playerTwo);
     }
 
-    public void setCurrentGame(Game game) {
-        this.currentGame = game;
-    }
 
-    // 게임을 종료할 때 호출하는 메서드입니다.
-    public void endCurrentGame() {
-        this.currentGame = null;
-    }
 }
