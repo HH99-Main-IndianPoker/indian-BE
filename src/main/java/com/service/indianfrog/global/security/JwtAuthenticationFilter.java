@@ -65,6 +65,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
+        /*
+        * 1.401-?리이슈.나머지는 백에서처리. 필터에서 로테이트 or 리이슈 정하기.
+            2.도메인 맞추기
+        * */
+
         String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
         Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
         response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
@@ -86,6 +91,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(24*60*60);
         cookie.setSecure(true); //https에 추가
+        cookie.setAttribute("SameSite","None");
+//      cookie.setHttpOnly(true);
         cookie.setPath("/");
 
         return cookie;
