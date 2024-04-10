@@ -81,7 +81,7 @@ public class WebSecurityConfig {
         configuration.addAllowedMethod("*");
         configuration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
         configuration.addExposedHeader("Authorization");
-//        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control","Set-Cookie"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
