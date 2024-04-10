@@ -64,6 +64,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         GeneratedToken tokens = jwtUtil.generateToken(email, String.valueOf(role));
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+        /*
+        * 1.401-?리이슈.나머지는 백에서처리. 필터에서 로테이트 or 리이슈 정하기.
+            2.도메인 맞추기
+
+        * */
 
         /*
         * 1.401-?리이슈.나머지는 백에서처리. 필터에서 로테이트 or 리이슈 정하기.
@@ -93,6 +98,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         cookie.setSecure(true); //https에 추가
         cookie.setDomain(".indianfrog.com");
         cookie.setAttribute("SameSite","None");
+
+//      cookie.setHttpOnly(true);
         cookie.setPath("/");
 
         return cookie;
