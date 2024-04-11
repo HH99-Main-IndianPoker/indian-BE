@@ -42,8 +42,9 @@ public class RefreshTokenService {
             RefreshToken resultToken = refreshToken.get();
             Optional<User> user = userRepository.findByEmail(resultToken.getId());
             String role = String.valueOf(user);
+            User userNickname = userRepository.findByNickname(user.get().getNickname());
 
-            String newAccessToken = jwtUtil.generateAccessToken(resultToken.getId(), role);
+            String newAccessToken = jwtUtil.generateAccessToken(resultToken.getId(), role, String.valueOf(userNickname));
             resultToken.updateAccessToken(newAccessToken);
             tokenRepository.save(resultToken);
             return newAccessToken;
