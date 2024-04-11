@@ -61,10 +61,10 @@ public class StartGameService {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
         int min = Math.min(playerOnePoints, playerTwoPoints);
-        if (min < 2000) {
+        if (min < 2) {
             return min;
         }
-        return 2000; // 10%의 포인트를 초기 베팅 금액으로 설정
+        return 2; // 10%의 포인트를 초기 베팅 금액으로 설정
     }
 
     private List<Card> prepareAvailableCards(Game game) {
