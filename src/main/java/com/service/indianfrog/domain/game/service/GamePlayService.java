@@ -93,6 +93,7 @@ public class GamePlayService {
             e.printStackTrace();
         }
 
+
         user.setPoints(userPoints - raiseAmount);
         game.setPot(game.getPot() + raiseAmount);
         game.setBetAmount(raiseAmount);

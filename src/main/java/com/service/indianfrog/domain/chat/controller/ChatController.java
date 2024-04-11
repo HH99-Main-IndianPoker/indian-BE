@@ -22,10 +22,11 @@ public class ChatController {
         this.gameRoomService = gameRoomService;
     }
 
-    @MessageMapping("/chat.sendMessage/{roomId}")
-    public void sendMessage(@DestinationVariable Long roomId, @Payload ChatMessage chatMessage) {
 
-        if (!gameRoomService.existsById(roomId)) {
+    @MessageMapping("/chat.sendMessage/{gameRoomId}")
+    public void sendMessage(@DestinationVariable Long gameRoomId, @Payload ChatMessage chatMessage) {
+
+        if (!gameRoomService.existsById(gameRoomId)) {
             // 이거 방이 없어도 없는 게임방번호 입력하면 채팅이 열리는 문제가 발생해서 검증로직 추가한거.
             // 게임방 폭파하면 채팅방도 없어지기에 굳이 필요없을것 같은데 혹시나 한번 더 걸어둠.
             return; // 방이 존재하지 않으면 종료.
@@ -35,7 +36,7 @@ public class ChatController {
         chatMessage.setContent(filteredContent);
 
         // 동적으로 메시지를 라우팅할 주소를 생성.
-        String destination = "/topic/gameRoom/" + roomId;
+        String destination = "/topic/gameRoom/" + gameRoomId;
 
         // 보통 convertAndSend와 convertAndSendToUser 이 2개를 쓰는데 우린 1:N 채팅이니까 특정 유저에게만 전송할 필요가 없음.
         // 아닌가? 전체 채팅방은 1:N 하더라도 게임방은 1:1인가? 근데 그렇게 구현하려면 너무 복잡해 지려나?
@@ -45,17 +46,17 @@ public class ChatController {
     }
 
 
-    @MessageMapping("/chat.addUser/{roomId}")
-    public void addUser(@DestinationVariable Long roomId, @Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+    @MessageMapping("/chat.addUser/{gameRoomId}")
+    public void addUser(@DestinationVariable Long gameRoomId, @Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
 
-        if (!gameRoomService.existsById(roomId)) {
+        if (!gameRoomService.existsById(gameRoomId)) {
             return;
         }
 
         //에러난 이유 : 헤더에 방번호를 추가안해줘서 나갔을때 어느방에서 나갔는지 모르기에 퇴장 메세지 안떴음. 리스너도 수정했음.
-        headerAccessor.getSessionAttributes().put("room_id", roomId);
+        headerAccessor.getSessionAttributes().put("room_id", gameRoomId);
         headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
-        String destination = "/topic/gameRoom/" + roomId;
+        String destination = "/topic/gameRoom/" + gameRoomId;
 
         // 입장 메시지 전송.
         messagingTemplate.convertAndSend(destination, chatMessage);
