@@ -3,7 +3,7 @@ package com.service.indianfrog.domain.gameroom.service;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
-import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.ParticipantInfo;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
@@ -156,9 +156,9 @@ public class GameRoomService {
         String nickname = user.getNickname();
 
         List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomIdAndParticipants(roomId, nickname);
-        if (validateRooms.isEmpty()) {
-            throw new RestApiException(ErrorCode.GAME_USER_HAS_GONE.getMessage());
-        }
+//        if (validateRooms.isEmpty()) {
+//            throw new RestApiException(ErrorCode.GAME_USER_HAS_GONE.getMessage());
+//        }
 
         boolean wasHost = validateRooms.stream().anyMatch(ValidateRoom::isHost);
         validateRooms.forEach(validateRoomRepository::delete);
