@@ -22,4 +22,5 @@ public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long
 
     List<ValidateRoom> findAllByReadyTrue();
 
+    List<ValidateRoom> findAllByParticipants(String email);
 }
