@@ -43,7 +43,7 @@ public class StartGameServiceTest {
     void testStartRound() {
         // Given
         Long gameRoomId = 1L;
-        GameRoom gameRoom = new GameRoom();
+        GameRoom gameRoom = mock(GameRoom.class);
         Game game = new Game(playerOne, playerTwo);
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
