@@ -73,4 +73,8 @@ public class User extends Timestamped {
     public void incrementLosses() {
         this.losses++;
     }
+
+    public void increasePoints(int points) {
+        this.points+=points;
+    }
 }

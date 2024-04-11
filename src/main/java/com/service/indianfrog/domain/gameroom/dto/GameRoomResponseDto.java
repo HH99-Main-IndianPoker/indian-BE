@@ -1,7 +1,7 @@
 package com.service.indianfrog.domain.gameroom.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import com.service.indianfrog.domain.game.entity.GameState;
 
 import java.time.LocalDateTime;
 
@@ -11,7 +11,8 @@ public class GameRoomResponseDto {
             Long roomId,
             String roomName,
             int participantCount,
-            String hostNickname,
+            String hostName,
+            GameState gameState,
 
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Seoul/Asia")
             LocalDateTime createdAt
@@ -21,6 +22,8 @@ public class GameRoomResponseDto {
             Long roomId,
             String roomName,
             int participantCount,
-            String hostNickname
+            String hostNickname,
+            GameState gameState
+
     ){}
 }

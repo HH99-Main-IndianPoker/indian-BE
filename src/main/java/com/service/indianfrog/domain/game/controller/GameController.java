@@ -8,6 +8,7 @@ import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.service.*;
+import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -29,25 +30,33 @@ public class GameController {
     private final EndGameService endGameService;
     private final GameSessionService gameSessionService;
     private final ReadyService readyService;
+
+    private final GameRoomService gameRoomService;
     public GameController(SimpMessageSendingOperations messagingTemplate,
                           StartGameService startGameService, GamePlayService gamePlayService,
-                          EndGameService endGameService, GameSessionService gameSessionService, ReadyService readyService) {
+                          EndGameService endGameService, GameSessionService gameSessionService, ReadyService readyService, GameRoomService gameRoomService) {
         this.messagingTemplate = messagingTemplate;
         this.startGameService = startGameService;
         this.gamePlayService = gamePlayService;
         this.endGameService = endGameService;
         this.gameSessionService = gameSessionService;
         this.readyService = readyService;
+        this.gameRoomService= gameRoomService;
     }
 
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
                                 @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
 
+
+
         switch (gameState) {
             case "START" -> {
+
                 StartRoundResponse response = startGameService.startRound(gameRoomId);
                 sendUserGameMessage(response); // 유저별 메시지 전송
+
+
             }
             case "ACTION", "END", "GAME_END", "USER_CHOICE"-> {
                 Object response = switch (gameState) {
@@ -62,6 +71,7 @@ public class GameController {
                 String destination = "/topic/gameRoom/" + gameRoomId;
                 messagingTemplate.convertAndSend(destination, response);
             }
+
             default -> throw new IllegalStateException("Invalid game state: " + gameState);
         }
     }

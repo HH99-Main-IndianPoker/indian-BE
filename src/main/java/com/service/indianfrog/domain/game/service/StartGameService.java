@@ -3,9 +3,12 @@ package com.service.indianfrog.domain.game.service;
 import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
+import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
+import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import com.service.indianfrog.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +25,21 @@ public class StartGameService {
     /* 생성자를 통한 필드 주입 */
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
+    private final GameRoomService gameRoomService;
+    private final GameRoomRepository gameRoomRepository;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService,GameRoomService gameRoomService, GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
+        this.gameRoomService = gameRoomService;
+        this.gameRoomRepository = gameRoomRepository;
     }
 
     @Transactional
     public StartRoundResponse startRound(Long gameRoomId) {
+        GameRoom findGameRoom = gameRoomRepository.findByRoomId(gameRoomId);
+        findGameRoom.updateGameState(GameState.START);
+
         GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
