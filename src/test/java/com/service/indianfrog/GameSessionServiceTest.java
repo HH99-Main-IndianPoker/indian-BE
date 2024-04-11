@@ -14,10 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class GameSessionServiceTest {
@@ -38,18 +37,19 @@ public class GameSessionServiceTest {
     @Disabled
     public void testProcessUserChoicesBothPlayAgain() {
         Long gameRoomId = 1L;
-        GameRoom gameRoom = new GameRoom();
+        GameRoom gameRoom = mock(GameRoom.class);
         String userOneId = "1";
         String userTwoId = "2";
-        UserChoices choices = new UserChoices(gameRoomId, userOneId, userTwoId, UserChoice.PLAY_AGAIN, UserChoice.PLAY_AGAIN);
+        UserChoices choice1 = new UserChoices(gameRoomId, userOneId, UserChoice.PLAY_AGAIN);
+        UserChoices choice2 = new UserChoices(gameRoomId, userTwoId, UserChoice.PLAY_AGAIN);
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
-        List<GameStatus> statusList = gameSessionService.processUserChoices(choices);
+        gameSessionService.processUserChoices(gameRoomId, choice1);
+        Object result2 = gameSessionService.processUserChoices(gameRoomId, choice2);
 
-        assertEquals(2, statusList.size());
-        assertEquals(GameState.START, statusList.get(0).getGameState());
-        assertEquals(GameState.START, statusList.get(1).getGameState());
+        assertInstanceOf(GameStatus.class, result2); // 두 번째 선택 결과가 GameStatus 여야 함
+        assertEquals(GameState.START, ((GameStatus) result2).getGameState()); // 두 번째 선택 결과 상태 검증
     }
 
     @Test
@@ -57,18 +57,19 @@ public class GameSessionServiceTest {
     @Disabled
     void testProcessUserChoicesBothLeave() {
         Long gameRoomId = 1L;
-        GameRoom gameRoom = new GameRoom();
+        GameRoom gameRoom = mock(GameRoom.class);
         String userOneId = "1";
         String userTwoId = "2";
-        UserChoices choices = new UserChoices(gameRoomId, userOneId, userTwoId, UserChoice.LEAVE, UserChoice.LEAVE);
+        UserChoices choice1 = new UserChoices(gameRoomId, userOneId, UserChoice.LEAVE);
+        UserChoices choice2 = new UserChoices(gameRoomId, userTwoId, UserChoice.LEAVE);
 
-        when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom); // 로직에 따라 적절한 모의 객체 반환
+        when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
-        List<GameStatus> statusList = gameSessionService.processUserChoices(choices);
+        gameSessionService.processUserChoices(gameRoomId, choice1); // 첫 번째 유저 선택 처리
+        Object result = gameSessionService.processUserChoices(gameRoomId, choice2); // 두 번째 유저 선택 처리
 
-        assertEquals(2, statusList.size());
-        assertEquals(GameState.LEAVE, statusList.get(0).getGameState());
-        assertEquals(GameState.LEAVE, statusList.get(1).getGameState());
+        assertInstanceOf(GameStatus.class, result);
+        assertEquals(GameState.LEAVE, ((GameStatus) result).getGameState());
     }
 
     @Test
@@ -76,30 +77,18 @@ public class GameSessionServiceTest {
     @Disabled
     void testProcessUserChoicesPlayAgainAndLEAVE() {
         Long gameRoomId = 1L;
-        GameRoom gameRoom = new GameRoom();
+        GameRoom gameRoom = mock(GameRoom.class);
         String userOneId = "1";
         String userTwoId = "2";
-        UserChoices choices = new UserChoices(gameRoomId, userOneId, userTwoId, UserChoice.PLAY_AGAIN, UserChoice.LEAVE);
+        UserChoices choice1 = new UserChoices(gameRoomId, userOneId, UserChoice.PLAY_AGAIN);
+        UserChoices choice2 = new UserChoices(gameRoomId, userTwoId, UserChoice.LEAVE);
 
-        when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom); // 로직에 따라 적절한 모의 객체 반환
+        when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
-        List<GameStatus> statusList = gameSessionService.processUserChoices(choices);
+        gameSessionService.processUserChoices(gameRoomId, choice1); // 첫 번째 유저 선택 처리
+        Object result = gameSessionService.processUserChoices(gameRoomId, choice2); // 두 번째 유저 선택 처리
 
-        assertEquals(2, statusList.size());
-        assertEquals(GameState.ENTER, statusList.get(0).getGameState());
-        assertEquals(GameState.LEAVE, statusList.get(1).getGameState());
-    }
-
-    @Test
-    @DisplayName("게임 룸 검증 실패 시 예외 발생 테스트")
-    @Disabled
-    void testProcessUserChoicesWithException() {
-        Long gameRoomId = 1L;
-        when(gameValidator.validateAndRetrieveGameRoom(anyLong())).thenThrow(new RuntimeException("Game room validation failed"));
-
-        Exception exception = assertThrows(RuntimeException.class, () -> gameSessionService.processUserChoices(new UserChoices(gameRoomId, "1", "2", UserChoice.PLAY_AGAIN, UserChoice.LEAVE)));
-
-        assertNotNull(exception);
-        assertEquals("Game room validation failed", exception.getMessage());
+        assertInstanceOf(GameStatus.class, result);
+        assertEquals(GameState.ENTER, ((GameStatus) result).getGameState());
     }
 }
