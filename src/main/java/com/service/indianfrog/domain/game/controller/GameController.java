@@ -6,6 +6,7 @@ import com.service.indianfrog.domain.game.dto.GameInfo;
 import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.Card;
+import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.service.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -68,11 +69,11 @@ public class GameController {
     // /pub 사용 게임 준비
     @MessageMapping("/gameRoom/{gameRoomId}/ready")
     public void gameReady(
-            @DestinationVariable Long gameRoomId, @Payload GameStatus gameStatus) {
-        log.info("게임 준비 - 레디 상태 : {} , 게임방 아이디 : {}", gameStatus.getGameState(), gameRoomId);
-        GameStatus gameState = readyService.gameReady(gameStatus, gameRoomId);
+            @DestinationVariable Long gameRoomId, Principal principal) {
+        log.info("게임 준비 - 게임방 아이디 : {}", gameRoomId);
+        GameStatus gameStatus = readyService.gameReady(gameRoomId, principal);
         String destination = "/topic/gameRoom/" + gameRoomId;
-        messagingTemplate.convertAndSend(destination, gameState);
+        messagingTemplate.convertAndSend(destination, gameStatus);
     }
 
     private void sendUserGameMessage(StartRoundResponse response) {
