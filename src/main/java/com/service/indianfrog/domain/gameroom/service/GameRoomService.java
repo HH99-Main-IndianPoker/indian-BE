@@ -8,6 +8,8 @@ import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
+import com.service.indianfrog.domain.gameroom.util.SessionMappingStorage;
+import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
@@ -23,10 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -36,13 +35,14 @@ public class GameRoomService {
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
-    private Set<String> badWords;
     private Pattern pattern;
+    private SessionMappingStorage sessionMappingStorage;
 
-    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository) {
+    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository, SessionMappingStorage sessionMappingStorage) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
+        this.sessionMappingStorage = sessionMappingStorage;
     }
 
     public GetGameRoomResponseDto getGameRoomById(Long roomId) {
@@ -122,18 +122,21 @@ public class GameRoomService {
         validateRoom.setGameRoom(gameRoom);
         validateRoom = validateRoomRepository.save(validateRoom);
 
-        return new ValidateRoomDto(validateRoom.getValidId(), validateRoom.getParticipants());
+        return new ValidateRoomDto(validateRoom.getValidId(), validateRoom.getParticipants(), validateRoom.isHost());
     }
 
     @Transactional
     public GetGameRoomResponseDto removeParticipant(Long roomId, Principal participant) {
         String email = participant.getName();
-        userRepository.findByEmail(email)
+
+        // 사용자가 존재하는지 확인 후, 존재하지 않으면 예외를 던집니다.
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
+        // 사용자가 해당 방에 참여하고 있는지 확인
         List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomIdAndParticipants(roomId, email);
         if (validateRooms.isEmpty()) {
-            throw new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage());
+            throw new RestApiException(ErrorCode.GAME_USER_HAS_GONE.getMessage());
         }
         boolean wasHost = validateRooms.stream().anyMatch(ValidateRoom::isHost);
         validateRooms.forEach(validateRoomRepository::delete);
@@ -160,6 +163,26 @@ public class GameRoomService {
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
         return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+    }
+
+
+    @Transactional
+    public void removeParticipantBySessionId(String sessionId) {
+        String email = sessionMappingStorage.getEmailBySessionId(sessionId);
+        if (email == null) {
+            // 세션 ID에 해당하는 이메일을 찾을 수 없음
+            return;
+        }
+
+        // 여기서는 예제로, 모든 게임방에서 해당 이메일을 가진 참가자를 제거하는 로직을 구현합니다.
+        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(email);
+        for (ValidateRoom validateRoom : validateRooms) {
+            validateRoomRepository.delete(validateRoom);
+            // 추가 로직: 방장 변경, 게임방 삭제 등
+        }
+
+        // 세션 매핑에서 제거
+        sessionMappingStorage.removeSession(sessionId);
     }
 
 }
