@@ -50,6 +50,7 @@ public class GameDto {
         private Long gameLoserId;
         private int winnerPot;
         private int loserPot;
+
         public EndGameResponse(String gameState, Long gameWinner, Long gameLoser, int winnerPot, int loserPot) {
             this.gameState = gameState;
             this.gameWinnerId = gameWinner;

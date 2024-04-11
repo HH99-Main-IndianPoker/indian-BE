@@ -6,12 +6,12 @@ import lombok.Getter;
 @Getter
 public class GameStatus {
     private Long gameRoomId;
-    private String userId;
+    private String nickname;
     private GameState gameState;
 
-    public GameStatus(Long gameRoomId, String userId, GameState gameState) {
+    public GameStatus(Long gameRoomId, String nickname, GameState gameState) {
         this.gameRoomId = gameRoomId;
-        this.userId = userId;
+        this.nickname = nickname;
         this.gameState = gameState;
     }
 }

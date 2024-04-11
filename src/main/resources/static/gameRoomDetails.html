@@ -14,6 +14,7 @@
 <div id="chatMessages" style="border:1px solid #ccc; height:200px; overflow:auto; margin-bottom:10px;"></div>
 <input type="text" id="chatMessageInput" placeholder="메시지 입력" style="width:70%;" onkeypress="handleKeyPress(event)">
 <button onclick="sendMessage()">전송</button>
+<button onclick="sendGameReady()">READY</button>
 <button onclick="leaveRoom()">게임방 나가기</button>
 
 <script>
@@ -39,6 +40,16 @@
     }, function(error) {
       console.log('WebSocket connection error: ' + error);
     });
+  }
+
+  // 게임방 준비 상태를 서버에 알리는 함수
+  function sendGameReady() {
+    const authToken = localStorage.getItem('authToken');
+    const email = localStorage.getItem('email');
+    if (stompClient && roomId && authToken && email) {
+      // 게임방 준비 메시지 전송
+      stompClient.send(`/app/gameRoom/${roomId}/ready`, {'Authorization': authToken}, JSON.stringify({sender: email}));
+    }
   }
 
   function sendMessage() {
@@ -89,6 +100,8 @@
       event.preventDefault(); // 폼 제출을 방지하고 페이지 새로고침을 막습니다.
     }
   }
+
+
 
   connectWebSocket();
 </script>
