@@ -5,10 +5,12 @@ import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
 import com.service.indianfrog.domain.game.dto.GameResult;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
+import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.game.utils.RepositoryHolder;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Tag(name = "게임/라운드 종료 서비스", description = "게임/라운드 종료 서비스 로직")
 @Slf4j
@@ -29,11 +32,13 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final RepositoryHolder repositoryHolder;
     private final GameTurnService gameTurnService;
+    private final GameRoomRepository gameRoomRepository;
 
-    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder, GameTurnService gameTurnService) {
+    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder, GameTurnService gameTurnService,GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
         this.repositoryHolder = repositoryHolder;
         this.gameTurnService = gameTurnService;
+        this.gameRoomRepository = gameRoomRepository;
     }
 
     /* 라운드 종료 로직*/
@@ -69,6 +74,9 @@ public class EndGameService {
 
         /* 게임 결과 처리 및 게임 정보 초기화*/
         GameResult gameResult = processGameResults(game);
+
+        GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
+        CurrentGameStatus.updateGameState(GameState.READY);
 
         /* 유저 선택 상태 반환*/
         return new EndGameResponse("USER_CHOICE", gameResult.getWinnerId(), gameResult.getLoserId(),
@@ -140,10 +148,22 @@ public class EndGameService {
         int winnerTotalPoints = gameWinner.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
         int loserTotalPoints = gameLoser.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
 
+        if (gameLoser.getPoints() < 10) {
+            doRevivalGame(gameLoser);
+        }
+
         /* 게임 데이터 초기화*/
         game.resetGame();
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
+    }
+
+    private void doRevivalGame(User gameLoser) {
+        /*카드가 3장이 있을때, 세장 중 한장을 고르면 그 값만큼 포인트를 올려줌.*/
+        Random random = new Random();
+        int[] pointsIncreaseOptions = {75, 100, 125};
+        int index = random.nextInt(pointsIncreaseOptions.length);
+        gameLoser.increasePoints(pointsIncreaseOptions[index]);
     }
 
     /* 1라운드 이후 턴 설정 메서드*/

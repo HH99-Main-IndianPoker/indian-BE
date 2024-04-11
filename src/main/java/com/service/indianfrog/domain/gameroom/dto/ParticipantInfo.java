@@ -8,12 +8,9 @@ public class ParticipantInfo {
     private int points;
     private boolean host;
 
-
-
-
     public ParticipantInfo(String nickname, boolean host, int points) {
         this.nickname = nickname;
-        this.points=points;
+        this.points = points;
         this.host = host;
 
     }

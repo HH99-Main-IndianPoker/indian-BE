@@ -57,7 +57,7 @@
         axios.post(`${apiUrl}/user/login`, { email, password })
             .then(response => {
                 localStorage.setItem('authToken', response.headers['authorization']);
-                localStorage.setItem('email', email); // 로그인한 사용자의 이메일을 로컬 스토리지에 저장
+                localStorage.setItem('nickname', response.data.nickname); // 가정: 서버 응답에 닉네임이 포함되어 있음
                 document.getElementById('createRoom').disabled = false;
                 document.getElementById('joinRoom').disabled = false;
                 alert('로그인 성공');

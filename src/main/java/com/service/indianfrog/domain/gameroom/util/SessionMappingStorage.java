@@ -6,17 +6,17 @@ import java.util.Map;
 
 @Component
 public class SessionMappingStorage {
-    private final Map<String, String> sessionIdToEmailMap = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionIdToNicknameMap = new ConcurrentHashMap<>();
 
-    public void registerSession(String sessionId, String email) {
-        sessionIdToEmailMap.put(sessionId, email);
+    public void registerSession(String sessionId, String nickname) {
+        sessionIdToNicknameMap.put(sessionId, nickname);
     }
 
-    public String getEmailBySessionId(String sessionId) {
-        return sessionIdToEmailMap.get(sessionId);
+    public String getNicknameBySessionId(String sessionId) {
+        return sessionIdToNicknameMap.get(sessionId);
     }
 
     public void removeSession(String sessionId) {
-        sessionIdToEmailMap.remove(sessionId);
+        sessionIdToNicknameMap.remove(sessionId);
     }
 }

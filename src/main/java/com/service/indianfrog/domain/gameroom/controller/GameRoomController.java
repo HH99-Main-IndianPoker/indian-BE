@@ -42,8 +42,9 @@ public class GameRoomController {
     @GetMapping("/{gameRoomId}")
     public ResponseDto<GetGameRoomResponseDto> getGameRoomById(@PathVariable Long gameRoomId) {
         GetGameRoomResponseDto gameRoom = gameRoomService.getGameRoomById(gameRoomId);
-        return ResponseDto.success("게임방건단  조회 기능",gameRoom);
+        return ResponseDto.success("게임방 조회 기능",gameRoom);
     }
+
 
     @PostMapping("/create")
     public ResponseDto<GameRoomCreateResponseDto> createGameRoom(@RequestBody GameRoomCreateRequestDto gameRoomDto, Principal principal) {
@@ -68,4 +69,6 @@ public class GameRoomController {
         gameRoomService.removeParticipant(gameRoomId, principal);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/leave", principal.getName());
     }
+
+
 }

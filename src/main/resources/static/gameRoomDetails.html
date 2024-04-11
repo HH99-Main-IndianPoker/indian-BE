@@ -15,6 +15,7 @@
 <input type="text" id="chatMessageInput" placeholder="메시지 입력" style="width:70%;" onkeypress="handleKeyPress(event)">
 <button onclick="sendMessage()">전송</button>
 <button onclick="sendGameReady()">READY</button>
+<button onclick="sendGameStart()">게임 시작</button>
 <button onclick="leaveRoom()">게임방 나가기</button>
 
 <script>
@@ -31,34 +32,41 @@
       roomId = new URLSearchParams(window.location.search).get('roomId');
       if (roomId) {
         document.getElementById('roomDetails').innerHTML = `게임방 ID: ${roomId}<br>이곳에 게임방 상세 정보 표시`;
+        stompClient.subscribe(`/topic/gameRoom/${roomId}`, function(messageOutput) {
+          showMessageOutput(JSON.parse(messageOutput.body));
+        });
       } else {
         document.getElementById('roomDetails').innerHTML = '게임방 ID가 제공되지 않았습니다.';
       }
-      stompClient.subscribe(`/topic/gameRoom/${roomId}`, function(messageOutput) {
-        showMessageOutput(JSON.parse(messageOutput.body));
-      });
     }, function(error) {
       console.log('WebSocket connection error: ' + error);
     });
   }
 
+  function sendGameStart() {
+    if (stompClient && roomId) {
+      stompClient.send(`/app/gameRoom/${roomId}/START`, {}, JSON.stringify({}));
+      console.log(`게임 시작 메시지를 ${roomId} 번 방에 전송했습니다.`);
+    }
+  }
+
   // 게임방 준비 상태를 서버에 알리는 함수
   function sendGameReady() {
     const authToken = localStorage.getItem('authToken');
-    const email = localStorage.getItem('email');
-    if (stompClient && roomId && authToken && email) {
+    const nickname = localStorage.getItem('nickname');
+    if (stompClient && roomId && authToken && nickname) {
       // 게임방 준비 메시지 전송
-      stompClient.send(`/app/gameRoom/${roomId}/ready`, {'Authorization': authToken}, JSON.stringify({sender: email}));
+      stompClient.send(`/app/gameRoom/${roomId}/ready`, {'Authorization': authToken}, JSON.stringify({sender: nickname}));
     }
   }
 
   function sendMessage() {
     const messageContent = document.getElementById('chatMessageInput').value;
-    const email = localStorage.getItem('email');
-    if(messageContent && stompClient && email && roomId) {
+    const nickname = localStorage.getItem('nickname');
+    if(messageContent && stompClient && nickname && roomId) {
       const chatMessage = {
         content: messageContent,
-        sender: email,
+        sender: nickname,
         type: "CHAT"
       };
       stompClient.send(`/app/chat.sendMessage/${roomId}`, {}, JSON.stringify(chatMessage));
@@ -67,20 +75,17 @@
   }
 
   window.addEventListener('beforeunload', function(event) {
-    // 게임방을 나가는 로직 수행
     leaveRoom();
-    // 사용자에게 표시할 경고 메시지
-    var confirmationMessage = '게임방에서 나가시겠습니까?'; // 원하는 메시지로 변경 가능
-    // 경고 메시지 반환
+    var confirmationMessage = '게임방에서 나가시겠습니까?';
     (event || window.event).returnValue = confirmationMessage;
     return confirmationMessage;
   });
 
   function leaveRoom() {
     const authToken = localStorage.getItem('authToken');
-    const email = localStorage.getItem('email');
-    if(stompClient && roomId && authToken && email) {
-      stompClient.send(`/app/${roomId}/leave`, {'Authorization': authToken}, JSON.stringify({sender: email}));
+    const nickname = localStorage.getItem('nickname');
+    if(stompClient && roomId && authToken && nickname) {
+      stompClient.send(`/app/${roomId}/leave`, {'Authorization': authToken}, JSON.stringify({sender: nickname}));
       alert(`게임방 ${roomId}에서 나갑니다.`);
       window.location.href = 'index.html';
     }
@@ -95,13 +100,11 @@
   }
 
   function handleKeyPress(event) {
-    if (event.keyCode === 13) { // 13은 엔터 키의 키 코드입니다.
+    if (event.keyCode === 13) {
       sendMessage();
-      event.preventDefault(); // 폼 제출을 방지하고 페이지 새로고침을 막습니다.
+      event.preventDefault();
     }
   }
-
-
 
   connectWebSocket();
 </script>

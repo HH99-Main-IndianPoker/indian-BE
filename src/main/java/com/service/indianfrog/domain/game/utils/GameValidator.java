@@ -32,8 +32,8 @@ public class GameValidator {
         String host = repositoryHolder.validateRoomRepository.findByHostTrue().getParticipants();
         String participant = repositoryHolder.validateRoomRepository.findByHostFalse().getParticipants();
 
-        User playerOne = repositoryHolder.userRepository.findByEmail(host).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
-        User playerTwo = repositoryHolder.userRepository.findByEmail(participant).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+        User playerOne = repositoryHolder.userRepository.findByNickname(host);
+        User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
 
         if (game == null) {
             gameRoom.startNewGame(playerOne, playerTwo);

@@ -2,12 +2,15 @@ package com.service.indianfrog.domain.gameroom.entity;
 
 import com.rabbitmq.client.LongString;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @Table(name = "validate_room")
+@NoArgsConstructor
 public class ValidateRoom {
 
     @Id
@@ -27,6 +30,7 @@ public class ValidateRoom {
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private GameRoom gameRoom;
+
 
     @Builder
     public ValidateRoom(String participants, boolean host, boolean ready, GameRoom gameRoom) {
