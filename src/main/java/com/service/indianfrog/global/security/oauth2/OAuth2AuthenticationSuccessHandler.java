@@ -1,6 +1,7 @@
 package com.service.indianfrog.global.security.oauth2;
 
 import com.service.indianfrog.global.jwt.JwtUtil;
+import com.service.indianfrog.global.security.UserDetailsImpl;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
 import com.service.indianfrog.global.security.filter.CustomResponseUtil;
 import jakarta.servlet.ServletException;
@@ -35,6 +36,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         String provider = oAuth2User.getAttribute("provider");
+        String nickname = ((UserDetailsImpl) authentication.getPrincipal()).getUser().getNickname();
         /*
         * CustomOAuth2UserService에서 셋팅한 로그인한 회원 존재 여부를 가져온다.
         * OAuth2User로 부터 Role을 얻어온다.*/
@@ -49,7 +51,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 회원이 존재할경우
         if (isExist) {
 
-            GeneratedToken tokens = jwtUtil.generateToken(email, role);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role,nickname);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
@@ -60,7 +62,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             CustomResponseUtil.success(response, null);
         } else {
             // 새로 생성된 사용자의 토큰 생성 및 전달
-            GeneratedToken tokens = jwtUtil.generateToken(email, role);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role,nickname);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 

@@ -59,21 +59,22 @@ public class JwtUtil {
     }
 
 
-    public GeneratedToken generateToken(String email, String role) {
-        String refreshToken = generateRefreshToken(email, role);
-        String accessToken = generateAccessToken(email, role);
+    public GeneratedToken generateToken(String email, String role, String nickname) {
+        String refreshToken = generateRefreshToken(email, role, nickname);
+        String accessToken = generateAccessToken(email, role, nickname);
 
         // 토큰을 Redis에 저장한다.
         tokenService.saveTokenInfo(email, refreshToken, accessToken);
         return new GeneratedToken(accessToken, refreshToken);
     }
 
-    public String generateRefreshToken(String email, String role) {
+    public String generateRefreshToken(String email, String role, String nickname) {
         Date date = new Date();
 
         return Jwts.builder()
                 .setSubject(email) // 사용자 식별자값(ID)
                 .claim(AUTHORIZATION_KEY, role) // 사용자 권한
+                .claim("nickname", nickname)
                 .setExpiration(new Date(date.getTime() + TOKEN_TIME)) // 만료 시간
                 .setIssuedAt(date) // 발급일
                 .signWith(refreshKey, signatureAlgorithm) // 암호화 알고리즘
@@ -81,12 +82,13 @@ public class JwtUtil {
     }
 
 
-    public String generateAccessToken(String email, String role) {
+    public String generateAccessToken(String email, String role, String nickname) {
         Date date = new Date();
         return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(email) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
+                        .claim("nickname", nickname)
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME/24)) // 1hour
                         .setIssuedAt(date) // 발급일
                         .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
