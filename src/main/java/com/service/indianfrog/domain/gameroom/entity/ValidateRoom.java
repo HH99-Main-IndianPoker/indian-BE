@@ -36,4 +36,6 @@ public class ValidateRoom {
         this.host = host;
     }
 
+
+
 }
