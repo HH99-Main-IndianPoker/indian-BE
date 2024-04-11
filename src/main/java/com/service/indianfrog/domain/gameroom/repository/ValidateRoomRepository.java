@@ -19,4 +19,6 @@ public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long
 
     ValidateRoom findByHostTrue();
     ValidateRoom findByHostFalse();
+
+    List<ValidateRoom> findAllByReadyTrue();
 }

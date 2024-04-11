@@ -19,6 +19,9 @@ public class ValidateRoom {
     @Column(name = "host")
     private boolean host;
 
+    @Column(name = "ready")
+    private boolean ready;
+
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private GameRoom gameRoom;
@@ -34,6 +37,10 @@ public class ValidateRoom {
 
     public void setHost(boolean host) {
         this.host = host;
+    }
+
+    public void revert(boolean isReady){
+        this.ready = !isReady;
     }
 
 }
