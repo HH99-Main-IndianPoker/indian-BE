@@ -47,7 +47,7 @@ public class GameSessionServiceTest {
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
-        Object result1 = gameSessionService.processUserChoices(choice1);
+        gameSessionService.processUserChoices(choice1);
         Object result2 = gameSessionService.processUserChoices(choice2);
 
         assertInstanceOf(GameStatus.class, result2); // 두 번째 선택 결과가 GameStatus 여야 함
