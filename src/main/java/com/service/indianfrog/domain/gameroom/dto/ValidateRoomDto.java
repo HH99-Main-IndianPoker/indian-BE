@@ -6,11 +6,16 @@ import lombok.Getter;
 public class ValidateRoomDto {
     private Long validId;
     private String participant;
+    private boolean host;
 
 
-    public ValidateRoomDto(Long validId, String participant) {
+
+
+    public ValidateRoomDto(Long validId, String participant, boolean host) {
         this.validId = validId;
         this.participant = participant;
+        this.host = host;
+
     }
 
 }
