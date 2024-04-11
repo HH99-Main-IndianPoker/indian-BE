@@ -3,7 +3,7 @@ package com.service.indianfrog.domain.gameroom.service;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
-import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.ParticipantInfo;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
@@ -85,26 +85,30 @@ public class GameRoomService {
     @Transactional
     public GameRoomCreateResponseDto createGameRoom(GameRoomCreateRequestDto gameRoomDto, Principal principal) {
         String email = principal.getName();
-        userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         LocalDateTime now = LocalDateTime.now();
+
         GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
 
-        ValidateRoom validateRoom = new ValidateRoom();
-        validateRoom.setParticipants(email);
-        validateRoom.setGameRoom(savedGameRoom);
-        validateRoom.setHost(true);
-        validateRoomRepository.save(validateRoom);
+        ValidateRoom.builder()
+                .participants(user.getNickname())
+                .host(true)
+                .gameRoom(savedGameRoom)
+                .build();
 
         return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), now);
     }
 
 
     @Transactional
-    public ValidateRoomDto addParticipant(Long roomId, Principal participant) {
+    public ParticipantInfo addParticipant(Long roomId, Principal participant) {
         String email = participant.getName();
         userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
@@ -117,12 +121,12 @@ public class GameRoomService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_USER.getMessage());
         }
 
-        ValidateRoom validateRoom = new ValidateRoom();
-        validateRoom.setParticipants(email);
-        validateRoom.setGameRoom(gameRoom);
-        validateRoom = validateRoomRepository.save(validateRoom);
+        ValidateRoom validateRoom = ValidateRoom.builder()
+                .participants(user.getNickname())
+                .gameRoom(gameRoom)
+                .build();
 
-        return new ValidateRoomDto(validateRoom.getValidId(), validateRoom.getParticipants(), validateRoom.isHost());
+        return new ParticipantInfo(validateRoom.getParticipants(), validateRoom.isHost(), user.getPoints());
     }
 
     @Transactional
@@ -146,8 +150,7 @@ public class GameRoomService {
             List<ValidateRoom> remainParticipant = validateRoomRepository.findAllByGameRoomRoomId(roomId);
             if (!remainParticipant.isEmpty()) {
                 ValidateRoom newHost = remainParticipant.get(0); //남아있는 첫번째 참가자를 방장으로 지정, 만약 참가자가 여러명이면 거의 랜덤?
-                newHost.setHost(true);
-                validateRoomRepository.save(newHost);
+                newHost.updateHost();
             }
         }
 

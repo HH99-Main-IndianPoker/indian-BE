@@ -1,6 +1,8 @@
 package com.service.indianfrog.domain.gameroom.entity;
 
+import com.rabbitmq.client.LongString;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 
 @Entity
@@ -26,21 +28,20 @@ public class ValidateRoom {
     @JoinColumn(name = "room_id", nullable = false)
     private GameRoom gameRoom;
 
-
-    public void setParticipants(String participants) {
+    @Builder
+    public ValidateRoom(String participants, boolean host, boolean ready, GameRoom gameRoom) {
         this.participants = participants;
-    }
-
-    public void setGameRoom(GameRoom gameRoom) {
-        this.gameRoom = gameRoom;
-    }
-
-    public void setHost(boolean host) {
         this.host = host;
+        this.ready = ready;
+        this.gameRoom = gameRoom;
     }
 
     public void revert(boolean isReady){
         this.ready = !isReady;
+    }
+
+    public void updateHost() {
+        this.host = true;
     }
 
 }
