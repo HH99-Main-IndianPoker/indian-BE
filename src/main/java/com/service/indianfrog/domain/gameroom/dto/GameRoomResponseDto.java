@@ -11,6 +11,7 @@ public class GameRoomResponseDto {
             Long roomId,
             String roomName,
             int participantCount,
+            String hostNickname,
 
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Seoul/Asia")
             LocalDateTime createdAt
@@ -19,6 +20,7 @@ public class GameRoomResponseDto {
     public record GetGameRoomResponseDto(
             Long roomId,
             String roomName,
-            int participantCount
+            int participantCount,
+            String hostNickname
     ){}
 }

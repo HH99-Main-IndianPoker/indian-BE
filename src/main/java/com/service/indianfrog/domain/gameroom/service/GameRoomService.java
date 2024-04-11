@@ -48,13 +48,31 @@ public class GameRoomService {
     public GetGameRoomResponseDto getGameRoomById(Long roomId) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+
+        String hostNickname = gameRoom.getValidateRooms().stream()
+                .filter(ValidateRoom::isHost)
+                .findFirst()
+                .map(ValidateRoom::getParticipants)
+                .orElse(null);
+
         int participantCount = gameRoom.getValidateRooms().size();
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount);
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostNickname);
     }
 
     public Page<GetGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
         return gameRoomRepository.findAll(pageable)
-                .map(gameRoom -> new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getValidateRooms().size()));
+                .map(gameRoom -> {
+                    // 각 게임방의 방장 닉네임 찾기
+                    String hostNickname = gameRoom.getValidateRooms().stream()
+                            .filter(ValidateRoom::isHost)
+                            .findFirst()
+                            .map(ValidateRoom::getParticipants)
+                            .orElse(null);
+
+                    int participantCount = gameRoom.getValidateRooms().size();
+
+                    return new GetGameRoomResponseDto(gameRoom.getRoomId(),gameRoom.getRoomName(),participantCount,hostNickname);
+                });
     }
 
     public void deleteGameRoom(Long roomId) {
@@ -98,7 +116,7 @@ public class GameRoomService {
         validateRoom.setHost(true);
         validateRoomRepository.save(validateRoom);
 
-        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, now);
+        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, nickname, now);
     }
 
     @Transactional
@@ -142,13 +160,23 @@ public class GameRoomService {
         boolean wasHost = validateRooms.stream().anyMatch(ValidateRoom::isHost);
         validateRooms.forEach(validateRoomRepository::delete);
 
+        String hostNickname = null; // 방장의 닉네임을 담을 변수 초기화
+
         if (wasHost) {
-            List<ValidateRoom> remainParticipant = validateRoomRepository.findAllByGameRoomRoomId(roomId);
-            if (!remainParticipant.isEmpty()) {
-                ValidateRoom newHost = remainParticipant.get(0);
+            List<ValidateRoom> remainingParticipants = validateRoomRepository.findAllByGameRoomRoomId(roomId);
+            if (!remainingParticipants.isEmpty()) {
+                ValidateRoom newHost = remainingParticipants.get(0);
                 newHost.setHost(true);
                 validateRoomRepository.save(newHost);
+                hostNickname = newHost.getParticipants(); // 새 방장의 닉네임 설정
             }
+        } else {
+            // wasHost가 아니라면, 기존 방장의 닉네임을 유지
+            hostNickname = validateRoomRepository.findAllByGameRoomRoomId(roomId).stream()
+                    .filter(ValidateRoom::isHost)
+                    .findFirst()
+                    .map(ValidateRoom::getParticipants)
+                    .orElse(null);
         }
 
         boolean isRoomEmpty = !validateRoomRepository.existsByGameRoomRoomId(roomId);
@@ -160,12 +188,11 @@ public class GameRoomService {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
-        // 남은 참가자의 수를 계산
         int remainingParticipantCount = validateRoomRepository.findAllByGameRoomRoomId(roomId).size();
 
-        // 수정된 GetGameRoomResponseDto 생성자를 사용하여 남은 참가자 수를 포함하여 반환
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), remainingParticipantCount);
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), remainingParticipantCount, hostNickname);
     }
+
 
 
     @Transactional
