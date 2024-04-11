@@ -18,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class EndGameServiceTest {
@@ -39,7 +40,7 @@ public class EndGameServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        gameRoom = new GameRoom();
+        gameRoom = mock(GameRoom.class);
         game = new Game(playerOne, playerTwo);
 
         Card playerOneCard = Card.DECK1_CARD1;
