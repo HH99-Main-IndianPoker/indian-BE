@@ -111,17 +111,18 @@ public class GameRoomService {
         LocalDateTime now = LocalDateTime.now();
         GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
 
-        ValidateRoom validateRoom = new ValidateRoom();
-        validateRoom.setParticipants(nickname);
-        validateRoom.setGameRoom(savedGameRoom);
-        validateRoom.setHost(true);
+        ValidateRoom validateRoom = new ValidateRoom().builder()
+                .participants(nickname)
+                .gameRoom(savedGameRoom)
+                .host(true)
+                .build();
         validateRoomRepository.save(validateRoom);
 
         return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, nickname, savedGameRoom.getGameState(), now);
     }
 
     @Transactional
-    public ValidateRoomDto addParticipant(Long roomId, Principal participant) {
+    public ParticipantInfo addParticipant(Long roomId, Principal participant) {
         String email = participant.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
@@ -138,12 +139,13 @@ public class GameRoomService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_USER.getMessage());
         }
 
-        ValidateRoom validateRoom = new ValidateRoom();
-        validateRoom.setParticipants(nickname);
-        validateRoom.setGameRoom(gameRoom);
+        ValidateRoom validateRoom = new ValidateRoom().builder()
+                .participants(nickname)
+                .gameRoom(gameRoom)
+                .build();
         validateRoom = validateRoomRepository.save(validateRoom);
 
-        return new ValidateRoomDto(validateRoom.getValidId(), validateRoom.getParticipants(), validateRoom.isHost());
+        return new ParticipantInfo(validateRoom.getParticipants(), validateRoom.isHost(), user.getPoints());
     }
 
     @Transactional
@@ -167,9 +169,7 @@ public class GameRoomService {
             List<ValidateRoom> remainingParticipants = validateRoomRepository.findAllByGameRoomRoomId(roomId);
             if (!remainingParticipants.isEmpty()) {
                 ValidateRoom newHost = remainingParticipants.get(0);
-                newHost.setHost(true);
-                validateRoomRepository.save(newHost);
-                hostName = newHost.getParticipants(); // 새 방장의 닉네임 설정
+                newHost.updateHost();
             }
         } else {
             // wasHost가 아니라면, 기존 방장의 닉네임을 유지
