@@ -27,6 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -71,17 +72,29 @@ public class WebSecurityConfig {
     }
 
     // 시큐리티 CORS 설정
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+//    @Bean
+//    CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        // 배포시 허용할 출처 추가하기
+//        configuration.addAllowedOriginPattern("*");
+//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+//        configuration.addAllowedHeader("*");
+//        configuration.setExposedHeaders(List.of("Authorization","Set-Cookie"));
+//        configuration.setAllowCredentials(true);
+//        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control","Set-Cookie"));
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
+
+    public CorsConfigurationSource configurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 배포시 허용할 출처 추가하기
-        configuration.addAllowedOriginPattern("*");
-        configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedOriginPattern("*");
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
-        configuration.addExposedHeader("Authorization");
-//        configuration.setAllowedHeaders(Arrays.asList("Authorization", "TOKEN_ID", "X-Requested-With", "Content-Type", "Content-Length", "Cache-Control"));
+        configuration.setExposedHeaders(List.of("Authorization","Set-Cookie"));
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -93,7 +106,7 @@ public class WebSecurityConfig {
         http.csrf((csrf) -> csrf.disable());
 
         // 시큐리티 CORS 빈 설정
-        http.cors((cors) -> cors.configurationSource(corsConfigurationSource()));
+        http.cors((cors) -> cors.configurationSource(configurationSource()));
 
         // JWT 방식을 사용하기 위한 설정
         http.sessionManagement((sessionManagement) ->
