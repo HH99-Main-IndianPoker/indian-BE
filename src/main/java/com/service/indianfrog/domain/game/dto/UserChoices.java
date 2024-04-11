@@ -5,15 +5,13 @@ import lombok.Getter;
 
 @Getter
 public class UserChoices {
-    private Long gameRoomId;
-    private String userId;
+    private String nickname;
     private UserChoice userChoice;
 
 
-    public UserChoices(Long gameRoomId, String userId, UserChoice userChoice) {
+    public UserChoices(Long gameRoomId, String nickname, UserChoice userChoice) {
 
-        this.gameRoomId = gameRoomId;
-        this.userId = userId;
+        this.nickname = nickname;
         this.userChoice = userChoice;
     }
 }

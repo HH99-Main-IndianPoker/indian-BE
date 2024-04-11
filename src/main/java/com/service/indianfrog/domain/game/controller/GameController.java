@@ -55,7 +55,7 @@ public class GameController {
                             gamePlayService.playerAction(gameRoomId, gameBetting.getNickname(), gameBetting.getAction());
                     case "END" -> endGameService.endRound(gameRoomId);
                     case "GAME_END" -> endGameService.endGame(gameRoomId);
-                    case "USER_CHOICE" -> gameSessionService.processUserChoices(userChoices);
+                    case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, userChoices);
                     default -> throw new IllegalStateException("Unexpected value: " + gameState);
                 };
                 // 공통 메시지 전송

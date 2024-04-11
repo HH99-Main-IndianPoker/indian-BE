@@ -14,10 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,8 +45,8 @@ public class GameSessionServiceTest {
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
-        gameSessionService.processUserChoices(choice1);
-        Object result2 = gameSessionService.processUserChoices(choice2);
+        gameSessionService.processUserChoices(gameRoomId, choice1);
+        Object result2 = gameSessionService.processUserChoices(gameRoomId, choice2);
 
         assertInstanceOf(GameStatus.class, result2); // 두 번째 선택 결과가 GameStatus 여야 함
         assertEquals(GameState.START, ((GameStatus) result2).getGameState()); // 두 번째 선택 결과 상태 검증
@@ -67,8 +65,8 @@ public class GameSessionServiceTest {
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
-        gameSessionService.processUserChoices(choice1); // 첫 번째 유저 선택 처리
-        Object result = gameSessionService.processUserChoices(choice2); // 두 번째 유저 선택 처리
+        gameSessionService.processUserChoices(gameRoomId, choice1); // 첫 번째 유저 선택 처리
+        Object result = gameSessionService.processUserChoices(gameRoomId, choice2); // 두 번째 유저 선택 처리
 
         assertInstanceOf(GameStatus.class, result);
         assertEquals(GameState.LEAVE, ((GameStatus) result).getGameState());
@@ -87,8 +85,8 @@ public class GameSessionServiceTest {
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
-        gameSessionService.processUserChoices(choice1); // 첫 번째 유저 선택 처리
-        Object result = gameSessionService.processUserChoices(choice2); // 두 번째 유저 선택 처리
+        gameSessionService.processUserChoices(gameRoomId, choice1); // 첫 번째 유저 선택 처리
+        Object result = gameSessionService.processUserChoices(gameRoomId, choice2); // 두 번째 유저 선택 처리
 
         assertInstanceOf(GameStatus.class, result);
         assertEquals(GameState.ENTER, ((GameStatus) result).getGameState());

@@ -3,16 +3,14 @@ package com.service.indianfrog.domain.game.service;
 import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.GameState;
-import com.service.indianfrog.domain.game.entity.UserChoice;
 import com.service.indianfrog.domain.game.utils.GameValidator;
+import com.service.indianfrog.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,19 +27,20 @@ public class GameSessionService {
     private final Map<Long, Map<String, String>> gameChoices = new ConcurrentHashMap<>();
 
     @Transactional
-    public Object processUserChoices(UserChoices choices) {
-        gameValidator.validateAndRetrieveGameRoom(choices.getGameRoomId());
+    public Object processUserChoices(Long gameRoomId, UserChoices choices) {
+        /* 입력 값 검증*/
+        gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+        User player = gameValidator.findUserByNickname(choices.getNickname());
 
-        Long gameRoomId = choices.getGameRoomId();
-        String userId = choices.getUserId();
+        String nickname = player.getNickname();
         String choice = choices.getUserChoice().toString();
 
         /* 유저 선택 저장*/
-        gameChoices.computeIfAbsent(gameRoomId, k -> new ConcurrentHashMap<>()).put(userId, choice);
+        gameChoices.computeIfAbsent(gameRoomId, k -> new ConcurrentHashMap<>()).put(nickname, choice);
 
         /* 모든 유저의 선택이 완료되었는지 확인*/
         if (gameChoices.get(gameRoomId).size() == 2) {
-            return new GameStatus(gameRoomId, userId, determineActionAndProceed(gameRoomId));
+            return new GameStatus(gameRoomId, nickname, determineActionAndProceed(gameRoomId));
         }
 
         return "다른 플레이어의 선택을 기다려주세요";
