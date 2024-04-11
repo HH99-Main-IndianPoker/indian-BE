@@ -48,11 +48,13 @@ public class GameRoomService {
     public GetGameRoomResponseDto getGameRoomById(Long roomId) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+        int participantCount = gameRoom.getValidateRooms().size();
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount);
     }
 
     public Page<GetGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
-        return gameRoomRepository.findAll(pageable).map(gameRoom -> new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName()));
+        return gameRoomRepository.findAll(pageable)
+                .map(gameRoom -> new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getValidateRooms().size()));
     }
 
     public void deleteGameRoom(Long roomId) {
@@ -96,7 +98,7 @@ public class GameRoomService {
         validateRoom.setHost(true);
         validateRoomRepository.save(validateRoom);
 
-        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), now);
+        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, now);
     }
 
     @Transactional
@@ -158,8 +160,13 @@ public class GameRoomService {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName());
+        // 남은 참가자의 수를 계산
+        int remainingParticipantCount = validateRoomRepository.findAllByGameRoomRoomId(roomId).size();
+
+        // 수정된 GetGameRoomResponseDto 생성자를 사용하여 남은 참가자 수를 포함하여 반환
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), remainingParticipantCount);
     }
+
 
     @Transactional
     public void removeParticipantBySessionId(String sessionId) {
