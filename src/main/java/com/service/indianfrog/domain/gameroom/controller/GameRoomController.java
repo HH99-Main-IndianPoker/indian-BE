@@ -2,7 +2,7 @@ package com.service.indianfrog.domain.gameroom.controller;
 
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
-import com.service.indianfrog.domain.gameroom.dto.ValidateRoomDto;
+import com.service.indianfrog.domain.gameroom.dto.ParticipantInfo;
 import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import com.service.indianfrog.global.dto.ResponseDto;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +59,7 @@ public class GameRoomController {
 
     @MessageMapping("/{gameRoomId}/join")
     public void joinGame(@DestinationVariable Long gameRoomId, Principal principal) {
-        ValidateRoomDto newParticipant = gameRoomService.addParticipant(gameRoomId, principal);
+        ParticipantInfo newParticipant = gameRoomService.addParticipant(gameRoomId, principal);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/join", newParticipant);
     }
 
