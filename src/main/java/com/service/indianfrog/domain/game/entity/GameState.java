@@ -17,6 +17,7 @@ public enum GameState {
     * USER_CHOICE : 유저 선택(게임 재시작, 게임 나가기)*/
     ENTER("ENTER"),
     READY("READY"),
+    UNREADY("UNREADY"),
     NO_ONE_READY("NO_ONE_READY"),
     ALL_READY("ALL_READY"),
     START("START"),
