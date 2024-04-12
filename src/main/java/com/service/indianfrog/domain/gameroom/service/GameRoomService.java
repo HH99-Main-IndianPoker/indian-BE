@@ -18,6 +18,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -164,12 +165,12 @@ public class GameRoomService {
     /**
      * 게임방에 참가자를 추가
      * @param roomId 참가할 게임방 ID
-     * @param participant 참가자 정보
+     * @param userDetails 참가자 정보
      * @return 추가된 참가자의 정보
      */
     @Transactional
-    public ParticipantInfo addParticipant(Long roomId, Principal participant) {
-        String email = participant.getName();
+    public ParticipantInfo addParticipant(Long roomId, UserDetails userDetails) {
+        String email = userDetails.getUsername();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         String nickname = user.getNickname();

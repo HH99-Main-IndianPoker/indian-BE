@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -81,11 +83,11 @@ public class GameRoomController {
     /**
      * 게임 방에 참가
      * @param gameRoomId 게임방 ID
-     * @param principal 참가자 정보
+     * @param userDetails 참가자 정보
      */
     @PostMapping("/{gameRoomId}/join")
-    public ResponseEntity<Object> joinGameRoom(@PathVariable Long gameRoomId, Principal principal) {
-        ParticipantInfo newParticipant = gameRoomService.addParticipant(gameRoomId, principal);
+    public ResponseEntity<Object> joinGameRoom(@PathVariable Long gameRoomId, @AuthenticationPrincipal UserDetails userDetails) {
+        ParticipantInfo newParticipant = gameRoomService.addParticipant(gameRoomId, userDetails);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/join", newParticipant);
         return ResponseEntity.ok().build();
     }
