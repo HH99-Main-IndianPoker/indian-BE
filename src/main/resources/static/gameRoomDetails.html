@@ -62,17 +62,18 @@
 
   function sendMessage() {
     const messageContent = document.getElementById('chatMessageInput').value;
-    const nickname = localStorage.getItem('nickname');
-    if(messageContent && stompClient && nickname && roomId) {
+    const nickname = localStorage.getItem('nickname');  // 로컬 스토리지에서 사용자 닉네임을 가져옴
+    if (messageContent && stompClient && nickname && roomId) {
       const chatMessage = {
         content: messageContent,
-        sender: nickname,
+        sender: nickname,  // 닉네임 사용
         type: "CHAT"
       };
       stompClient.send(`/app/chat.sendMessage/${roomId}`, {}, JSON.stringify(chatMessage));
       document.getElementById('chatMessageInput').value = '';
     }
   }
+
 
   window.addEventListener('beforeunload', function(event) {
     leaveRoom();

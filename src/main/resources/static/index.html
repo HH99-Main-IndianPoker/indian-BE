@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <title>Game Room</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
 <body>
 <h2>회원가입</h2>
@@ -26,13 +24,12 @@
 <h2>게임방</h2>
 <button id="createRoom" disabled>게임방 생성</button>
 게임방 ID: <input type="text" id="roomId" placeholder="참여할 게임방 ID 입력"><br>
-게임방 이름: <input type="text" id="roomName" placeholder="생성할 게임방 이름 입력"><br>
+게임방 이름: <input type="text" id="roomName" placeholder="생성할 게임방 이름 입력" disabled><br>
 <button id="joinRoom" disabled>게임방 참여</button>
 <button id="leaveRoom" disabled>게임방 나가기</button>
 
 <script>
     const apiUrl = 'http://localhost:8080';
-    let stompClient = null;
 
     document.getElementById('registerForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -57,50 +54,45 @@
         axios.post(`${apiUrl}/user/login`, { email, password })
             .then(response => {
                 localStorage.setItem('authToken', response.headers['authorization']);
-                localStorage.setItem('nickname', response.data.nickname); // 가정: 서버 응답에 닉네임이 포함되어 있음
+                localStorage.setItem('nickname', response.data.nickname);
                 document.getElementById('createRoom').disabled = false;
+                document.getElementById('roomName').disabled = false;
                 document.getElementById('joinRoom').disabled = false;
                 alert('로그인 성공');
-                connectWebSocket();
             })
             .catch(error => alert('로그인 실패'));
     });
 
-    const connectWebSocket = () => {
-        const socket = new SockJS(`${apiUrl}/ws`);
-        stompClient = Stomp.over(socket);
-        const authToken = localStorage.getItem('authToken');
-        stompClient.connect({'Authorization': authToken}, function(frame) {
-            console.log('Connected: ' + frame);
-        }, function(error) {
-            console.log('WebSocket connection error: ' + error);
-        });
-    };
-
     document.getElementById('createRoom').addEventListener('click', function() {
-        const authToken = localStorage.getItem('authToken');
         const roomName = document.getElementById('roomName').value;
         axios.post(`${apiUrl}/gameRoom/create`, { name: roomName }, {
-            headers: { 'Authorization': authToken }
+            headers: { 'Authorization': localStorage.getItem('authToken') }
         })
             .then(response => {
-                const roomId = response.data.data.roomId;
-                alert('게임방이 생성되었습니다. 방 ID: ' + roomId);
+                const roomId = response.data.data.roomId; // 가정: 응답에 방 ID 포함
                 document.getElementById('roomId').value = roomId;
-                document.getElementById('leaveRoom').disabled = false;
+                alert(`게임방 '${roomName}'이 생성되었습니다. 방 ID: ${roomId}`);
                 window.location.href = `gameRoomDetails.html?roomId=${roomId}`;
             })
-            .catch(error => alert('게임방 생성 실패'));
+            .catch(error => {
+                console.error('게임방 생성 실패', error);
+                alert('게임방 생성 실패');
+            });
     });
-
 
     document.getElementById('joinRoom').addEventListener('click', function() {
         const roomId = document.getElementById('roomId').value;
-        if(stompClient && roomId) {
-            stompClient.send(`/app/${roomId}/join`, {}, "");
-            alert(`Attempting to join game room ${roomId}`);
-            window.location.href = `gameRoomDetails.html?roomId=${roomId}`;
-        }
+        axios.post(`${apiUrl}/gameRoom/${roomId}/join`, {}, {
+            headers: { 'Authorization': localStorage.getItem('authToken') }
+        })
+            .then(response => {
+                alert(`게임방 ${roomId}에 성공적으로 참여하였습니다.`);
+                window.location.href = `gameRoomDetails.html?roomId=${roomId}`;
+            })
+            .catch(error => {
+                console.error('게임방 참여 오류:', error);
+                alert(`게임방 참여 실패: ${error.response ? error.response.data.message : '서버 응답 없음'}`);
+            });
     });
 
 </script>
