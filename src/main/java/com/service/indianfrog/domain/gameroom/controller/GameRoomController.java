@@ -90,8 +90,6 @@ public class GameRoomController {
         return ResponseEntity.ok().build();
     }
 
-
-
     /**
      * 게임 방에서 나갸기
      * @param gameRoomId 게임방 ID
@@ -103,6 +101,4 @@ public class GameRoomController {
         gameRoomService.removeParticipant(gameRoomId, principal);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/leave", principal.getName());
     }
-
-
 }
