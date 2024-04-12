@@ -15,6 +15,7 @@ import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class GameRoomService {
 
     private final GameRoomRepository gameRoomRepository;
@@ -192,7 +194,18 @@ public class GameRoomService {
                 .build();
         validateRoom = validateRoomRepository.save(validateRoom);
 
-        return new ParticipantInfo(validateRoom.getParticipants(), validateRoom.isHost(), user.getPoints());
+        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomId(roomId);
+
+        String host = validateRooms.stream().filter(ValidateRoom::isHost).map(ValidateRoom::getParticipants).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        String participant = validateRooms.stream().filter(p -> !p.isHost()).map(ValidateRoom::getParticipants).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+        int participantPoint = user.getPoints();
+
+        User hostInfo = userRepository.findByNickname(host);
+
+        int hostPoint = hostInfo.getPoints();
+
+        return new ParticipantInfo(participant, host, participantPoint, hostPoint);
     }
 
 
