@@ -89,7 +89,7 @@ public class GameRoomController {
     public ResponseEntity<Object> joinGameRoom(@PathVariable Long gameRoomId, @AuthenticationPrincipal UserDetails userDetails) {
         ParticipantInfo newParticipant = gameRoomService.addParticipant(gameRoomId, userDetails);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/join", newParticipant);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(newParticipant);
     }
 
     /**
