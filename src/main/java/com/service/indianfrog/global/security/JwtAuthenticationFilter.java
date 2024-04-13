@@ -23,7 +23,7 @@ import java.net.URLEncoder;
 
 
 @Slf4j
-public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter  {
 
     private final JwtUtil jwtUtil;
 
@@ -65,11 +65,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         GeneratedToken tokens = jwtUtil.generateToken(email, String.valueOf(role), nickname);
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-
-        /*
-        * 1.401-?리이슈.나머지는 백에서처리. 필터에서 로테이트 or 리이슈 정하기.
-            2.도메인 맞추기
-        * */
 
         String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
         Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);

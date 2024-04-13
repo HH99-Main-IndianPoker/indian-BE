@@ -5,6 +5,7 @@ import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import com.service.indianfrog.global.jwt.JwtUtil;
+import com.service.indianfrog.global.security.dto.GeneratedToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,7 @@ public class RefreshTokenService {
             User userNickname = userRepository.findByNickname(user.get().getNickname());
 
             String newAccessToken = jwtUtil.generateAccessToken(resultToken.getId(), role, String.valueOf(userNickname));
+
             resultToken.updateAccessToken(newAccessToken);
             tokenRepository.save(resultToken);
             return newAccessToken;
