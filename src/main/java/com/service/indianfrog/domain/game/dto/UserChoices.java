@@ -9,8 +9,7 @@ public class UserChoices {
     private UserChoice userChoice;
 
 
-    public UserChoices(Long gameRoomId, String nickname, UserChoice userChoice) {
-
+    public UserChoices(String nickname, UserChoice userChoice) {
         this.nickname = nickname;
         this.userChoice = userChoice;
     }

@@ -44,6 +44,7 @@ public class GameController {
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
                                 @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
 
+        log.info(gameState);
         switch (gameState) {
             case "START" -> {
                 StartRoundResponse response = startGameService.startRound(gameRoomId);
