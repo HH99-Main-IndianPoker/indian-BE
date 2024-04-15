@@ -29,8 +29,18 @@ public class GameValidator {
     @Transactional
     public Game initializeOrRetrieveGame(GameRoom gameRoom) {
         Game game = gameRoom.getCurrentGame();
-        String host = repositoryHolder.validateRoomRepository.findByHostTrue().getParticipants();
-        String participant = repositoryHolder.validateRoomRepository.findByHostFalse().getParticipants();
+        List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
+
+        String host = validateRooms.stream()
+                .filter(ValidateRoom::isHost)
+                .map(ValidateRoom::getParticipants)
+                .findFirst()
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        String participant = validateRooms.stream()
+                .filter(p -> !p.isHost())
+                .map(ValidateRoom::getParticipants)
+                .findFirst()
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         User playerOne = repositoryHolder.userRepository.findByNickname(host);
         User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
