@@ -29,4 +29,7 @@ public class RefreshToken implements Serializable {
         this.accessToken = accessToken;
     }
 
+    public void updateRefreshToken(String refreshToken1) {
+        this.refreshToken = refreshToken1;
+    }
 }

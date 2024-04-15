@@ -2,6 +2,7 @@ package com.service.indianfrog.global.config;
 
 import com.service.indianfrog.domain.gameroom.dto.AuthenticatedUser;
 import com.service.indianfrog.global.jwt.JwtUtil;
+import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -50,7 +51,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             token = token.substring(7);
 
             // jwt로 유효성 검사
-            if (jwtUtil.verifyToken(token)) {
+            if (jwtUtil.verifyAccessToken(token)== TokenVerificationResult.VALID) {
                 String email = jwtUtil.getUid(token);
 
                 // 이메일을 이용해서 인증객체 생성. new AuthenticatedUser(email) 이걸로 principal 사용.
