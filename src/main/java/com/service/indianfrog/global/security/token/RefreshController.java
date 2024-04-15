@@ -34,7 +34,7 @@ public class RefreshController {
     @PostMapping("/token/refresh")
     public ResponseEntity<TokenResponseStatus> refresh(@RequestHeader("Authorization") final String accessToken) {
 
-        String newAccessToken = tokenService.republishAccessToken(accessToken);
+        String newAccessToken = tokenService.republishAccessTokenWithRotate(accessToken);
         if (StringUtils.hasText(newAccessToken)) {
             return ResponseEntity.ok(TokenResponseStatus.addStatus(200, newAccessToken));
         }

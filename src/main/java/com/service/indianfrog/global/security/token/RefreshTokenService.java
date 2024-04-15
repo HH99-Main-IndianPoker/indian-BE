@@ -34,7 +34,7 @@ public class RefreshTokenService {
     * 2.RefreshToken 객체를 꺼내온다.
     * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
     @Transactional
-    public String republishAccessToken(String accessToken) {
+    public String republishAccessTokenWithRotate(String accessToken) {
         Optional<RefreshToken> refreshToken = tokenRepository.findByAccessToken(accessToken);
         log.info(String.valueOf(refreshToken.get().getRefreshToken()));
         log.info(String.valueOf(accessToken));
@@ -44,12 +44,18 @@ public class RefreshTokenService {
             Optional<User> user = userRepository.findByEmail(resultToken.getId());
             String role = String.valueOf(user);
             User userNickname = userRepository.findByNickname(user.get().getNickname());
+            /*
+            * 1.remove accesstoken
+            * 2.generate tokens
+            * 3.update each token*/
+            removeRefreshToken(accessToken);
 
-            String newAccessToken = jwtUtil.generateAccessToken(resultToken.getId(), role, String.valueOf(userNickname));
+            GeneratedToken generatedToken = jwtUtil.generateToken(resultToken.getId(), role, String.valueOf(userNickname));
 
-            resultToken.updateAccessToken(newAccessToken);
+            resultToken.updateAccessToken(resultToken.getAccessToken());
+            resultToken.updateRefreshToken(resultToken.getAccessToken());
             tokenRepository.save(resultToken);
-            return newAccessToken;
+            return generatedToken.getAccessToken();
         }
 
         throw new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_REFRESH_TOKEN.getMessage());
