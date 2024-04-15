@@ -63,15 +63,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String nickname = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getNickname();
         String role = "USER";
         GeneratedToken tokens = jwtUtil.generateToken(email, String.valueOf(role), nickname);
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-
-        String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
-        Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
-        response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
+        insertInHeaderWithAccessToken(response, tokens);
+        insertSetCookieWithRefreshToken(response, tokens);
 
         CustomResponseUtil.success(response, null);
     }
+
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) {
@@ -92,5 +89,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         cookie.setPath("/");
 
         return cookie;
+    }
+
+    private void insertSetCookieWithRefreshToken(HttpServletResponse response, GeneratedToken tokens) throws UnsupportedEncodingException {
+        String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
+        Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
+        response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
+    }
+
+    private static void insertInHeaderWithAccessToken(HttpServletResponse response, GeneratedToken tokens) {
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
     }
 }
