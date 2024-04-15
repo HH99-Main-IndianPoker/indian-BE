@@ -40,8 +40,8 @@ public class GameSessionServiceTest {
         GameRoom gameRoom = mock(GameRoom.class);
         String userOneId = "1";
         String userTwoId = "2";
-        UserChoices choice1 = new UserChoices(gameRoomId, userOneId, UserChoice.PLAY_AGAIN);
-        UserChoices choice2 = new UserChoices(gameRoomId, userTwoId, UserChoice.PLAY_AGAIN);
+        UserChoices choice1 = new UserChoices(userOneId, UserChoice.PLAY_AGAIN);
+        UserChoices choice2 = new UserChoices(userTwoId, UserChoice.PLAY_AGAIN);
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
@@ -60,8 +60,8 @@ public class GameSessionServiceTest {
         GameRoom gameRoom = mock(GameRoom.class);
         String userOneId = "1";
         String userTwoId = "2";
-        UserChoices choice1 = new UserChoices(gameRoomId, userOneId, UserChoice.LEAVE);
-        UserChoices choice2 = new UserChoices(gameRoomId, userTwoId, UserChoice.LEAVE);
+        UserChoices choice1 = new UserChoices(userOneId, UserChoice.LEAVE);
+        UserChoices choice2 = new UserChoices(userTwoId, UserChoice.LEAVE);
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 
@@ -80,8 +80,8 @@ public class GameSessionServiceTest {
         GameRoom gameRoom = mock(GameRoom.class);
         String userOneId = "1";
         String userTwoId = "2";
-        UserChoices choice1 = new UserChoices(gameRoomId, userOneId, UserChoice.PLAY_AGAIN);
-        UserChoices choice2 = new UserChoices(gameRoomId, userTwoId, UserChoice.LEAVE);
+        UserChoices choice1 = new UserChoices(userOneId, UserChoice.PLAY_AGAIN);
+        UserChoices choice2 = new UserChoices(userTwoId, UserChoice.LEAVE);
 
         when(gameValidator.validateAndRetrieveGameRoom(gameRoomId)).thenReturn(gameRoom);
 

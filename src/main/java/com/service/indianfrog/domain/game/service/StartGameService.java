@@ -25,13 +25,11 @@ public class StartGameService {
     /* 생성자를 통한 필드 주입 */
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
-    private final GameRoomService gameRoomService;
     private final GameRoomRepository gameRoomRepository;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService,GameRoomService gameRoomService, GameRoomRepository gameRoomRepository) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
-        this.gameRoomService = gameRoomService;
         this.gameRoomRepository = gameRoomRepository;
     }
 
@@ -70,11 +68,9 @@ public class StartGameService {
     private int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
-        int min = Math.min(playerOnePoints, playerTwoPoints);
-        if (min < 2000) {
-            return min;
-        }
-        return 2000; // 10%의 포인트를 초기 베팅 금액으로 설정
+        int minPoints = Math.min(playerOnePoints, playerTwoPoints);
+        int tenPercentOfMinPoints = (int) (minPoints * 0.1);
+        return Math.min(tenPercentOfMinPoints, 2000);
     }
 
     private List<Card> prepareAvailableCards(Game game) {

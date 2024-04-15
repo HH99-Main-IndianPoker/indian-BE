@@ -127,6 +127,8 @@ public class WebSecurityConfig {
                         .requestMatchers("/","/user/**","/login/**","/oauth2/**", "/token/**", "/**").permitAll() // 메인 페이지 요청 허가
                         .requestMatchers("/ws/**").permitAll() // WebSocket 경로 허가
                         .requestMatchers("/topic/**").permitAll() // WebSocket 메시지 브로커 경로 허가
+//                        .requestMatchers("/app/**").permitAll()
+//                        .requestMatchers("/user/queue/**").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );
