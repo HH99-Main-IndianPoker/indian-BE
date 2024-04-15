@@ -7,7 +7,6 @@ import com.service.indianfrog.global.exception.RestApiException;
 import com.service.indianfrog.global.jwt.JwtUtil;
 import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
-import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Collection;
-import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -41,20 +36,19 @@ public class RefreshTokenService {
     }
 
     /*1.액세스 토큰으로 Refresh 토큰 객체를 조회
-    * 2.RefreshToken 객체를 꺼내온다.
-    * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
+     * 2.RefreshToken 객체를 꺼내온다.
+     * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
     @Transactional
-    public String republishAccessTokenWithRotate(String accessToken,HttpServletResponse response) throws UnsupportedEncodingException {
+    public String republishAccessTokenWithRotate(String accessToken, HttpServletResponse response) throws UnsupportedEncodingException {
         Optional<RefreshToken> refreshToken = tokenRepository.findByAccessToken(accessToken);
-        log.info(String.valueOf(refreshToken.get().getRefreshToken()));
         log.info(String.valueOf(accessToken));
 
         /*
-        * 1.지금은 만료안된 엑세스토큰*/
+         * 1.지금은 만료안된 엑세스토큰*/
 
-        if (refreshToken.isPresent() ) {
+        if (refreshToken.isPresent()) {
             String originAccessToken = refreshToken.get().getAccessToken().substring(7);
-            if (jwtUtil.verifyAccessToken(originAccessToken)== TokenVerificationResult.EXPIRED) {
+            if (jwtUtil.verifyAccessToken(originAccessToken) == TokenVerificationResult.EXPIRED) {
                 RefreshToken resultToken = refreshToken.get();
                 Optional<User> user = userRepository.findByEmail(resultToken.getId());
                 String role = String.valueOf(user);
@@ -76,16 +70,15 @@ public class RefreshTokenService {
                 return updatedToken.getAccessToken();
             }
         }
-
         throw new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_REFRESH_TOKEN.getMessage());
     }
 
     private Cookie createCookie(String key, String value) {
 
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24*60*60);
+        cookie.setMaxAge(24 * 60 * 60);
         cookie.setSecure(true); //https에 추가
-        cookie.setAttribute("SameSite","None");
+        cookie.setAttribute("SameSite", "None");
         cookie.setHttpOnly(true);
         cookie.setPath("/");
 

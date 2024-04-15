@@ -8,7 +8,6 @@ import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
-import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import com.service.indianfrog.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +74,7 @@ public class StartGameService {
 
     private List<Card> prepareAvailableCards(Game game) {
         /* 사용한 카드 목록과 전체 카드 목록을 가져옴
-        * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
+         * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
         Set<Card> usedCards = game.getUsedCards();
         Set<Card> allCards = EnumSet.allOf(Card.class); // 성능 개선 여지 있음
         allCards.removeAll(usedCards);
@@ -84,7 +83,7 @@ public class StartGameService {
 
     private void assignRandomCardsToPlayers(Game game, List<Card> availableCards) {
         /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
-        * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
+         * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
         Collections.shuffle(availableCards);
 
         Card playerOneCard = availableCards.get(0);

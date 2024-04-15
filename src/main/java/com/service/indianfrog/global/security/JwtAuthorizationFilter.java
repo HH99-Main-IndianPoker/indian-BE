@@ -37,7 +37,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         this.userRepository = userRepository;
     }
 
-    @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         return request.getRequestURI().contains("token/refresh");
     }

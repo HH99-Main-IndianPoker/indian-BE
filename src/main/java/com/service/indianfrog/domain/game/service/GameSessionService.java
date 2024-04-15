@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameSessionService {
 
     private final GameValidator gameValidator;
+
     public GameSessionService(GameValidator gameValidator) {
         this.gameValidator = gameValidator;
     }

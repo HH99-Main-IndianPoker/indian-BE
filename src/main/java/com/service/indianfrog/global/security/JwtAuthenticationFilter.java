@@ -23,7 +23,7 @@ import java.net.URLEncoder;
 
 
 @Slf4j
-public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter  {
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final JwtUtil jwtUtil;
 
@@ -82,9 +82,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private Cookie createCookie(String key, String value) {
 
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24*60*60);
+        cookie.setMaxAge(24 * 60 * 60);
         cookie.setSecure(true); //https에 추가
-        cookie.setAttribute("SameSite","None");
+        cookie.setAttribute("SameSite", "None");
         cookie.setHttpOnly(true);
         cookie.setPath("/");
 

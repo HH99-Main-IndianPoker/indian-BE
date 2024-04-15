@@ -30,16 +30,16 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         /*
-        * OAuth2User로 캐스팅하여 인증된 사용자 정보를 가져온다.
-        * 사용자 이메일을 가져온다.
-        * 서비스 제공 플랫폼(GOOGLE, KAKAO, NAVER)이 어디인지 가져온다.*/
+         * OAuth2User로 캐스팅하여 인증된 사용자 정보를 가져온다.
+         * 사용자 이메일을 가져온다.
+         * 서비스 제공 플랫폼(GOOGLE, KAKAO, NAVER)이 어디인지 가져온다.*/
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         String provider = oAuth2User.getAttribute("provider");
         String nickname = ((UserDetailsImpl) authentication.getPrincipal()).getUser().getNickname();
         /*
-        * CustomOAuth2UserService에서 셋팅한 로그인한 회원 존재 여부를 가져온다.
-        * OAuth2User로 부터 Role을 얻어온다.*/
+         * CustomOAuth2UserService에서 셋팅한 로그인한 회원 존재 여부를 가져온다.
+         * OAuth2User로 부터 Role을 얻어온다.*/
 
         boolean isExist = oAuth2User.getAttribute("exist");
         String role = oAuth2User.getAuthorities().stream().
@@ -51,7 +51,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 회원이 존재할경우
         if (isExist) {
 
-            GeneratedToken tokens = jwtUtil.generateToken(email, role,nickname);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
@@ -62,7 +62,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             CustomResponseUtil.success(response, null);
         } else {
             // 새로 생성된 사용자의 토큰 생성 및 전달
-            GeneratedToken tokens = jwtUtil.generateToken(email, role,nickname);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 

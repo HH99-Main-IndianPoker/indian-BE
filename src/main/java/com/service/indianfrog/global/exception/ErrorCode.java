@@ -15,8 +15,7 @@ public enum ErrorCode {
     NOT_FOUND_GAME_ROOM("존재하지 않는 게임 방입니다."),
     BATTING_INPUT_EXCEPTION("베팅값의 오류가 발생했습니다."),
     IMPOSSIBLE_UPDATE_REFRESH_TOKEN("리프레시 토큰 발급 오류!"),
-    GAME_ROOM_NOW_FULL("게임방이 가득 찼습니다.")
-    ;
+    GAME_ROOM_NOW_FULL("게임방이 가득 찼습니다.");
 
     private final String message;
 

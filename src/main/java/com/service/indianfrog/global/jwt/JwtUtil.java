@@ -9,11 +9,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.security.Key;
 import java.util.Base64;
@@ -91,7 +88,7 @@ public class JwtUtil {
                         .setSubject(email) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
                         .claim("nickname", nickname)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME/24/3600)) // 1hour
+                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24)) // 1hour
                         .setIssuedAt(date) // 발급일
                         .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
                         .compact();

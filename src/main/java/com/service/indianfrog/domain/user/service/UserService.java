@@ -1,6 +1,5 @@
 package com.service.indianfrog.domain.user.service;
 
-import com.service.indianfrog.domain.user.dto.UserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
@@ -63,7 +62,7 @@ public class UserService {
 
     // 닉네임 중복체크
     public boolean nicknameCheck(String nickname) {
-        if(userRepository.existsByNickname(nickname)) {
+        if (userRepository.existsByNickname(nickname)) {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
         }
         return userRepository.existsByNickname(nickname);
