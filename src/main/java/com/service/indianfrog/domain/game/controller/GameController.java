@@ -7,7 +7,6 @@ import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.service.*;
-import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -82,20 +81,19 @@ public class GameController {
 
     private void sendUserGameMessage(StartRoundResponse response) {
         /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
+        log.info(response.getGameState());
+        log.info(response.getPlayerOneInfo().getId());
+        log.info(response.getPlayerTwoInfo().getCard().toString());
         String playerOneId = response.getPlayerOneInfo().getId();
         Card playerTwoCard = response.getPlayerTwoInfo().getCard();
-        messagingTemplate.convertAndSendToUser(
-                playerOneId,
-                "/queue/gameInfo",
-                new GameInfo(playerTwoCard, response.getTurn())
-        );
-
         String playerTwoId = response.getPlayerTwoInfo().getId();
         Card playerOneCard = response.getPlayerOneInfo().getCard();
-        messagingTemplate.convertAndSendToUser(
-                playerTwoId,
-                "/queue/gameInfo",
-                new GameInfo(playerOneCard, response.getTurn())
-        );
+        try {
+            messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(playerTwoCard, response.getTurn()));
+            messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(playerOneCard, response.getTurn()));
+            log.info("Message sent successfully.");
+        } catch (Exception e) {
+            log.error("Failed to send message", e);
+        }
     }
 }

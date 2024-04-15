@@ -25,13 +25,11 @@ public class StartGameService {
     /* 생성자를 통한 필드 주입 */
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
-    private final GameRoomService gameRoomService;
     private final GameRoomRepository gameRoomRepository;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService,GameRoomService gameRoomService, GameRoomRepository gameRoomRepository) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
-        this.gameRoomService = gameRoomService;
         this.gameRoomRepository = gameRoomRepository;
     }
 
