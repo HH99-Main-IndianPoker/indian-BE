@@ -6,8 +6,8 @@ import com.service.indianfrog.domain.game.dto.GameInfo;
 import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.Card;
-import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.service.*;
+import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -29,6 +29,7 @@ public class GameController {
     private final EndGameService endGameService;
     private final GameSessionService gameSessionService;
     private final ReadyService readyService;
+
     public GameController(SimpMessageSendingOperations messagingTemplate,
                           StartGameService startGameService, GamePlayService gamePlayService,
                           EndGameService endGameService, GameSessionService gameSessionService, ReadyService readyService) {
@@ -45,6 +46,7 @@ public class GameController {
                                 @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
 
         log.info(gameState);
+
         switch (gameState) {
             case "START" -> {
                 StartRoundResponse response = startGameService.startRound(gameRoomId);
@@ -63,6 +65,7 @@ public class GameController {
                 String destination = "/topic/gameRoom/" + gameRoomId;
                 messagingTemplate.convertAndSend(destination, response);
             }
+
             default -> throw new IllegalStateException("Invalid game state: " + gameState);
         }
     }
