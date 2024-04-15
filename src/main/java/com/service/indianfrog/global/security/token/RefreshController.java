@@ -2,11 +2,9 @@ package com.service.indianfrog.global.security.token;
 
 import com.service.indianfrog.global.dto.ResponseDto;
 import com.service.indianfrog.global.dto.TokenResponseStatus;
-import com.service.indianfrog.global.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -33,16 +31,12 @@ public class RefreshController {
     }
 
     /*
-    * 로테이트시 기존 리프레시토큰 못쓰게 막아야함.*/
+     * 로테이트시 기존 리프레시토큰 못쓰게 막아야함.*/
     @PostMapping("/token/refresh")
     public ResponseEntity<TokenResponseStatus> refresh(@RequestHeader("Authorization") final String accessToken, HttpServletResponse response) throws UnsupportedEncodingException {
 
-        String newAccessToken = tokenService.republishAccessTokenWithRotate(accessToken,response);
-        if (StringUtils.hasText(newAccessToken)) {
-            return ResponseEntity.ok(TokenResponseStatus.addStatus(200, newAccessToken));
-        }
-
-        return ResponseEntity.badRequest().body(TokenResponseStatus.addStatus(400, null));
+        String newAccessToken = tokenService.republishAccessTokenWithRotate(accessToken, response);
+        return ResponseEntity.ok(TokenResponseStatus.addStatus(200, newAccessToken));
     }
 
 }
