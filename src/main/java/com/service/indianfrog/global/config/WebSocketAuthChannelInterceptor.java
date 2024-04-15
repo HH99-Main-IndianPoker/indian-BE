@@ -2,6 +2,7 @@ package com.service.indianfrog.global.config;
 
 import com.service.indianfrog.domain.gameroom.dto.AuthenticatedUser;
 import com.service.indianfrog.global.jwt.JwtUtil;
+import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -31,7 +32,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         String token = accessor.getFirstNativeHeader("Authorization");
         if (StringUtils.hasText(token) && token.startsWith(JwtUtil.BEARER_PREFIX)) {
             token = token.substring(7);
-            if (jwtUtil.verifyToken(token)) {
+            if (jwtUtil.verifyAccessToken(token) == TokenVerificationResult.VALID) {
                 String email = jwtUtil.getUid(token);
                 Authentication authentication = new UsernamePasswordAuthenticationToken(new AuthenticatedUser(email), null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
