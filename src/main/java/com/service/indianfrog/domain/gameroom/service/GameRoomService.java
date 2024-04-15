@@ -196,8 +196,16 @@ public class GameRoomService {
 
         List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomId(roomId);
 
-        String host = validateRooms.stream().filter(ValidateRoom::isHost).map(ValidateRoom::getParticipants).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-        String participant = validateRooms.stream().filter(p -> !p.isHost()).map(ValidateRoom::getParticipants).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        String host = validateRooms.stream()
+                .filter(ValidateRoom::isHost)
+                .map(ValidateRoom::getParticipants)
+                .findFirst()
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        String participant = validateRooms.stream()
+                .filter(p -> !p.isHost())
+                .map(ValidateRoom::getParticipants)
+                .findFirst()
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         int participantPoint = user.getPoints();
 
