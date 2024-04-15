@@ -22,6 +22,7 @@
   const apiUrl = 'http://localhost:8080';
   let stompClient = null;
   let roomId = null;
+  let participantInfo = null;
 
   function connectWebSocket() {
     const socket = new SockJS(`${apiUrl}/ws`);
@@ -33,7 +34,8 @@
       if (roomId) {
         document.getElementById('roomDetails').innerHTML = `게임방 ID: ${roomId}<br>이곳에 게임방 상세 정보 표시`;
         stompClient.subscribe(`/topic/gameRoom/${roomId}`, function(messageOutput) {
-          showMessageOutput(JSON.parse(messageOutput.body));
+          participantInfo = JSON.parse(messageOutput.body);  // 서버에서 받은 참가자 정보 저장
+          showMessageOutput(participantInfo);
         });
       } else {
         document.getElementById('roomDetails').innerHTML = '게임방 ID가 제공되지 않았습니다.';
@@ -50,23 +52,18 @@
     }
   }
 
-  // 게임방 준비 상태를 서버에 알리는 함수
   function sendGameReady() {
-    const authToken = localStorage.getItem('authToken');
-    const nickname = localStorage.getItem('nickname');
-    if (stompClient && roomId && authToken && nickname) {
-      // 게임방 준비 메시지 전송
-      stompClient.send(`/app/gameRoom/${roomId}/ready`, {'Authorization': authToken}, JSON.stringify({sender: nickname}));
+    if (stompClient && roomId && participantInfo) {
+      stompClient.send(`/app/gameRoom/${roomId}/ready`, {}, JSON.stringify({sender: participantInfo.nickname}));
     }
   }
 
   function sendMessage() {
     const messageContent = document.getElementById('chatMessageInput').value;
-    const nickname = localStorage.getItem('nickname');
-    if(messageContent && stompClient && nickname && roomId) {
+    if (messageContent && stompClient && participantInfo && roomId) {
       const chatMessage = {
         content: messageContent,
-        sender: nickname,
+        sender: participantInfo.nickname,  // 서버에서 받은 닉네임 사용
         type: "CHAT"
       };
       stompClient.send(`/app/chat.sendMessage/${roomId}`, {}, JSON.stringify(chatMessage));
@@ -82,18 +79,16 @@
   });
 
   function leaveRoom() {
-    const authToken = localStorage.getItem('authToken');
-    const nickname = localStorage.getItem('nickname');
-    if(stompClient && roomId && authToken && nickname) {
-      stompClient.send(`/app/${roomId}/leave`, {'Authorization': authToken}, JSON.stringify({sender: nickname}));
+    if (stompClient && roomId && participantInfo) {
+      stompClient.send(`/app/${roomId}/leave`, {}, JSON.stringify({sender: participantInfo.nickname}));
       alert(`게임방 ${roomId}에서 나갑니다.`);
       window.location.href = 'index.html';
     }
   }
 
-  function showMessageOutput(messageOutput) {
+  function showMessageOutput(participantInfo) {
     const messageElement = document.createElement('div');
-    messageElement.innerHTML = `<strong>${messageOutput.sender}:</strong> ${messageOutput.content}`;
+    messageElement.innerHTML = `<strong>${participantInfo.nickname}:</strong> has joined the room.`;
     const chatMessagesDiv = document.getElementById('chatMessages');
     chatMessagesDiv.appendChild(messageElement);
     chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;

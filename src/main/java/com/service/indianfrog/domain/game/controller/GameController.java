@@ -6,9 +6,7 @@ import com.service.indianfrog.domain.game.dto.GameInfo;
 import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.Card;
-import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.service.*;
-import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -31,32 +29,27 @@ public class GameController {
     private final GameSessionService gameSessionService;
     private final ReadyService readyService;
 
-    private final GameRoomService gameRoomService;
     public GameController(SimpMessageSendingOperations messagingTemplate,
                           StartGameService startGameService, GamePlayService gamePlayService,
-                          EndGameService endGameService, GameSessionService gameSessionService, ReadyService readyService, GameRoomService gameRoomService) {
+                          EndGameService endGameService, GameSessionService gameSessionService, ReadyService readyService) {
         this.messagingTemplate = messagingTemplate;
         this.startGameService = startGameService;
         this.gamePlayService = gamePlayService;
         this.endGameService = endGameService;
         this.gameSessionService = gameSessionService;
         this.readyService = readyService;
-        this.gameRoomService= gameRoomService;
     }
 
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
                                 @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
 
-
+        log.info(gameState);
 
         switch (gameState) {
             case "START" -> {
-
                 StartRoundResponse response = startGameService.startRound(gameRoomId);
                 sendUserGameMessage(response); // 유저별 메시지 전송
-
-
             }
             case "ACTION", "END", "GAME_END", "USER_CHOICE"-> {
                 Object response = switch (gameState) {
@@ -88,20 +81,19 @@ public class GameController {
 
     private void sendUserGameMessage(StartRoundResponse response) {
         /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
+        log.info(response.getGameState());
+        log.info(response.getPlayerOneInfo().getId());
+        log.info(response.getPlayerTwoInfo().getCard().toString());
         String playerOneId = response.getPlayerOneInfo().getId();
         Card playerTwoCard = response.getPlayerTwoInfo().getCard();
-        messagingTemplate.convertAndSendToUser(
-                playerOneId,
-                "/queue/gameInfo",
-                new GameInfo(playerTwoCard, response.getTurn())
-        );
-
         String playerTwoId = response.getPlayerTwoInfo().getId();
         Card playerOneCard = response.getPlayerOneInfo().getCard();
-        messagingTemplate.convertAndSendToUser(
-                playerTwoId,
-                "/queue/gameInfo",
-                new GameInfo(playerOneCard, response.getTurn())
-        );
+        try {
+            messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(playerTwoCard, response.getTurn()));
+            messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(playerOneCard, response.getTurn()));
+            log.info("Message sent successfully.");
+        } catch (Exception e) {
+            log.error("Failed to send message", e);
+        }
     }
 }
