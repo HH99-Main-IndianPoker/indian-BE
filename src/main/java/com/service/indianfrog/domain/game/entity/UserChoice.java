@@ -8,6 +8,7 @@ public enum UserChoice {
     ;
 
     private final String userChoice;
+
     UserChoice(String userChoice) {
         this.userChoice = userChoice;
     }

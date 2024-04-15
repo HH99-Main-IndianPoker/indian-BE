@@ -50,6 +50,7 @@ public class GameRoomService {
 
     /**
      * 주어진 ID에 해당하는 게임방 정보를 조회
+     *
      * @param roomId 게임방 ID
      * @return 조회된 게임방의 상세 정보를 담은 Dto
      */
@@ -74,6 +75,7 @@ public class GameRoomService {
 
     /**
      * 모든 게임방을 페이지 단위로 조회
+     *
      * @param pageable 페이징 정보
      * @return 페이징 처리된 게임방 목록
      */
@@ -95,6 +97,7 @@ public class GameRoomService {
 
     /**
      * 주어진 ID를 가진 게임방을 삭제
+     *
      * @param roomId 삭제할 게임방 ID
      */
     public void deleteGameRoom(Long roomId) {
@@ -103,6 +106,7 @@ public class GameRoomService {
 
     /**
      * 주어진 ID의 게임방이 존재하는지 여부를 확인
+     *
      * @param roomId 게임방 ID
      * @return 존재 여부
      */
@@ -129,6 +133,7 @@ public class GameRoomService {
 
     /**
      * 메시지에서 욕설을 필터링
+     *
      * @param message 필터링할 메시지
      * @return 필터링된 메시지
      */
@@ -139,8 +144,9 @@ public class GameRoomService {
 
     /**
      * 새로운 게임방을 생성
+     *
      * @param gameRoomDto 게임방 생성 요청 데이터
-     * @param principal 현재 인증된 사용자 정보
+     * @param principal   현재 인증된 사용자 정보
      * @return 생성된 게임방의 상세 정보
      */
     @Transactional
@@ -166,7 +172,8 @@ public class GameRoomService {
 
     /**
      * 게임방에 참가자를 추가
-     * @param roomId 참가할 게임방 ID
+     *
+     * @param roomId      참가할 게임방 ID
      * @param userDetails 참가자 정보
      * @return 추가된 참가자의 정보
      */
@@ -219,7 +226,8 @@ public class GameRoomService {
 
     /**
      * 게임방에서 참가자를 제거
-     * @param roomId 게임방 ID
+     *
+     * @param roomId      게임방 ID
      * @param participant 제거할 참가자 정보
      * @return 업데이트된 게임방의 상세 정보
      */
@@ -275,6 +283,7 @@ public class GameRoomService {
 
     /**
      * 비정상적인 종료시 세션 ID를 통해 게임방에서 참가자를 제거
+     *
      * @param sessionId 제거할 참가자의 WebSocket 세션 ID
      */
     @Transactional

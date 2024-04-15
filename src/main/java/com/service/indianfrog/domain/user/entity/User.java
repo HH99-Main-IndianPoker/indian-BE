@@ -30,7 +30,7 @@ public class User extends Timestamped {
     private int points = 100;
 
     /*
-    * rank*/
+     * rank*/
     private int wins;
     private int losses;
 
@@ -72,6 +72,6 @@ public class User extends Timestamped {
     }
 
     public void increasePoints(int points) {
-        this.points+=points;
+        this.points += points;
     }
 }

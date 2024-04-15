@@ -51,7 +51,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             token = token.substring(7);
 
             // jwt로 유효성 검사
-            if (jwtUtil.verifyAccessToken(token)== TokenVerificationResult.VALID) {
+            if (jwtUtil.verifyAccessToken(token) == TokenVerificationResult.VALID) {
                 String email = jwtUtil.getUid(token);
 
                 // 이메일을 이용해서 인증객체 생성. new AuthenticatedUser(email) 이걸로 principal 사용.

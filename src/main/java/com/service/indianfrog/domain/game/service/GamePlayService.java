@@ -80,7 +80,7 @@ public class GamePlayService {
             return GameState.END;
         }
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        int raiseAmount=0;
+        int raiseAmount = 0;
 
         /* RAISE 베팅 액 설정*/
         try {

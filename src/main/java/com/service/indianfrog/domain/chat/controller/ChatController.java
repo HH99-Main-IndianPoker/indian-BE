@@ -25,8 +25,8 @@ public class ChatController {
     /**
      * 채팅 메시지를 전송하는 메서드
      *
-     * @param gameRoomId   게임방 ID
-     * @param chatMessage  채팅 메시지
+     * @param gameRoomId  게임방 ID
+     * @param chatMessage 채팅 메시지
      */
     @MessageMapping("/chat.sendMessage/{gameRoomId}")
     public void sendMessage(@DestinationVariable Long gameRoomId, @Payload ChatMessage chatMessage) {
@@ -48,9 +48,9 @@ public class ChatController {
     /**
      * 사용자를 채팅방에 추가하는 메서드
      *
-     * @param gameRoomId       게임방 ID
-     * @param chatMessage      채팅 메시지
-     * @param headerAccessor   메시지 헤더 접근자
+     * @param gameRoomId     게임방 ID
+     * @param chatMessage    채팅 메시지
+     * @param headerAccessor 메시지 헤더 접근자
      */
     @MessageMapping("/chat.addUser/{gameRoomId}")
     public void addUser(@DestinationVariable Long gameRoomId, @Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {

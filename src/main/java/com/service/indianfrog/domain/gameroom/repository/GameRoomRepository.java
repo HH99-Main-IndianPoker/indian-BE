@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface GameRoomRepository extends JpaRepository<GameRoom, Long> {
 
 
-
     GameRoom findByRoomId(Long gameRoomId);
 
     GameRoom findByCurrentGame(Game game);

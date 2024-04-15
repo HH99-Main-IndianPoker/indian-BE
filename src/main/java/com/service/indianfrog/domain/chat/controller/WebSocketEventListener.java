@@ -49,7 +49,7 @@ public class WebSocketEventListener {
         Long roomId = (Long) headerAccessor.getSessionAttributes().get("room_id");
         String username = (String) headerAccessor.getSessionAttributes().get("username");
 
-        if(username != null && roomId != null) {
+        if (username != null && roomId != null) {
             logger.info("연결해제 : 유저네임 - " + username + ", 방번호 - " + roomId);
 
             ChatMessage chatMessage = new ChatMessage();

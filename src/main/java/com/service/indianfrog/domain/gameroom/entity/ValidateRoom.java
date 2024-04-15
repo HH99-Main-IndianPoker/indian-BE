@@ -1,8 +1,6 @@
 package com.service.indianfrog.domain.gameroom.entity;
 
-import com.rabbitmq.client.LongString;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,7 +38,7 @@ public class ValidateRoom {
         this.gameRoom = gameRoom;
     }
 
-    public void revert(boolean isReady){
+    public void revert(boolean isReady) {
         this.ready = !isReady;
     }
 
