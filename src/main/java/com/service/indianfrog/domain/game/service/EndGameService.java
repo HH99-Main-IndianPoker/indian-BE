@@ -34,7 +34,8 @@ public class EndGameService {
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
 
-    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
+    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder,
+                          GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
         this.repositoryHolder = repositoryHolder;
         this.gameTurnService = gameTurnService;
@@ -44,6 +45,7 @@ public class EndGameService {
     /* 라운드 종료 로직*/
     @Transactional
     public EndRoundResponse endRound(Long gameRoomId) {
+        log.info("Ending round for gameRoomId={}", gameRoomId);
         GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
@@ -51,6 +53,7 @@ public class EndGameService {
         승자에게 라운드 포인트 할당
         라운드 포인트 값 가져오기*/
         GameResult gameResult = determineGameResult(game);
+        log.debug("Round result determined: winnerId={}, loserId={}", gameResult.getWinnerId(), gameResult.getLoserId());
         assignRoundPointsToWinner(game, gameResult);
         int roundPot = game.getPot();
 
@@ -59,9 +62,11 @@ public class EndGameService {
 
         /* 라운드 정보 초기화*/
         game.resetRound();
+        log.debug("Round reset for gameRoomId={}", gameRoomId);
 
         /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
         String gameState = determineGameState(game);
+        log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, gameState);
 
         return new EndRoundResponse(gameState, game.getRound(), gameResult.getWinnerId(), gameResult.getLoserId(), roundPot);
     }
@@ -69,6 +74,7 @@ public class EndGameService {
     /* 게임 종료 로직*/
     @Transactional
     public EndGameResponse endGame(Long gameRoomId) {
+        log.info("Ending game for gameRoomId={}", gameRoomId);
         GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
@@ -77,6 +83,9 @@ public class EndGameService {
 
         GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
         CurrentGameStatus.updateGameState(GameState.READY);
+
+        log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
+                gameRoomId, gameResult.getWinnerId(), gameResult.getLoserId());
 
         /* 유저 선택 상태 반환*/
         return new EndGameResponse("USER_CHOICE", gameResult.getWinnerId(), gameResult.getLoserId(),
@@ -93,14 +102,18 @@ public class EndGameService {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
 
+        /* 카드 숫자가 같으면 1번 덱의 카드를 가진 플레이어가 승리*/
+        GameResult result;
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
-            return playerOneCard.getNumber() > playerTwoCard.getNumber() ?
+            result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
+                    new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
+        } else {
+            result = playerOneCard.getDeckNumber() == 1 ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
 
-        /* 카드 숫자가 같으면 1번 덱의 카드를 가진 플레이어가 승리*/
-        return playerOneCard.getDeckNumber() == 1 ?
-                new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
+        log.debug("Game result determined: winnerId={}, loserId={}", result.getWinnerId(), result.getLoserId());
+        return result;
     }
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
@@ -117,6 +130,7 @@ public class EndGameService {
         } else {
             game.addPlayerTwoRoundPoints(pointsToAdd);
         }
+        log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getId(), pointsToAdd);
     }
 
     /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드*/
