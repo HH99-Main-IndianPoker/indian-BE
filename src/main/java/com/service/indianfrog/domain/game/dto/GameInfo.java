@@ -7,10 +7,10 @@ import lombok.Getter;
 @Getter
 public class GameInfo {
     private Card playerCard;
-    private Turn turn;
+    private String currentPlayer;
 
     public GameInfo(Card playerCard, Turn turn) {
         this.playerCard = playerCard;
-        this.turn = turn;
+        this.currentPlayer = turn.getCurrentPlayer();
     }
 }

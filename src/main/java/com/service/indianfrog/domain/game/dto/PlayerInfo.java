@@ -6,11 +6,11 @@ import lombok.Getter;
 
 @Getter
 public class PlayerInfo {
-    private String id;
+    private String email;
     private Card card;
 
     public PlayerInfo(User player, Card card) {
-        this.id = player.getEmail();
+        this.email = player.getEmail();
         this.card = card;
     }
 }
