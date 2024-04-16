@@ -7,6 +7,7 @@ public class ChatMessage {
     private String content;
     private String sender;
 
+    private int point;
     private MessageType type;
 
     public enum MessageType {
@@ -26,4 +27,6 @@ public class ChatMessage {
     public void setSender(String sender) {
         this.sender = sender;
     }
+
+    public void setPoint(int point){ this.point = point; }
 }
