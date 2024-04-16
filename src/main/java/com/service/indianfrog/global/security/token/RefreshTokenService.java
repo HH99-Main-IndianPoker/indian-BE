@@ -50,16 +50,14 @@ public class RefreshTokenService {
             String originAccessToken = refreshToken.get().getAccessToken().substring(7);
             if (jwtUtil.verifyAccessToken(originAccessToken) == TokenVerificationResult.EXPIRED) {
                 RefreshToken resultToken = refreshToken.get();
-                Optional<User> user = userRepository.findByEmail(resultToken.getId());
-                String role = String.valueOf(user);
-                User userNickname = userRepository.findByNickname(user.get().getNickname());
+                User user = userRepository.findByEmail(resultToken.getId()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
                 /*
                  * 1.remove accesstoken
                  * 2.generate tokens
                  * 3.update each token*/
 
                 removeRefreshToken(refreshToken.get().getAccessToken());
-                GeneratedToken updatedToken = jwtUtil.generateToken(resultToken.getId(), role, String.valueOf(userNickname));
+                GeneratedToken updatedToken = jwtUtil.generateToken(resultToken.getId(), "USER", user.getNickname());
                 response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
                 response.setHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
 
