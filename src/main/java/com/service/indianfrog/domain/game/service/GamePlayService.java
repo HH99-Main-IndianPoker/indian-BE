@@ -58,11 +58,11 @@ public class GamePlayService {
         log.debug("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
                 isFirstTurn, user.getEmail(), game.getPot(), game.getBetAmount());
 
-        if (game.isCheck()) {
+        if (game.isCheckStatus()) {
             return gameEnd(user, game);
         }
 
-        if(game.isRaise()){
+        if(game.isRaiseStatus()){
             return gameEnd(user, game);
         }
 

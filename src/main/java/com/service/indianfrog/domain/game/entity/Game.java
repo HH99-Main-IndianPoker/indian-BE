@@ -49,9 +49,8 @@ public class Game {
     // 라운드 정보
     private int round;
 
-    private boolean check = false;
-
-    private boolean raise = false;
+    private boolean checkStatus;
+    private boolean raiseStatus;
 
     // Constructor and methods
     public Game(User playerOne, User playerTwo) {
@@ -128,10 +127,10 @@ public class Game {
     }
 
     public void updateCheck() {
-        this.check = true;
+        this.checkStatus = true;
     }
 
     public void updateRaise() {
-        this.raise = true;
+        this.raiseStatus = true;
     }
 }
