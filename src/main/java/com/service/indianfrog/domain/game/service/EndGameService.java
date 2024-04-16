@@ -162,22 +162,10 @@ public class EndGameService {
         int winnerTotalPoints = gameWinner.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
         int loserTotalPoints = gameLoser.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
 
-        if (gameLoser.getPoints() < 10) {
-            doRevivalGame(gameLoser);
-        }
-
         /* 게임 데이터 초기화*/
         game.resetGame();
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
-    }
-
-    private void doRevivalGame(User gameLoser) {
-        /*카드가 3장이 있을때, 세장 중 한장을 고르면 그 값만큼 포인트를 올려줌.*/
-        Random random = new Random();
-        int[] pointsIncreaseOptions = {75, 100, 125};
-        int index = random.nextInt(pointsIncreaseOptions.length);
-        gameLoser.increasePoints(pointsIncreaseOptions[index]);
     }
 
     /* 1라운드 이후 턴 설정 메서드*/
