@@ -7,15 +7,12 @@ import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.security.Principal;
 
@@ -79,13 +76,14 @@ public class ChatController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-        int point = user.getPoints();
-        log.info("내포인트는?"+point);
+//        int point = user.getPoints();
+        chatMessage.setPoint(user.getPoints());
+        log.info("내포인트는?"+chatMessage.getPoint());
 
 
         // 입장 메시지 전송.
         messagingTemplate.convertAndSend(destination, chatMessage);
-        messagingTemplate.convertAndSend(destination, point);
+//        messagingTemplate.convertAndSend(destination, point);
     }
 
 //    @MessageMapping("/gameRoom/{gameRoomId}/join")
