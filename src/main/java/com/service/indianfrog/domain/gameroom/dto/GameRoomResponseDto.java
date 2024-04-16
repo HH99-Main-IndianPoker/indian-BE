@@ -12,6 +12,7 @@ public class GameRoomResponseDto {
             String roomName,
             int participantCount,
             String hostName,
+            int myPoint,
             GameState gameState,
 
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Seoul/Asia")
