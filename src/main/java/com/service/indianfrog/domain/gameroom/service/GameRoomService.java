@@ -154,20 +154,18 @@ public class GameRoomService {
         String email = principal.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-        String nickname = user.getNickname();
-
         LocalDateTime now = LocalDateTime.now();
         GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
 
         ValidateRoom validateRoom = new ValidateRoom().builder()
-                .participants(nickname)
+                .participants(user.getNickname())
                 .gameRoom(savedGameRoom)
                 // 방 생성한 사람이 최초의 방장이니까 방장으로 설정
                 .host(true)
                 .build();
         validateRoomRepository.save(validateRoom);
         // 방생성시 최초의 인원은 1명이니까 participantCount를 1로 설정
-        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, nickname, savedGameRoom.getGameState(), now);
+        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, user.getNickname(), user.getPoints(), savedGameRoom.getGameState(), now);
     }
 
     /**
