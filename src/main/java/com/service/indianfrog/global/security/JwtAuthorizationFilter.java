@@ -2,6 +2,7 @@ package com.service.indianfrog.global.security;
 
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.jwt.JwtUtil;
+import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import com.service.indianfrog.global.security.dto.SecurityUserDto;
 import com.service.indianfrog.global.security.filter.CustomResponseUtil;
 import io.jsonwebtoken.Claims;
@@ -36,7 +37,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         this.userRepository = userRepository;
     }
 
-    @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         return request.getRequestURI().contains("token/refresh");
     }
@@ -47,7 +47,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         String tokenValue = jwtUtil.getJwtFromHeader(request);
 
         if (StringUtils.hasText(tokenValue)) {
-            if (!jwtUtil.verifyToken(tokenValue)) {
+            if (jwtUtil.verifyAccessToken(tokenValue) == TokenVerificationResult.EXPIRED || jwtUtil.verifyAccessToken(tokenValue) == TokenVerificationResult.INVALID) {
                 log.error("Token Error");
                 CustomResponseUtil.fail(response, "JWT 유효성 검사 실패", HttpStatus.UNAUTHORIZED);
                 return;

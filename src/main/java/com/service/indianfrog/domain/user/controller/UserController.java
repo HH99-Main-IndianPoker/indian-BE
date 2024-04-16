@@ -1,7 +1,6 @@
 package com.service.indianfrog.domain.user.controller;
 
 import com.service.indianfrog.domain.user.controller.docs.UserControllerDocs;
-import com.service.indianfrog.domain.user.dto.UserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;

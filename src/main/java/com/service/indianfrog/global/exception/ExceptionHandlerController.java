@@ -4,12 +4,10 @@ import com.service.indianfrog.global.dto.ResponseDto;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
@@ -30,7 +28,7 @@ public class ExceptionHandlerController {
         return ResponseEntity.badRequest().body(ResponseDto.fail("필수값을 모두 입력해 주세요."));
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    //    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ResponseDto<List<String>>> checkFieldRequest(ConstraintViolationException e) {
         List<String> data = e.getConstraintViolations().stream().map(ConstraintViolation::getMessage).toList();

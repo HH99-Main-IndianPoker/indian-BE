@@ -1,6 +1,6 @@
 package com.service.indianfrog.domain.user.valid;
 
-import com.service.indianfrog.domain.user.valid.UserValidationGroup.PasswordPatternGroup;
+import com.service.indianfrog.domain.user.valid.UserValidationGroup.*;
 import jakarta.validation.GroupSequence;
 
 import static com.service.indianfrog.domain.user.valid.UserValidationGroup.*;

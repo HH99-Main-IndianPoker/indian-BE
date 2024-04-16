@@ -34,7 +34,7 @@ public class EndGameService {
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
 
-    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder, GameTurnService gameTurnService,GameRoomRepository gameRoomRepository) {
+    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
         this.repositoryHolder = repositoryHolder;
         this.gameTurnService = gameTurnService;
@@ -172,7 +172,7 @@ public class EndGameService {
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
         User roundWinner = repositoryHolder.userRepository.findById(winnerId)
-                        .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
         players.add(roundWinner);
 
         User player = (!roundWinner.equals(game.getPlayerOne()))

@@ -17,10 +17,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.security.Principal;
 
-import static com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.*;
+import static com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
 
 @Slf4j
 @RestController
@@ -37,30 +36,33 @@ public class GameRoomController {
 
     /**
      * 모든 게임 방을 페이징하여 조회
+     *
      * @param pageable 페이징 정보
      * @return 조회된 게임 방의 페이징된 목록
      */
     @GetMapping("") // 전체페이지 조회
     public ResponseDto<Page<GetGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
         Page<GetGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
-        return ResponseDto.success("모든 게임방 조회 기능",gameRooms);
+        return ResponseDto.success("모든 게임방 조회 기능", gameRooms);
     }
 
     /**
      * 주어진 ID를 가진 게임 방을 조회
+     *
      * @param gameRoomId 게임 방 ID
      * @return 조회된 게임 방 정보
      */
     @GetMapping("/{gameRoomId}") //특정 게임방 조회
     public ResponseDto<GetGameRoomResponseDto> getGameRoomById(@PathVariable Long gameRoomId) {
         GetGameRoomResponseDto gameRoom = gameRoomService.getGameRoomById(gameRoomId);
-        return ResponseDto.success("게임방 조회 기능",gameRoom);
+        return ResponseDto.success("게임방 조회 기능", gameRoom);
     }
 
     /**
      * 새로운 게임 방을 생성
+     *
      * @param gameRoomDto 게임 방 생성 요청 Dto
-     * @param principal 요청을 보낸 사용자의 정보
+     * @param principal   요청을 보낸 사용자의 정보
      * @return 생성된 게임 방 정보
      */
     @PostMapping("/create") //채널인터셉터로 인증된 사용자의 인증정보 사용하여 방생성
@@ -71,6 +73,7 @@ public class GameRoomController {
 
     /**
      * 주어진 ID를 가진 게임 방을 삭제
+     *
      * @param gameRoomId 게임방 ID
      * @return 응답 엔티티 (성공 시 HTTP 200)
      */
@@ -82,7 +85,8 @@ public class GameRoomController {
 
     /**
      * 게임 방에 참가
-     * @param gameRoomId 게임방 ID
+     *
+     * @param gameRoomId  게임방 ID
      * @param userDetails 참가자 정보
      */
     @PostMapping("/{gameRoomId}/join")
@@ -94,8 +98,9 @@ public class GameRoomController {
 
     /**
      * 게임 방에서 나갸기
+     *
      * @param gameRoomId 게임방 ID
-     * @param principal 참가자 정보
+     * @param principal  참가자 정보
      */
     @MessageMapping("/{gameRoomId}/leave")
     public void leaveGame(@DestinationVariable Long gameRoomId, Principal principal) {

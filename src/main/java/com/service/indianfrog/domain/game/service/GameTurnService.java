@@ -1,7 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
 import com.service.indianfrog.domain.game.entity.Turn;
-import com.service.indianfrog.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

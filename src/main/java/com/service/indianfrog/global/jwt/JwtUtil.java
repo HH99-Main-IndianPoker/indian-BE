@@ -3,7 +3,6 @@ package com.service.indianfrog.global.jwt;
 import com.service.indianfrog.global.properties.JwtProperties;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
 import com.service.indianfrog.global.security.token.AccessTokenService;
-import com.service.indianfrog.global.security.token.RefreshTokenService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -89,44 +88,29 @@ public class JwtUtil {
                         .setSubject(email) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
                         .claim("nickname", nickname)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME/24)) // 1hour
+                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24)) // 1hour
                         .setIssuedAt(date) // 발급일
                         .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
                         .compact();
     }
 
-    public boolean verifyToken(String token) {
+    public TokenVerificationResult verifyAccessToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token);
-            return true;
+            return TokenVerificationResult.VALID;
         } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
             log.error("Invalid JWT signature, 유효하지 않는 JWT 서명입니다.");
         } catch (ExpiredJwtException e) {
-            log.error("Expired JWT token, 만료된 JWT token 입니다.");
+            log.error("Expired JWT token, 만료된 JWT AccessToken 입니다.");
+            return TokenVerificationResult.EXPIRED;
         } catch (UnsupportedJwtException e) {
             log.error("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
         } catch (IllegalArgumentException e) {
             log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
         }
-        return false;
+        return TokenVerificationResult.INVALID;
     }
 
-    public boolean verifyRefreshToken(String token) {
-        try {
-            Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(refreshKey).build().parseClaimsJws(token);
-            log.info(claimsJws.toString());
-            return true;
-        } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
-            log.error("Invalid JWT signature, 유효하지 않는 JWT 서명입니다.");
-        } catch (ExpiredJwtException e) {
-            log.error("Expired JWT token, 만료된 JWT token 입니다.");
-        } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
-        }
-        return false;
-    }
 
     // 토큰에서 사용자 정보 가져오기
     public Claims getUserInfoFromToken(String token) {
