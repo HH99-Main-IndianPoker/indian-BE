@@ -31,6 +31,7 @@ public class GamePlayService {
 
     @Transactional
     public GameState playerAction(Long gameRoomId, String nickname, String action) {
+        log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, nickname, action);
         GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
         User user = gameValidator.findUserByNickname(nickname);
@@ -38,9 +39,11 @@ public class GamePlayService {
 
         /* 유저의 턴이 맞는지 확인*/
         if (!turn.getCurrentPlayer().equals(user)) {
+            log.warn("It's not the turn of the user: {}", nickname);
             throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
         }
 
+        log.debug("Performing {} action for user {}", action, nickname);
         Betting betting = Betting.valueOf(action.toUpperCase());
         return switch (betting) {
             case CHECK -> performCheckAction(game, user, turn);
@@ -52,10 +55,13 @@ public class GamePlayService {
     private GameState performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
         boolean isFirstTurn = turn.getCurrentPlayer().equals(user);
+        log.debug("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
+                isFirstTurn, user.getEmail(), game.getPot(), game.getBetAmount());
 
         if (!isFirstTurn) {
             int userPoints = user.getPoints();
             int currentBet = game.getBetAmount();
+            log.debug("User points before action: {}, currentBet={}", userPoints, currentBet);
             if (userPoints >= currentBet) {
                 user.setPoints(userPoints - currentBet);
                 game.setPot(game.getPot() + currentBet);
@@ -63,6 +69,7 @@ public class GamePlayService {
                 game.setPot(game.getPot() + userPoints);
                 user.setPoints(0);
             }
+            log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
             return GameState.END;
         }
 
@@ -70,13 +77,16 @@ public class GamePlayService {
         user.setPoints(user.getPoints() - game.getBetAmount());
         game.setPot(game.getPot() + game.getBetAmount());
         turn.nextTurn();
+        log.info("First turn check completed, moving to next turn");
         return GameState.ACTION;
     }
 
     private GameState performRaiseAction(Game game, User user, Turn turn) {
         int userPoints = user.getPoints();
+        log.debug("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
 
         if (userPoints <= 0) {
+            log.warn("User has insufficient points to raise");
             return GameState.END;
         }
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -87,18 +97,19 @@ public class GamePlayService {
             System.out.print("베팅할 금액을 입력하세요: ");
             String input = br.readLine();
             raiseAmount = Integer.parseInt(input);
+            log.debug("Raise amount entered: {}", raiseAmount);
         } catch (IOException e) {
             log.error("입력 오류가 발생했습니다.");
             raiseAmount = Math.min(raiseAmount, userPoints);
             e.printStackTrace();
         }
 
-
         user.setPoints(userPoints - raiseAmount);
         game.setPot(game.getPot() + raiseAmount);
         game.setBetAmount(raiseAmount);
 
         turn.nextTurn();
+        log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
         return GameState.ACTION;
     }
 
@@ -106,6 +117,7 @@ public class GamePlayService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
         User winner = user.equals(playerOne) ? playerTwo : playerOne;
+        log.info("Die action by user: {}, winner: {}", user.getEmail(), winner.getEmail());
 
         /* DIE 하지 않은 유저에게 Pot 이월*/
         int pot = game.getPot();
@@ -116,7 +128,7 @@ public class GamePlayService {
         }
 
         game.setFoldedUser(user);
-
+        log.info("Die action completed, game ended. Winner: {}", winner.getEmail());
         return GameState.END;
     }
 

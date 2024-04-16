@@ -30,20 +30,26 @@ public class GameSessionService {
     @Transactional
     public Object processUserChoices(Long gameRoomId, UserChoices choices) {
         /* 입력 값 검증*/
+        log.info("Processing user choices for gameRoomId={} with nickname={}", gameRoomId, choices.getNickname());
         gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         User player = gameValidator.findUserByNickname(choices.getNickname());
 
         String nickname = player.getNickname();
         String choice = choices.getUserChoice().toString();
+        log.debug("User choice received: gameRoomId={}, nickname={}, choice={}", gameRoomId, nickname, choice);
 
         /* 유저 선택 저장*/
         gameChoices.computeIfAbsent(gameRoomId, k -> new ConcurrentHashMap<>()).put(nickname, choice);
+        log.debug("Current game choices: {}", gameChoices.get(gameRoomId));
 
         /* 모든 유저의 선택이 완료되었는지 확인*/
         if (gameChoices.get(gameRoomId).size() == 2) {
-            return new GameStatus(gameRoomId, nickname, determineActionAndProceed(gameRoomId));
+            GameStatus status = new GameStatus(gameRoomId, nickname, determineActionAndProceed(gameRoomId));
+            log.info("All user choices received for gameRoomId={}, proceeding with action", gameRoomId);
+            return status;
         }
 
+        log.info("Waiting for other player's choices in gameRoomId={}", gameRoomId);
         return "다른 플레이어의 선택을 기다려주세요";
     }
 
@@ -52,9 +58,14 @@ public class GameSessionService {
         boolean allSame = new HashSet<>(roomChoices.values()).size() == 1;
         gameChoices.remove(gameRoomId);
 
+        log.debug("Determining action for gameRoomId={}, all choices same: {}", gameRoomId, allSame);
+
         if (allSame) {
-            return roomChoices.values().iterator().next().equals("PLAY_AGAIN") ? GameState.START : GameState.LEAVE;
+            GameState finalState = roomChoices.values().iterator().next().equals("PLAY_AGAIN") ? GameState.START : GameState.LEAVE;
+            log.info("Action determined for gameRoomId={}, state: {}", gameRoomId, finalState);
+            return finalState;
         } else {
+            log.info("Conflicting choices in gameRoomId={}, defaulting to ENTER state", gameRoomId);
             return GameState.ENTER;
         }
     }
