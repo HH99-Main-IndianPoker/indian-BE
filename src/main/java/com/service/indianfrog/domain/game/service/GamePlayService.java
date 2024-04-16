@@ -58,27 +58,34 @@ public class GamePlayService {
         log.debug("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
                 isFirstTurn, user.getEmail(), game.getPot(), game.getBetAmount());
 
-        if (!isFirstTurn) {
-            int userPoints = user.getPoints();
-            int currentBet = game.getBetAmount();
-            log.debug("User points before action: {}, currentBet={}", userPoints, currentBet);
-            if (userPoints >= currentBet) {
-                user.setPoints(userPoints - currentBet);
-                game.setPot(game.getPot() + currentBet);
-            } else {
-                game.setPot(game.getPot() + userPoints);
-                user.setPoints(0);
-            }
-            log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
-            return GameState.END;
+        if (game.isCheck()) {
+            return gameEnd(user, game);
+        }
+
+        if(game.isRaise()){
+            return gameEnd(user, game);
         }
 
         /* 선턴 유저 CHECK*/
         user.setPoints(user.getPoints() - game.getBetAmount());
         game.setPot(game.getPot() + game.getBetAmount());
+        game.updateCheck();
         turn.nextTurn();
         log.info("First turn check completed, moving to next turn");
         return GameState.ACTION;
+    }
+
+    private GameState gameEnd(User user, Game game) {
+        log.debug("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
+        if (user.getPoints() >= game.getBetAmount()) {
+            user.setPoints(user.getPoints() - game.getBetAmount());
+            game.setPot(game.getPot() + game.getBetAmount());
+        } else {
+            game.setPot(game.getPot() + user.getPoints());
+            user.setPoints(0);
+        }
+        log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
+        return GameState.END;
     }
 
     private GameState performRaiseAction(Game game, User user, Turn turn) {
@@ -107,7 +114,7 @@ public class GamePlayService {
         user.setPoints(userPoints - raiseAmount);
         game.setPot(game.getPot() + raiseAmount);
         game.setBetAmount(raiseAmount);
-
+        game.updateRaise();
         turn.nextTurn();
         log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
         return GameState.ACTION;
