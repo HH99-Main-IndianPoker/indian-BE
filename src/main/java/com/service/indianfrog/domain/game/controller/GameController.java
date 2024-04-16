@@ -42,14 +42,14 @@ public class GameController {
 
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
-                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
+                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices, Principal principal) {
 
         log.info(gameState);
 
         switch (gameState) {
             case "START" -> {
                 StartRoundResponse response = startGameService.startRound(gameRoomId);
-                sendUserGameMessage(response); // 유저별 메시지 전송
+                sendUserGameMessage(response, principal); // 유저별 메시지 전송
             }
             case "ACTION", "END", "GAME_END", "USER_CHOICE" -> {
                 Object response = switch (gameState) {
@@ -79,19 +79,28 @@ public class GameController {
         messagingTemplate.convertAndSend(destination, gameStatus);
     }
 
-    private void sendUserGameMessage(StartRoundResponse response) {
+    private void sendUserGameMessage(StartRoundResponse response, Principal principal) {
         /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
         log.info(response.getGameState(), response.getTurn().toString());
-        log.info(response.getPlayerOneInfo().getId(), response.getPlayerOneInfo().getCard().toString());
-        log.info(response.getPlayerTwoInfo().getId(), response.getPlayerTwoInfo().getCard().toString());
-        String playerOneId = response.getPlayerOneInfo().getId();
+        log.info(response.getPlayerOneInfo().getEmail(), response.getPlayerOneInfo().getCard().toString());
+        log.info(response.getPlayerTwoInfo().getEmail(), response.getPlayerTwoInfo().getCard().toString());
+        String playerOneId = response.getPlayerOneInfo().getEmail();
         Card playerTwoCard = response.getPlayerTwoInfo().getCard();
-        String playerTwoId = response.getPlayerTwoInfo().getId();
+        String playerTwoId = response.getPlayerTwoInfo().getEmail();
         Card playerOneCard = response.getPlayerOneInfo().getCard();
         try {
-            messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(playerTwoCard, response.getTurn()));
-            messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(playerOneCard, response.getTurn()));
-            log.info("Message sent successfully.");
+            if (principal.getName().equals(playerOneId)) {
+                messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(playerTwoCard, response.getTurn()));
+                log.info("Message sent successfully.");
+            }
+
+            if (principal.getName().equals(playerTwoId)) {
+                messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(playerOneCard, response.getTurn()));
+                log.info("Message sent successfully.");
+            }
+
+            log.info("who are you?");
+
         } catch (Exception e) {
             log.error("Failed to send message", e);
         }
