@@ -38,7 +38,7 @@ public class GamePlayService {
         Turn turn = gameTurnService.getTurn(game.getId());
 
         /* 유저의 턴이 맞는지 확인*/
-        if (!turn.getCurrentPlayer().equals(user)) {
+        if (!turn.getCurrentPlayer().equals(user.getNickname())) {
             log.warn("It's not the turn of the user: {}", nickname);
             throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
         }
@@ -54,7 +54,7 @@ public class GamePlayService {
 
     private GameState performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
-        boolean isFirstTurn = turn.getCurrentPlayer().equals(user);
+        boolean isFirstTurn = turn.getCurrentPlayer().equals(user.getNickname());
         log.debug("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
                 isFirstTurn, user.getEmail(), game.getPot(), game.getBetAmount());
 
