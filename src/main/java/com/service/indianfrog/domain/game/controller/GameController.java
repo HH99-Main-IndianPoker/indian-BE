@@ -54,7 +54,7 @@ public class GameController {
             case "ACTION", "END", "GAME_END", "USER_CHOICE" -> {
                 Object response = switch (gameState) {
                     case "ACTION" ->
-                            gamePlayService.playerAction(gameRoomId, gameBetting.getNickname(), gameBetting.getAction());
+                            gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
                     case "END" -> endGameService.endRound(gameRoomId);
                     case "GAME_END" -> endGameService.endGame(gameRoomId);
                     case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, userChoices);

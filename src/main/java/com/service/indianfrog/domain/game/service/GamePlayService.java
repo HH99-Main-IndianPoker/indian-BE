@@ -1,5 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
+import com.service.indianfrog.domain.game.dto.GameBetting;
 import com.service.indianfrog.domain.game.entity.Betting;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
@@ -30,24 +31,24 @@ public class GamePlayService {
     }
 
     @Transactional
-    public GameState playerAction(Long gameRoomId, String nickname, String action) {
-        log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, nickname, action);
+    public GameState playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
+        log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
         GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
-        User user = gameValidator.findUserByNickname(nickname);
+        User user = gameValidator.findUserByNickname(gameBetting.getNickname());
         Turn turn = gameTurnService.getTurn(game.getId());
 
         /* 유저의 턴이 맞는지 확인*/
         if (!turn.getCurrentPlayer().equals(user.getNickname())) {
-            log.warn("It's not the turn of the user: {}", nickname);
+            log.warn("It's not the turn of the user: {}", gameBetting.getNickname());
             throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
         }
 
-        log.debug("Performing {} action for user {}", action, nickname);
+        log.debug("Performing {} action for user {}", action, gameBetting.getNickname());
         Betting betting = Betting.valueOf(action.toUpperCase());
         return switch (betting) {
             case CHECK -> performCheckAction(game, user, turn);
-            case RAISE -> performRaiseAction(game, user, turn);
+            case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint());
             case DIE -> performDieAction(game, user);
         };
     }
@@ -88,7 +89,7 @@ public class GamePlayService {
         return GameState.END;
     }
 
-    private GameState performRaiseAction(Game game, User user, Turn turn) {
+    private GameState performRaiseAction(Game game, User user, Turn turn, int point) {
         int userPoints = user.getPoints();
         log.debug("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
 
@@ -100,16 +101,8 @@ public class GamePlayService {
         int raiseAmount = 0;
 
         /* RAISE 베팅 액 설정*/
-        try {
-            System.out.print("베팅할 금액을 입력하세요: ");
-            String input = br.readLine();
-            raiseAmount = Integer.parseInt(input);
-            log.debug("Raise amount entered: {}", raiseAmount);
-        } catch (IOException e) {
-            log.error("입력 오류가 발생했습니다.");
-            raiseAmount = Math.min(raiseAmount, userPoints);
-            e.printStackTrace();
-        }
+        raiseAmount = point;
+        log.debug("Raise amount entered: {}", raiseAmount);
 
         user.setPoints(userPoints - raiseAmount);
         game.setPot(game.getPot() + raiseAmount);
