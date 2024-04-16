@@ -81,9 +81,9 @@ public class GameController {
 
     private void sendUserGameMessage(StartRoundResponse response) {
         /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
-        log.info(response.getGameState());
-        log.info(response.getPlayerOneInfo().getId());
-        log.info(response.getPlayerTwoInfo().getCard().toString());
+        log.info(response.getGameState(), response.getTurn().toString());
+        log.info(response.getPlayerOneInfo().getId(), response.getPlayerOneInfo().getCard().toString());
+        log.info(response.getPlayerTwoInfo().getId(), response.getPlayerTwoInfo().getCard().toString());
         String playerOneId = response.getPlayerOneInfo().getId();
         Card playerTwoCard = response.getPlayerTwoInfo().getCard();
         String playerTwoId = response.getPlayerTwoInfo().getId();
