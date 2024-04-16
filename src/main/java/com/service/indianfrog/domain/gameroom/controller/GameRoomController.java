@@ -90,7 +90,7 @@ public class GameRoomController {
      * @param userDetails 참가자 정보
      */
     @PostMapping("/{gameRoomId}/join")
-    public ResponseEntity<Object> joinGameRoom(@PathVariable Long gameRoomId, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ParticipantInfo> joinGameRoom(@PathVariable Long gameRoomId, @AuthenticationPrincipal UserDetails userDetails) {
         ParticipantInfo newParticipant = gameRoomService.addParticipant(gameRoomId, userDetails);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/join", newParticipant);
         return ResponseEntity.ok(newParticipant);

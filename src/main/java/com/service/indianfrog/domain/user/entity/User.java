@@ -27,10 +27,11 @@ public class User extends Timestamped {
 //    @Enumerated(EnumType.STRING)
 //    private AuthorityType authority;
 
-    private int points = 100;
+    private int points;
 
     /*
-     * rank*/
+     * rank
+     */
     private int wins;
     private int losses;
 
@@ -40,6 +41,7 @@ public class User extends Timestamped {
         this.nickname = nickname;
         this.email = email;
         this.password = password;
+        this.points = 100;
 //        this.authority = authority;
     }
 
@@ -71,7 +73,7 @@ public class User extends Timestamped {
         this.losses++;
     }
 
-    public void increasePoints(int points) {
-        this.points += points;
+    public void updatePoint(int point) {
+        this.points += point;
     }
 }
