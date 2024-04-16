@@ -10,7 +10,7 @@ public class PlayerInfo {
     private Card card;
 
     public PlayerInfo(User player, Card card) {
-        this.id = player.getNickname();
+        this.id = player.getEmail();
         this.card = card;
     }
 }
