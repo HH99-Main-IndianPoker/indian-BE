@@ -88,7 +88,7 @@ public class JwtUtil {
                         .setSubject(email) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
                         .claim("nickname", nickname)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24)) // 1hour
+                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 4*5/3600)) // 1hour
                         .setIssuedAt(date) // 발급일
                         .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
                         .compact();
@@ -97,6 +97,23 @@ public class JwtUtil {
     public TokenVerificationResult verifyAccessToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token);
+            return TokenVerificationResult.VALID;
+        } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
+            log.error("Invalid JWT signature, 유효하지 않는 JWT 서명입니다.");
+        } catch (ExpiredJwtException e) {
+            log.error("Expired JWT token, 만료된 JWT AccessToken 입니다.");
+            return TokenVerificationResult.EXPIRED;
+        } catch (UnsupportedJwtException e) {
+            log.error("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
+        } catch (IllegalArgumentException e) {
+            log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
+        }
+        return TokenVerificationResult.INVALID;
+    }
+
+    public TokenVerificationResult verifyRefreshToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(refreshKey).build().parseClaimsJws(token);
             return TokenVerificationResult.VALID;
         } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
             log.error("Invalid JWT signature, 유효하지 않는 JWT 서명입니다.");

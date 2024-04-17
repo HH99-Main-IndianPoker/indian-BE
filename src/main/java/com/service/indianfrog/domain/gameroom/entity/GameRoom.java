@@ -17,7 +17,6 @@ import java.util.Set;
 @Entity
 @Getter
 @Table(name = "Game_room")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GameRoom extends Timestamped {
 
     @Id
@@ -44,6 +43,10 @@ public class GameRoom extends Timestamped {
         this.validateRooms = validateRooms;
         this.currentGame = currentGame;
         this.gameState = gameState;
+
+    }
+
+    public GameRoom() {
 
     }
 
