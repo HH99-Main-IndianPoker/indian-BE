@@ -40,36 +40,48 @@ public class RefreshTokenService {
      * 2.RefreshToken 객체를 꺼내온다.
      * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
     @Transactional
-    public String republishAccessTokenWithRotate(String accessToken,
-        HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
+    public String republishAccessTokenWithRotate(String accessToken,HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
         RefreshToken refreshTokenInfo = tokenRepository.findByAccessToken(accessToken)
             .orElseThrow(()->new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_REFRESH_TOKEN.getMessage()));
-        log.info(String.valueOf(accessToken));
+        String originalAccessToken = refreshTokenInfo.getAccessToken().substring(7);
+        if (jwtUtil.verifyAccessToken(originalAccessToken)
+            == TokenVerificationResult.EXPIRED) {
+            String originRefreshToken = refreshTokenInfo.getRefreshToken();
+            if (jwtUtil.verifyRefreshToken(originRefreshToken) != TokenVerificationResult.EXPIRED) {
+                User user = userRepository.findByEmail(refreshTokenInfo.getId())
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+                /*
+                 * 1.remove accesstoken
+                 * 2.generate tokens
+                 * 3.update each token*/
+                Cookie[] cookies = request.getCookies();
+                if (cookies != null) {
+                    for (Cookie cookie : cookies) {
+                        if (cookie.getName().equals("refreshToken")) {
+                            cookie.setValue(""); // 쿠키의 값을 비웁니다.
+                            cookie.setPath("/"); // 쿠키의 경로를 설정합니다. 생성할 때의 경로와 일치해야 합니다.
+                            cookie.setMaxAge(0); // 쿠키의 최대 수명을 0으로 설정하여 즉시 만료시킵니다.
+                            cookie.setHttpOnly(true); // JavaScript 접근 방지
+                            response.addCookie(cookie); // 수정된 쿠키를 응답에 추가합니다.
+                        }
+                    }
+                }
 
+                removeRefreshToken(refreshTokenInfo.getAccessToken());
+                GeneratedToken updatedToken = jwtUtil.generateToken(refreshTokenInfo.getId(), "USER", user.getNickname());
+                response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
+                response.setHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
+
+                String updatedRefreshToken = URLEncoder.encode(updatedToken.getRefreshToken(), "utf-8");
+                Cookie refreshTokenCookie = createCookie("refreshTokenInfo", updatedRefreshToken);
+                response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
+
+                return updatedToken.getAccessToken();
+            }
+        }
         /*
          * 1.지금은 만료안된 엑세스토큰*/
-
-        String originRefreshToken = refreshTokenInfo.getRefreshToken();
-        if (jwtUtil.verifyRefreshToken(originRefreshToken) == TokenVerificationResult.EXPIRED) {
-            User user = userRepository.findByEmail(refreshTokenInfo.getId())
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-            /*
-             * 1.remove accesstoken
-             * 2.generate tokens
-             * 3.update each token*/
-
-            removeRefreshToken(refreshTokenInfo.getAccessToken());
-            GeneratedToken updatedToken = jwtUtil.generateToken(refreshTokenInfo.getId(), "USER", user.getNickname());
-            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
-            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
-
-            String updatedRefreshToken = URLEncoder.encode(updatedToken.getRefreshToken(), "utf-8");
-            Cookie refreshTokenCookie = createCookie("refreshTokenInfo", updatedRefreshToken);
-            response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
-
-            return updatedToken.getAccessToken();
-        }
-        throw new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_REFRESH_TOKEN.getMessage());
+        throw new RestApiException(ErrorCode.NOT_EXPIRED_ACCESS_TOKEN.getMessage());
     }
 
     private Cookie createCookie(String key, String value) {
