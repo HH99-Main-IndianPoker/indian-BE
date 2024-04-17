@@ -47,9 +47,14 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         String tokenValue = jwtUtil.getJwtFromHeader(request);
 
         if (StringUtils.hasText(tokenValue)) {
-            if (jwtUtil.verifyAccessToken(tokenValue) == TokenVerificationResult.EXPIRED || jwtUtil.verifyAccessToken(tokenValue) == TokenVerificationResult.INVALID) {
+            if (jwtUtil.verifyAccessToken(tokenValue) == TokenVerificationResult.INVALID) {
                 log.error("Token Error");
                 CustomResponseUtil.fail(response, "JWT 유효성 검사 실패", HttpStatus.UNAUTHORIZED);
+                return;
+            }
+            if (jwtUtil.verifyAccessToken(tokenValue) == TokenVerificationResult.EXPIRED) {
+                log.error("Token Error");
+                CustomResponseUtil.fail(response, "JWT 엑세스 토큰 만료", HttpStatus.UNAUTHORIZED);
                 return;
             }
 
