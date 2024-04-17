@@ -57,18 +57,7 @@ public class RefreshTokenService {
              * 1.remove accesstoken
              * 2.generate tokens
              * 3.update each token*/
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    if (cookie.getName().equals("refreshTokenInfo")) {
-                        cookie.setValue("");
-                        cookie.setPath("/");
-                        cookie.setMaxAge(0);
-                        cookie.setHttpOnly(true);
-                        response.addCookie(cookie);
-                    }
-                }
-            }
+
             removeRefreshToken(refreshTokenInfo.getAccessToken());
             GeneratedToken updatedToken = jwtUtil.generateToken(refreshTokenInfo.getId(), "USER", user.getNickname());
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
