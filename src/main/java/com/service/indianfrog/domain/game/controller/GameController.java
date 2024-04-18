@@ -86,13 +86,8 @@ public class GameController {
     private void sendUserEndRoundMessage(EndRoundResponse response, Principal principal) {
 
         log.info("who are you? -> {}", principal.getName());
-
-        String winner = response.getRoundWinner().getEmail();
-        String loser = response.getRoundLoser().getEmail();
-
-        try {
-            if (principal.getName().equals(winner)) {
-                messagingTemplate.convertAndSendToUser(winner, "/queue/endRoundInfo", new EndRoundInfo(
+       try {
+        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endRoundInfo", new EndRoundInfo(
                         response.getNowState(),
                         response.getNextState(),
                         response.getRound(),
@@ -101,18 +96,7 @@ public class GameController {
                         response.getRoundPot()));
                 log.info("Message sent successfully.");
             }
-
-            if (principal.getName().equals(loser)) {
-                messagingTemplate.convertAndSendToUser(loser, "/queue/endRoundInfo", new EndRoundInfo(
-                        response.getNowState(),
-                        response.getNextState(),
-                        response.getRound(),
-                        response.getRoundWinner().getNickname(),
-                        response.getRoundLoser().getNickname(),
-                        response.getRoundPot()));
-                log.info("Message sent successfully.");
-            }
-        } catch (Exception e) {
+            catch (Exception e) {
             log.error("Failed to send message", e);
         }
 
@@ -122,12 +106,8 @@ public class GameController {
 
         log.info("who are you? -> {}", principal.getName());
 
-        String winner = response.getGameWinner().getEmail();
-        String loser = response.getGameLoser().getEmail();
-
         try {
-            if (principal.getName().equals(winner)) {
-                messagingTemplate.convertAndSendToUser(winner, "/queue/endGameInfo", new EndGameInfo(
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endGameInfo", new EndGameInfo(
                         response.getNowState(),
                         response.getNextState(),
                         response.getGameWinner().getNickname(),
@@ -135,18 +115,6 @@ public class GameController {
                         response.getWinnerPot(),
                         response.getLoserPot()));
                 log.info("Message sent successfully.");
-            }
-
-            if (principal.getName().equals(loser)) {
-                messagingTemplate.convertAndSendToUser(loser, "/queue/endGameInfo", new EndGameInfo(
-                        response.getNowState(),
-                        response.getNextState(),
-                        response.getGameWinner().getNickname(),
-                        response.getGameLoser().getNickname(),
-                        response.getWinnerPot(),
-                        response.getLoserPot()));
-                log.info("Message sent successfully.");
-            }
         } catch (Exception e) {
             log.error("Failed to send message", e);
         }
