@@ -25,21 +25,4 @@ public class ChatMessage {
         this.point = points;
         this.senderImgUrl = imgUrl;
     }
-//
-//    public void setType(MessageType type) {
-//        this.type = type;
-//    }
-//
-//    public void setContent(String content) {
-//        this.content = content;
-//    }
-//
-//    public void setSender(String sender) {
-//        this.sender = sender;
-//    }
-//
-//    public void setImgUrl(String imgUrl) {
-//        this.imgUrl = imgUrl;
-//    }
-//    public void setPoint(int point){ this.point = point; }
 }
