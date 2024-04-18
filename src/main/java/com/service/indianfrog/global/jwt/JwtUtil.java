@@ -58,9 +58,9 @@ public class JwtUtil {
     }
 
 
-    public GeneratedToken generateToken(String email, String role, String nickname) {
+    public GeneratedToken generateToken(String email, String role, String nickname, int points) {
         String refreshToken = generateRefreshToken(email, role, nickname);
-        String accessToken = generateAccessToken(email, role, nickname);
+        String accessToken = generateAccessToken(email, role, nickname, points);
 
         // 토큰을 Redis에 저장한다.
         tokenService.saveTokenInfo(email, refreshToken, accessToken);
@@ -81,13 +81,14 @@ public class JwtUtil {
     }
 
 
-    public String generateAccessToken(String email, String role, String nickname) {
+    public String generateAccessToken(String email, String role, String nickname, int points) {
         Date date = new Date();
         return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(email) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
                         .claim("nickname", nickname)
+                        .claim("points", points)
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME / 4*5/3600)) // 1hour
                         .setIssuedAt(date) // 발급일
                         .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘

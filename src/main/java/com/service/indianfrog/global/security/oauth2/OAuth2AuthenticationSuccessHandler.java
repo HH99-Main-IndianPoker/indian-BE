@@ -37,6 +37,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String email = oAuth2User.getAttribute("email");
         String provider = oAuth2User.getAttribute("provider");
         String nickname = ((UserDetailsImpl) authentication.getPrincipal()).getUser().getNickname();
+        int points = ((UserDetailsImpl) authentication.getPrincipal()).getUser().getPoints();
         /*
          * CustomOAuth2UserService에서 셋팅한 로그인한 회원 존재 여부를 가져온다.
          * OAuth2User로 부터 Role을 얻어온다.*/
@@ -48,10 +49,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 .getAuthority(); // Role을 가져온다.
 
 
+
         // 회원이 존재할경우
         if (isExist) {
 
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname, points);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
@@ -62,7 +64,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             CustomResponseUtil.success(response, null);
         } else {
             // 새로 생성된 사용자의 토큰 생성 및 전달
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname, points);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 

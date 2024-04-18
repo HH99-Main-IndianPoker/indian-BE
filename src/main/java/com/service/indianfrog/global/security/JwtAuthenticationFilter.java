@@ -61,8 +61,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String email = ((UserDetailsImpl) authResult.getPrincipal()).getUsername();
 //        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getAuthority()
         String nickname = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getNickname();
+        int points = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getPoints();
         String role = "USER";
-        GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
+        GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname, points);
         insertInHeaderWithAccessToken(response, tokens);
         insertSetCookieWithRefreshToken(response, tokens);
 
