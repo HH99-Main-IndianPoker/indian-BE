@@ -1,5 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
+import com.service.indianfrog.domain.game.dto.ActionDto;
 import com.service.indianfrog.domain.game.dto.GameBetting;
 import com.service.indianfrog.domain.game.entity.Betting;
 import com.service.indianfrog.domain.game.entity.Game;
@@ -31,7 +32,7 @@ public class GamePlayService {
     }
 
     @Transactional
-    public GameState playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
+    public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
         log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
         GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
@@ -53,7 +54,7 @@ public class GamePlayService {
         };
     }
 
-    private GameState performCheckAction(Game game, User user, Turn turn) {
+    private ActionDto performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
         boolean isFirstTurn = turn.getCurrentPlayer().equals(user.getNickname());
         log.info("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
@@ -73,16 +74,17 @@ public class GamePlayService {
         game.updateCheck();
         turn.nextTurn();
         log.info("First turn check completed, moving to next turn");
-        return GameState.ACTION;
+
+        return new ActionDto(GameState.ACTION, GameState.ACTION, Betting.CHECK, game.getBetAmount(), game.getPot(), turn.getCurrentPlayer());
     }
 
-    private GameState performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
+    private ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
         int userPoints = user.getPoints();
         log.info("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
 
         if (userPoints <= 0) {
-            log.warn("User has insufficient points to raise");
-            return GameState.END;
+            log.info("User has insufficient points to raise");
+            return new ActionDto(GameState.ACTION, GameState.END, Betting.RAISE, 0, game.getPot(), user.getNickname());
         }
         /* RAISE 베팅 액 설정*/
         log.info("Raise amount entered: {}", raiseAmount);
@@ -93,14 +95,14 @@ public class GamePlayService {
         game.updateRaise();
         turn.nextTurn();
         log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
-        return GameState.ACTION;
+        return new ActionDto(GameState.ACTION, GameState.ACTION, Betting.RAISE, game.getBetAmount(), game.getPot(), turn.getCurrentPlayer());
     }
 
-    private GameState performDieAction(Game game, User user) {
+    private ActionDto performDieAction(Game game, User user) {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
         User winner = user.equals(playerOne) ? playerTwo : playerOne;
-        log.info("Die action by user: {}, winner: {}", user.getEmail(), winner.getEmail());
+        log.info("Die action by user: {}, winner: {}", user.getNickname(), winner.getNickname());
 
         /* DIE 하지 않은 유저에게 Pot 이월*/
         int pot = game.getPot();
@@ -111,11 +113,11 @@ public class GamePlayService {
         }
 
         game.setFoldedUser(user);
-        log.info("Die action completed, game ended. Winner: {}", winner.getEmail());
-        return GameState.END;
+        log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
+        return new ActionDto(GameState.ACTION, GameState.END, Betting.DIE, game.getBetAmount(), game.getPot(), winner.getNickname());
     }
 
-    private GameState gameEnd(User user, Game game) {
+    private ActionDto gameEnd(User user, Game game) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
         if (user.getPoints() >= game.getBetAmount()) {
             user.setPoints(user.getPoints() - game.getBetAmount());
@@ -125,7 +127,7 @@ public class GamePlayService {
             user.setPoints(0);
         }
         log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
-        return GameState.END;
+        return new ActionDto(GameState.ACTION, GameState.END, Betting.CHECK, game.getBetAmount(), game.getPot(), user.getNickname());
     }
 
 }

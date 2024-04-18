@@ -48,7 +48,7 @@ public class StartGameService {
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
         log.info("게임 초기화 또는 검색 완료.");
 
-        performRoundStart(game);
+        int firstBet = performRoundStart(game);
         log.info("라운드 시작 작업 수행 완료.");
 
         gameValidator.saveGameRoomState(gameRoom);
@@ -62,10 +62,10 @@ public class StartGameService {
 
         log.info("StartRoundResponse 반환 중.");
         return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
-                game.getPlayerOneCard(), game.getPlayerTwoCard(), turn);
+                game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);
     }
 
-    private void performRoundStart(Game game) {
+    private int performRoundStart(Game game) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
@@ -91,6 +91,8 @@ public class StartGameService {
             initializeTurnForGame(game);
             log.info("첫 라운드에 턴 초기화 됨.");
         }
+
+        return betAmount;
     }
 
     private int calculateInitialBet(User playerOne, User playerTwo) {

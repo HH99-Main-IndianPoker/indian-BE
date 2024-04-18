@@ -15,27 +15,34 @@ public class GameDto {
         private PlayerInfo playerOneInfo;
         private PlayerInfo playerTwoInfo;
         private Turn turn;
+        private int firstBet;
+        private int roundPot;
 
         public StartRoundResponse(String gameState, int round, User playerOne, User playerTwo,
-                                  Card playerOneCard, Card playerTwoCard, Turn turn) {
+                                  Card playerOneCard, Card playerTwoCard, Turn turn, int firstBet) {
             this.gameState = gameState;
             this.round = round;
             this.playerOneInfo = new PlayerInfo(playerOne, playerOneCard);
             this.playerTwoInfo = new PlayerInfo(playerTwo, playerTwoCard);
             this.turn = turn;
+            this.firstBet = firstBet;
+            this.roundPot = firstBet * 2;
+
         }
     }
 
     @Getter
     public static class EndRoundResponse {
-        private String gameState;
+        private String nowState;
+        private String nextState;
         private int round;
         private Long roundWinnerId;
         private Long roundLoserId;
         private int roundPot;
 
-        public EndRoundResponse(String gameState, int round, Long roundWinnerId, Long roundLoserId, int roundPot) {
-            this.gameState = gameState;
+        public EndRoundResponse(String nowState, String nextState,int round, Long roundWinnerId, Long roundLoserId, int roundPot) {
+            this.nowState = nowState;
+            this.nextState = nextState;
             this.round = round;
             this.roundWinnerId = roundWinnerId;
             this.roundLoserId = roundLoserId;

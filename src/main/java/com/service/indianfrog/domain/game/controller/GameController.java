@@ -90,12 +90,12 @@ public class GameController {
         Card playerOneCard = response.getPlayerOneInfo().getCard();
         try {
             if (principal.getName().equals(playerOneId)) {
-                messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(playerTwoCard, response.getTurn()));
+                messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(playerTwoCard, response.getTurn(), response.getFirstBet(), response.getRoundPot()));
                 log.info("Message sent successfully.");
             }
 
             if (principal.getName().equals(playerTwoId)) {
-                messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(playerOneCard, response.getTurn()));
+                messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(playerOneCard, response.getTurn(), response.getFirstBet(), response.getRoundPot()));
                 log.info("Message sent successfully.");
             }
 

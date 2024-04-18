@@ -65,10 +65,10 @@ public class EndGameService {
         log.debug("Round reset for gameRoomId={}", gameRoomId);
 
         /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
-        String gameState = determineGameState(game);
-        log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, gameState);
+        String nextState = determineGameState(game);
+        log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-        return new EndRoundResponse(gameState, game.getRound(), gameResult.getWinnerId(), gameResult.getLoserId(), roundPot);
+        return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinnerId(), gameResult.getLoserId(), roundPot);
     }
 
     /* 게임 종료 로직*/
