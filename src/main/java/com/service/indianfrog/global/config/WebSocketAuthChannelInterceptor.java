@@ -42,11 +42,8 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
      */
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        if (!accessor.isMutable()) {
-            accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
-            accessor.copyHeadersIfAbsent(message.getHeaders());
-        }
+        StompHeaderAccessor accessor = MessageHeaderAccessor
+                .getAccessor(message, StompHeaderAccessor.class);
 
         // 클라이언트가 보낸 메세지에서 Authorization 추출.
         // getFirstNativeHeader는 STOMP를 사용하는 웹소켓에서 헤더에 접근할수 있게 해주는 프로토콜
@@ -55,10 +52,10 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         // 토큰 유효성 검사
         if (StringUtils.hasText(token) && token.startsWith(JwtUtil.BEARER_PREFIX)) {
             token = token.substring(7);
-            TokenVerificationResult result = jwtUtil.verifyAccessToken(token);
-
-            if (result == TokenVerificationResult.VALID) {
+            // jwt로 유효성 검사
+            if (jwtUtil.verifyAccessToken(token) == TokenVerificationResult.VALID) {
                 String email = jwtUtil.getUid(token);
+
                 // 이메일을 이용해서 인증객체 생성. new AuthenticatedUser(email) 이걸로 principal 사용.
                 Authentication authentication = new UsernamePasswordAuthenticationToken(new AuthenticatedUser(email), null, Collections.emptyList());
                 //SecurityContext에 담아서 다른데서도 인증된 사용자 정보를 조회할수 있음.
@@ -66,21 +63,8 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
                 // STOMP에 사용자 인증정보 설정해서 해당 메세지 처리하는 동안 사용자가 인증된 상태 유지.
                 accessor.setUser(authentication);
                 log.info("Authentication set for user: {}", email);
-                return message;
-            } else {
-                String errorMessage = "인증 실패. ";
-                switch (result) {
-                    case EXPIRED:
-                        errorMessage += "토큰이 만료되었습니다.";
-                        break;
-                    case INVALID:
-                        errorMessage += "유효하지 않은 토큰입니다.";
-                        break;
-                }
-                accessor.setHeader("error", errorMessage);
-                return MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
             }
         }
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+        return message;
     }
 }
