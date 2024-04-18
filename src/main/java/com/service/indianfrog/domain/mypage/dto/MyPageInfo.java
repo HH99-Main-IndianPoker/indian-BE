@@ -4,7 +4,6 @@ public record MyPageInfo (
 
     String nickName,
     String email,
-
     int ranking,
     int point
 
