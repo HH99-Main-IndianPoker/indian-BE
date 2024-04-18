@@ -6,6 +6,7 @@ import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
@@ -42,6 +43,10 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        if (!accessor.isMutable()) {
+            accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
+            accessor.copyHeadersIfAbsent(message.getHeaders());
+        }
 
         // 클라이언트가 보낸 메세지에서 Authorization 추출.
         // getFirstNativeHeader는 STOMP를 사용하는 웹소켓에서 헤더에 접근할수 있게 해주는 프로토콜
