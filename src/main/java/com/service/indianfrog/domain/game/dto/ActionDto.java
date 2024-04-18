@@ -2,6 +2,8 @@ package com.service.indianfrog.domain.game.dto;
 
 import com.service.indianfrog.domain.game.entity.Betting;
 import com.service.indianfrog.domain.game.entity.GameState;
+import com.service.indianfrog.domain.game.entity.Turn;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
@@ -14,6 +16,7 @@ public class ActionDto {
     int nowBet;
     int pot;
 
+    @Builder
     public ActionDto(GameState nowState, GameState nextState, Betting actionType, int nowBet, int pot, String currentPlayer){
         this.nowState = nowState.getGameState();
         this.nextState = nextState.getGameState();

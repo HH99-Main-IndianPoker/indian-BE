@@ -56,9 +56,8 @@ public class GamePlayService {
 
     private ActionDto performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
-        boolean isFirstTurn = turn.getCurrentPlayer().equals(user.getNickname());
-        log.info("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
-                isFirstTurn, user.getEmail(), game.getPot(), game.getBetAmount());
+        log.info("Check action: currentPlayer={}, user={}, currentPot={}, betAmount={}",
+                user.getNickname(), user.getEmail(), game.getPot(), game.getBetAmount());
 
         if (game.isCheckStatus()) {
             return gameEnd(user, game);
@@ -75,7 +74,14 @@ public class GamePlayService {
         turn.nextTurn();
         log.info("First turn check completed, moving to next turn");
 
-        return new ActionDto(GameState.ACTION, GameState.ACTION, Betting.CHECK, game.getBetAmount(), game.getPot(), turn.getCurrentPlayer());
+        return ActionDto.builder()
+                .nowState(GameState.ACTION)
+                .nextState(GameState.ACTION)
+                .actionType(Betting.CHECK)
+                .nowBet(game.getBetAmount())
+                .pot(game.getPot())
+                .currentPlayer(turn.getCurrentPlayer())
+                .build();
     }
 
     private ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
@@ -95,7 +101,14 @@ public class GamePlayService {
         game.updateRaise();
         turn.nextTurn();
         log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
-        return new ActionDto(GameState.ACTION, GameState.ACTION, Betting.RAISE, game.getBetAmount(), game.getPot(), turn.getCurrentPlayer());
+        return ActionDto.builder()
+                .nowState(GameState.ACTION)
+                .nextState(GameState.ACTION)
+                .actionType(Betting.CHECK)
+                .nowBet(game.getBetAmount())
+                .pot(game.getPot())
+                .currentPlayer(turn.getCurrentPlayer())
+                .build();
     }
 
     private ActionDto performDieAction(Game game, User user) {
@@ -113,8 +126,17 @@ public class GamePlayService {
         }
 
         game.setFoldedUser(user);
+
         log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
-        return new ActionDto(GameState.ACTION, GameState.END, Betting.DIE, game.getBetAmount(), game.getPot(), winner.getNickname());
+
+        return ActionDto.builder()
+                .nowState(GameState.ACTION)
+                .nextState(GameState.END)
+                .actionType(Betting.DIE)
+                .nowBet(game.getBetAmount())
+                .pot(game.getPot())
+                .currentPlayer(winner.getNickname())
+                .build();
     }
 
     private ActionDto gameEnd(User user, Game game) {
@@ -127,7 +149,14 @@ public class GamePlayService {
             user.setPoints(0);
         }
         log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
-        return new ActionDto(GameState.ACTION, GameState.END, Betting.CHECK, game.getBetAmount(), game.getPot(), user.getNickname());
+        return ActionDto.builder()
+                .nowState(GameState.ACTION)
+                .nextState(GameState.END)
+                .actionType(Betting.CHECK)
+                .nowBet(game.getBetAmount())
+                .pot(game.getPot())
+                .currentPlayer(user.getNickname())
+                .build();
     }
 
 }
