@@ -69,7 +69,7 @@ public class MyPageService {
 
         user.imgUpdate(originFileName, s3UrlText);
 
-        return new MyProfile(user.getImageUrl());
+        return new MyProfile(s3UrlText);
     }
 
 

@@ -53,7 +53,7 @@ public class User extends Timestamped {
 
     }
 
-    public void imgUpdate(String imageUrl, String originFileName) {
+    public void imgUpdate(String originFileName, String imageUrl) {
         this.originFileName = originFileName;
         this.imageUrl = imageUrl;
     }
