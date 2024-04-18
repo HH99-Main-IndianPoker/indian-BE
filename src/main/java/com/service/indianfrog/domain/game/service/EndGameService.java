@@ -50,7 +50,7 @@ public class EndGameService {
         int roundPot = game.getPot();
 
         /* 라운드 승자가 선턴을 가지도록 설정*/
-        initializeTurnForGame(game, gameResult.getWinner());
+        initializeTurnForGame(game, gameResult.getWinner(), gameResult.getLoser());
 
         /* 라운드 정보 초기화*/
         game.resetRound();
@@ -160,16 +160,14 @@ public class EndGameService {
     }
 
     /* 1라운드 이후 턴 설정 메서드 */
-    private void initializeTurnForGame(Game game, User winner) {
+    private void initializeTurnForGame(Game game, User winner, User loser) {
         List<User> players = new ArrayList<>();
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
         players.add(winner);
+        players.add(loser);
 
-        User player = (!winner.equals(game.getPlayerOne()))
-                ? game.getPlayerTwo() : game.getPlayerOne();
-        players.add(player);
-
-        gameTurnService.setTurn(game.getId(), new Turn(players));
+        Turn turn = new Turn(players);
+        gameTurnService.setTurn(game.getId(), turn);
     }
 }
