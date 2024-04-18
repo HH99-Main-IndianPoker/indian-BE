@@ -5,6 +5,7 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
+import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
@@ -23,10 +24,12 @@ public class StartGameService {
     /* 생성자를 통한 필드 주입 */
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
+    private final GameRepository gameRepository;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
+        this.gameRepository = gameRepository;
     }
 
     @Transactional
@@ -80,6 +83,8 @@ public class StartGameService {
         game.setBetAmount(0);
         game.setPot(betAmount * 2);
 
+        gameRepository.save(game);
+
         List<Card> availableCards = prepareAvailableCards(game);
         assignRandomCardsToPlayers(game, availableCards);
         log.info("플레이어에게 카드 할당됨.");
@@ -97,6 +102,9 @@ public class StartGameService {
         int playerTwoPoints = playerTwo.getPoints();
         int minPoints = Math.min(playerOnePoints, playerTwoPoints);
         int fivePercentOfMinPoint = (int) Math.round(minPoints * 0.05);
+        if (fivePercentOfMinPoint < 1) {
+            fivePercentOfMinPoint = 1;
+        }
         return Math.min(fivePercentOfMinPoint, 2000);
     }
 

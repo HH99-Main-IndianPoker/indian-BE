@@ -107,6 +107,7 @@ public class EndGameService {
         return result;
     }
 
+
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
         User winner = gameResult.getWinner();
