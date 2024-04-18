@@ -68,8 +68,7 @@ public class RefreshTokenService {
                 }
 
                 removeRefreshToken(refreshTokenInfo.getAccessToken());
-                GeneratedToken updatedToken = jwtUtil
-                    .generateToken(refreshTokenInfo.getId(), "USER", user.getNickname(), user.getPoints());
+                GeneratedToken updatedToken = jwtUtil.generateToken(refreshTokenInfo.getId(), "USER", user.getNickname());
                 response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
                 response.setHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
 

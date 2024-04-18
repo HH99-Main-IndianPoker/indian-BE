@@ -19,7 +19,6 @@ public class RefreshToken implements Serializable {
 
     private String refreshToken;
 
-
     public RefreshToken(String id, String accessToken, String refreshToken) {
         this.id = id;
         this.accessToken = accessToken;
