@@ -6,19 +6,19 @@ import lombok.Getter;
 @Getter
 public class GameResult {
 
-    private String winner;
-    private String loser;
+    private User winner;
+    private User loser;
     private int winnerPot;
     private int loserPot;
 
     public GameResult(User winner, User loser) {
-        this.winner = winner.getNickname();
-        this.loser = loser.getNickname();
+        this.winner = winner;
+        this.loser = loser;
     }
 
     public GameResult(User winner, User loser, int winnerPot, int loserPot) {
-        this.winner = winner.getNickname();
-        this.loser = loser.getNickname();
+        this.winner = winner;
+        this.loser = loser;
         this.winnerPot = winnerPot;
         this.loserPot = loserPot;
     }

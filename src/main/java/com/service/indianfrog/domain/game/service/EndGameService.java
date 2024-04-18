@@ -8,21 +8,16 @@ import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
-import com.service.indianfrog.domain.game.utils.RepositoryHolder;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
-import com.service.indianfrog.global.exception.ErrorCode;
-import com.service.indianfrog.global.exception.RestApiException;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @Tag(name = "게임/라운드 종료 서비스", description = "게임/라운드 종료 서비스 로직")
 @Slf4j
@@ -30,14 +25,11 @@ import java.util.Random;
 public class EndGameService {
 
     private final GameValidator gameValidator;
-    private final RepositoryHolder repositoryHolder;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
 
-    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder,
-                          GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
-        this.repositoryHolder = repositoryHolder;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
     }
@@ -88,7 +80,7 @@ public class EndGameService {
                 gameRoomId, gameResult.getWinner(), gameResult.getLoser());
 
         /* 유저 선택 상태 반환 */
-        return new EndGameResponse("USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
+        return new EndGameResponse("GAME_END" ,"USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
                 gameResult.getWinnerPot(), gameResult.getLoserPot());
     }
 
@@ -117,7 +109,7 @@ public class EndGameService {
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
-        User winner = repositoryHolder.userRepository.findByNickname(gameResult.getWinner());
+        User winner = gameResult.getWinner();
 
         int pointsToAdd = game.getPot();
 
@@ -167,14 +159,13 @@ public class EndGameService {
     }
 
     /* 1라운드 이후 턴 설정 메서드 */
-    private void initializeTurnForGame(Game game, String winner) {
+    private void initializeTurnForGame(Game game, User winner) {
         List<User> players = new ArrayList<>();
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
-        User roundWinner = repositoryHolder.userRepository.findByNickname(winner);
-        players.add(roundWinner);
+        players.add(winner);
 
-        User player = (!roundWinner.equals(game.getPlayerOne()))
+        User player = (!winner.equals(game.getPlayerOne()))
                 ? game.getPlayerTwo() : game.getPlayerOne();
         players.add(player);
 
