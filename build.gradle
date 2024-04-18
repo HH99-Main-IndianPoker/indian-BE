@@ -38,6 +38,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-reactor-netty")
 
+    //S3
+    implementation platform('com.amazonaws:aws-java-sdk-bom:1.12.701')
+    implementation 'com.amazonaws:aws-java-sdk-s3'
+
 //view
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-freemarker'

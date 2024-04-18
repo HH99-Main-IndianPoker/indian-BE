@@ -20,9 +20,9 @@ import java.security.Principal;
 @Slf4j
 public class ChatController {
 
-    private SimpMessageSendingOperations messagingTemplate; //이 심플메세지프로토콜을 이용하면 목적지와,메세지를 지정할수 있음
-    private GameRoomService gameRoomService;
-    private UserRepository userRepository;
+    private final SimpMessageSendingOperations messagingTemplate; //이 심플메세지프로토콜을 이용하면 목적지와,메세지를 지정할수 있음
+    private final GameRoomService gameRoomService;
+    private final UserRepository userRepository;
 
     public ChatController(SimpMessageSendingOperations messagingTemplate, GameRoomService gameRoomService,UserRepository userRepository) {
         this.messagingTemplate = messagingTemplate;
@@ -45,12 +45,16 @@ public class ChatController {
 
         // 욕설 필터링
         String filteredContent = gameRoomService.filterMessage(chatMessage.getContent());
-        chatMessage.setContent(filteredContent);
+        ChatMessage responseChatMessage = ChatMessage.builder()
+                .type(chatMessage.getType())
+                .sender(chatMessage.getSender())
+                .content(filteredContent)
+                .build();
 
         // 동적으로 메시지를 라우팅할 주소를 생성.
         String destination = "/topic/gameRoom/" + gameRoomId;
 
-        messagingTemplate.convertAndSend(destination, chatMessage);
+        messagingTemplate.convertAndSend(destination, responseChatMessage);
     }
 
     /**
@@ -76,37 +80,16 @@ public class ChatController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-//        int point = user.getPoints();
-        chatMessage.setPoint(user.getPoints());
-        log.info("내포인트는?"+chatMessage.getPoint());
+        ChatMessage responseChatMessage = ChatMessage.builder()
+                .type(chatMessage.getType())
+                .sender(chatMessage.getSender())
+                .imgUrl(user.getImageUrl())
+                .points(user.getPoints())
+                .build();
 
+        log.info("내포인트는? : " + chatMessage.getPoint());
 
         // 입장 메시지 전송.
-        messagingTemplate.convertAndSend(destination, chatMessage);
-//        messagingTemplate.convertAndSend(destination, point);
+        messagingTemplate.convertAndSend(destination, responseChatMessage);
     }
-
-//    @MessageMapping("/gameRoom/{gameRoomId}/join")
-//    public void userPoint(@DestinationVariable Long gameRoomId, Principal principal) {
-//        String email = principal.getName();
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-//
-//        int point = user.getPoints();
-//        log.info("내포인트는?"+point);
-//        String destination = "/topic/gameRoom/" + gameRoomId;
-//
-//        messagingTemplate.convertAndSend(destination, point);
-//    }
-
-//    @GetMapping("/gameRoom/point") 테스트용
-//    public ResponseEntity<Integer> getUserPoint(Principal principal) {
-//        String email = principal.getName();
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-//
-//        int point = user.getPoints();
-//        log.info("내 포인트는? " + point);
-//        return ResponseEntity.ok(point);
-//    }
 }
