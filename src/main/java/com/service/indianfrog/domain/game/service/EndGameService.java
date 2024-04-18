@@ -53,12 +53,12 @@ public class EndGameService {
         승자에게 라운드 포인트 할당
         라운드 포인트 값 가져오기*/
         GameResult gameResult = determineGameResult(game);
-        log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinnerId(), gameResult.getLoserId());
+        log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
         assignRoundPointsToWinner(game, gameResult);
         int roundPot = game.getPot();
 
         /* 라운드 승자가 선턴을 가지도록 설정*/
-        initializeTurnForGame(game, gameResult.getWinnerId());
+        initializeTurnForGame(game, gameResult.getWinner());
 
         /* 라운드 정보 초기화*/
         game.resetRound();
@@ -68,7 +68,7 @@ public class EndGameService {
         String nextState = determineGameState(game);
         log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-        return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinnerId(), gameResult.getLoserId(), roundPot);
+        return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot);
     }
 
     /* 게임 종료 로직*/
@@ -85,10 +85,10 @@ public class EndGameService {
         CurrentGameStatus.updateGameState(GameState.READY);
 
         log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
-                gameRoomId, gameResult.getWinnerId(), gameResult.getLoserId());
+                gameRoomId, gameResult.getWinner(), gameResult.getLoser());
 
         /* 유저 선택 상태 반환 */
-        return new EndGameResponse("USER_CHOICE", gameResult.getWinnerId(), gameResult.getLoserId(),
+        return new EndGameResponse("USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
                 gameResult.getWinnerPot(), gameResult.getLoserPot());
     }
 
@@ -111,14 +111,13 @@ public class EndGameService {
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
 
-        log.debug("Game result determined: winnerId={}, loserId={}", result.getWinnerId(), result.getLoserId());
+        log.info("Game result determined: winnerId={}, loserId={}", result.getWinner(), result.getLoser());
         return result;
     }
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
-        User winner = repositoryHolder.userRepository.findById(gameResult.getWinnerId())
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User winner = repositoryHolder.userRepository.findByNickname(gameResult.getWinner());
 
         int pointsToAdd = game.getPot();
 
@@ -129,7 +128,7 @@ public class EndGameService {
         } else {
             game.addPlayerTwoRoundPoints(pointsToAdd);
         }
-        log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getId(), pointsToAdd);
+        log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
     }
 
     /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드*/
@@ -168,12 +167,11 @@ public class EndGameService {
     }
 
     /* 1라운드 이후 턴 설정 메서드 */
-    private void initializeTurnForGame(Game game, Long winnerId) {
+    private void initializeTurnForGame(Game game, String winner) {
         List<User> players = new ArrayList<>();
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
-        User roundWinner = repositoryHolder.userRepository.findById(winnerId)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+        User roundWinner = repositoryHolder.userRepository.findByNickname(winner);
         players.add(roundWinner);
 
         User player = (!roundWinner.equals(game.getPlayerOne()))

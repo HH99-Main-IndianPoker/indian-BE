@@ -36,16 +36,16 @@ public class GameDto {
         private String nowState;
         private String nextState;
         private int round;
-        private Long roundWinnerId;
-        private Long roundLoserId;
+        private String roundWinner;
+        private String roundLoser;
         private int roundPot;
 
-        public EndRoundResponse(String nowState, String nextState,int round, Long roundWinnerId, Long roundLoserId, int roundPot) {
+        public EndRoundResponse(String nowState, String nextState, int round, String roundWinner, String roundLoser, int roundPot) {
             this.nowState = nowState;
             this.nextState = nextState;
             this.round = round;
-            this.roundWinnerId = roundWinnerId;
-            this.roundLoserId = roundLoserId;
+            this.roundWinner = roundWinner;
+            this.roundLoser = roundLoser;
             this.roundPot = roundPot;
         }
     }
@@ -53,15 +53,15 @@ public class GameDto {
     @Getter
     public static class EndGameResponse {
         private String gameState;
-        private Long gameWinnerId;
-        private Long gameLoserId;
+        private String gameWinner;
+        private String gameLoser;
         private int winnerPot;
         private int loserPot;
 
-        public EndGameResponse(String gameState, Long gameWinner, Long gameLoser, int winnerPot, int loserPot) {
+        public EndGameResponse(String gameState, String gameWinner, String gameLoser, int winnerPot, int loserPot) {
             this.gameState = gameState;
-            this.gameWinnerId = gameWinner;
-            this.gameLoserId = gameLoser;
+            this.gameWinner = gameWinner;
+            this.gameLoser = gameLoser;
             this.winnerPot = winnerPot;
             this.loserPot = loserPot;
         }
