@@ -67,7 +67,7 @@ public class GameControllerTest {
         when(gameTurnService.getTurn(mockGame.getId())).thenReturn(mockTurn);
 
         // When
-        StartRoundResponse response = startGameService.startRound(gameRoomId);
+        StartRoundResponse response = startGameService.startRound(gameRoomId, principal);
 
         // Then
         assertNotNull(response);
