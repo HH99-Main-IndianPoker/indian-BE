@@ -37,5 +37,4 @@ public class MyPageController {
     public ResponseEntity<PointChange> pointRecharge(@AuthenticationPrincipal UserDetails userDetails, @RequestBody PointChange pointChange){
         return ResponseEntity.ok(myPageService.pointRecharge(userDetails.getUsername(), pointChange.point()));
     }
-
 }
