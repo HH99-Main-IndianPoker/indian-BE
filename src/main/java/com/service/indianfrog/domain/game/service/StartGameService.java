@@ -82,6 +82,7 @@ public class StartGameService {
         playerTwo.setPoints(playerTwo.getPoints() - betAmount);
 
         game.setBetAmount(0);
+        game.setPot(betAmount);
 
         List<Card> availableCards = prepareAvailableCards(game);
         assignRandomCardsToPlayers(game, availableCards);
