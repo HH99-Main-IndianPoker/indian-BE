@@ -83,11 +83,11 @@ public class StartGameService {
         game.setBetAmount(0);
         game.setPot(betAmount * 2);
 
-        gameRepository.save(game);
-
         List<Card> availableCards = prepareAvailableCards(game);
         assignRandomCardsToPlayers(game, availableCards);
         log.info("플레이어에게 카드 할당됨.");
+
+        gameRepository.save(game);
 
         if (game.getRound() == 1) {
             initializeTurnForGame(game);

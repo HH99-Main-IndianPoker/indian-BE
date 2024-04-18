@@ -6,6 +6,7 @@ import com.service.indianfrog.domain.game.entity.Betting;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
+import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
@@ -25,10 +26,12 @@ public class GamePlayService {
 
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
+    private final GameRepository gameRepository;
 
-    public GamePlayService(GameValidator gameValidator, GameTurnService gameTurnService) {
+    public GamePlayService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
+        this.gameRepository = gameRepository;
     }
 
     @Transactional
@@ -52,6 +55,7 @@ public class GamePlayService {
             case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint());
             case DIE -> performDieAction(game, user);
         };
+
     }
 
     private ActionDto performCheckAction(Game game, User user, Turn turn) {
@@ -73,6 +77,8 @@ public class GamePlayService {
         game.updateCheck();
         turn.nextTurn();
         log.info("First turn check completed, moving to next turn");
+
+        gameRepository.save(game);
 
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
@@ -101,6 +107,9 @@ public class GamePlayService {
         game.updateRaise();
         turn.nextTurn();
         log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
+
+        gameRepository.save(game);
+
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.ACTION)
@@ -129,6 +138,8 @@ public class GamePlayService {
 
         log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
 
+        gameRepository.save(game);
+
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.END)
@@ -149,6 +160,9 @@ public class GamePlayService {
             user.setPoints(0);
         }
         log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
+
+        gameRepository.save(game);
+
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.END)
