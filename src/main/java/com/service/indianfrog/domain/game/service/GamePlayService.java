@@ -76,9 +76,7 @@ public class GamePlayService {
         game.setPot(game.getPot() + game.getBetAmount());
         game.updateCheck();
         turn.nextTurn();
-        log.info("First turn check completed, moving to next turn");
-
-        gameRepository.save(game);
+        log.info("First turn check completed, moving to next turn " + turn.getPlayers().toString());
 
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
@@ -108,8 +106,6 @@ public class GamePlayService {
         turn.nextTurn();
         log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
 
-        gameRepository.save(game);
-
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.ACTION)
@@ -137,8 +133,6 @@ public class GamePlayService {
         game.setFoldedUser(user);
 
         log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
-
-        gameRepository.save(game);
 
         return ActionDto.builder()
                 .nowState(GameState.ACTION)

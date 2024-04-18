@@ -16,7 +16,7 @@ public class Turn {
     }
 
     public void nextTurn() {
-        currentPlayer = (currentPlayer + 1) % players.size();
+        this.currentPlayer = (currentPlayer + 1) % players.size();
     }
 
     public String getCurrentPlayer() {
