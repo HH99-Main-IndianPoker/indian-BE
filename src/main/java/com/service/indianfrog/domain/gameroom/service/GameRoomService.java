@@ -165,7 +165,7 @@ public class GameRoomService {
                 .build();
         validateRoomRepository.save(validateRoom);
         // 방생성시 최초의 인원은 1명이니까 participantCount를 1로 설정
-        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, user.getNickname(), user.getPoints(), savedGameRoom.getGameState(), now);
+        return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, user.getNickname(), user.getPoints(), savedGameRoom.getGameState(), user.getImageUrl(),now);
     }
 
     /**
@@ -218,7 +218,7 @@ public class GameRoomService {
 
         int hostPoint = hostInfo.getPoints();
 
-        return new ParticipantInfo(participant, host, participantPoint, hostPoint);
+        return new ParticipantInfo(participant, host, participantPoint, hostPoint, user.getImageUrl(), hostInfo.getImageUrl());
     }
 
 
@@ -227,56 +227,27 @@ public class GameRoomService {
      *
      * @param roomId      게임방 ID
      * @param participant 제거할 참가자 정보
-     * @return 업데이트된 게임방의 상세 정보
      */
     @Transactional
-    public GetGameRoomResponseDto removeParticipant(Long roomId, Principal participant) {
+    public void removeParticipant(Long roomId, Principal participant) {
         String email = participant.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         String nickname = user.getNickname();
 
         //특정 게임방에있는 특정 참가자 찾기
-        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomIdAndParticipants(roomId, nickname);
+        ValidateRoom validateRoom = validateRoomRepository.findByGameRoomRoomIdAndParticipants(roomId, nickname);
 
-        // 해당 참가자가 방장인지 확인. 방장이면 true 반환. 순회하는 이유는 한명이 여러 게임방에 참여하고 있을 가능성도 있기 때문.
-        boolean wasHost = validateRooms.stream().anyMatch(ValidateRoom::isHost);
-        validateRooms.forEach(validateRoomRepository::delete);
-
-        // 방장의 닉네임을 담을 변수 초기화
-        String hostName = null;
-
-        //나간게 방장이었다면 새로운 방장 지정
-        if (wasHost) {
-            List<ValidateRoom> remainingParticipants = validateRoomRepository.findAllByGameRoomRoomId(roomId);
-            if (!remainingParticipants.isEmpty()) {
-                // 남아있는 첫번째 유저를 방장으로 지정
-                ValidateRoom newHost = remainingParticipants.get(0);
-                newHost.updateHost();
-            }
-        } else {
-            // wasHost가 아니라면, 기존 방장의 닉네임을 유지
-            hostName = validateRoomRepository.findAllByGameRoomRoomId(roomId).stream()
-                    .filter(ValidateRoom::isHost)
-                    .findFirst()
-                    .map(ValidateRoom::getParticipants)
-                    .orElse(null);
-        }
-
-        // 만약에 방이 비었으면 방을 삭제해야 하니까 방이 비었는지 확인하고 삭제.
-        boolean isRoomEmpty = !validateRoomRepository.existsByGameRoomRoomId(roomId);
-        if (isRoomEmpty) {
+        if (validateRoomRepository.countByGameRoomRoomId(roomId) == 1) {
+            validateRoomRepository.delete(validateRoom);
             gameRoomRepository.deleteById(roomId);
-            return null;
         }
 
-        // 수정된 방 정보 저장.
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
-
-        int remainParticipantCount = validateRoomRepository.findAllByGameRoomRoomId(roomId).size();
-
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), remainParticipantCount, hostName, gameRoom.getGameState());
+        if (validateRoomRepository.countByGameRoomRoomId(roomId) == 2) {
+            validateRoomRepository.delete(validateRoom);
+            ValidateRoom newHost = validateRoomRepository.findByGameRoomRoomId(roomId);
+            newHost.updateHost();
+        }
     }
 
     /**
@@ -295,9 +266,7 @@ public class GameRoomService {
         // 사용자의 닉네임을 기준으로 모든 게임방 참여 정보를 조회
         List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
         // 검색된 모든 참여 정보를 삭제
-        for (ValidateRoom validateRoom : validateRooms) {
-            validateRoomRepository.delete(validateRoom);
-        }
+        validateRoomRepository.deleteAll(validateRooms);
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
     }
