@@ -6,8 +6,10 @@ import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -42,6 +44,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor
                 .getAccessor(message, StompHeaderAccessor.class);
+
         // 클라이언트가 보낸 메세지에서 Authorization 추출.
         // getFirstNativeHeader는 STOMP를 사용하는 웹소켓에서 헤더에 접근할수 있게 해주는 프로토콜
         String token = accessor.getFirstNativeHeader("Authorization");
@@ -49,7 +52,6 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         // 토큰 유효성 검사
         if (StringUtils.hasText(token) && token.startsWith(JwtUtil.BEARER_PREFIX)) {
             token = token.substring(7);
-
             // jwt로 유효성 검사
             if (jwtUtil.verifyAccessToken(token) == TokenVerificationResult.VALID) {
                 String email = jwtUtil.getUid(token);

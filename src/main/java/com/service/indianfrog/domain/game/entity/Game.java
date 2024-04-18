@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Game {
 
@@ -57,6 +56,10 @@ public class Game {
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
         this.usedCards = new HashSet<>();
+    }
+
+    public Game() {
+
     }
 
     public void addUsedCard(Card card) {

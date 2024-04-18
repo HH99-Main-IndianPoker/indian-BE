@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends Timestamped {
 
     @Id
@@ -51,6 +50,10 @@ public class User extends Timestamped {
 
     public User(String nickname, String email, String socialId) {
         super();
+    }
+
+    public User() {
+
     }
 
     public User kakaoIdUpdate(Long socialId) {
