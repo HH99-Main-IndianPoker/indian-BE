@@ -53,7 +53,7 @@ public class EndGameService {
         승자에게 라운드 포인트 할당
         라운드 포인트 값 가져오기*/
         GameResult gameResult = determineGameResult(game);
-        log.debug("Round result determined: winnerId={}, loserId={}", gameResult.getWinnerId(), gameResult.getLoserId());
+        log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinnerId(), gameResult.getLoserId());
         assignRoundPointsToWinner(game, gameResult);
         int roundPot = game.getPot();
 
@@ -87,11 +87,10 @@ public class EndGameService {
         log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
                 gameRoomId, gameResult.getWinnerId(), gameResult.getLoserId());
 
-        /* 유저 선택 상태 반환*/
+        /* 유저 선택 상태 반환 */
         return new EndGameResponse("USER_CHOICE", gameResult.getWinnerId(), gameResult.getLoserId(),
                 gameResult.getWinnerPot(), gameResult.getLoserPot());
     }
-
 
     /* 검증 메서드 필드*/
     /* 라운드 승자, 패자 선정 메서드 */
@@ -168,7 +167,7 @@ public class EndGameService {
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
     }
 
-    /* 1라운드 이후 턴 설정 메서드*/
+    /* 1라운드 이후 턴 설정 메서드 */
     private void initializeTurnForGame(Game game, Long winnerId) {
         List<User> players = new ArrayList<>();
 

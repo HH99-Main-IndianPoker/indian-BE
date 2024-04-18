@@ -69,7 +69,7 @@ public class GameController {
         }
     }
 
-    // /pub 사용 게임 준비
+    /* pub 사용 게임 준비 */
     @MessageMapping("/gameRoom/{gameRoomId}/ready")
     public void gameReady(
             @DestinationVariable Long gameRoomId, Principal principal) {

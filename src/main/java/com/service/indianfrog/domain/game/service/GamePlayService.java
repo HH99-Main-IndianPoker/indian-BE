@@ -44,7 +44,7 @@ public class GamePlayService {
             throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
         }
 
-        log.debug("Performing {} action for user {}", action, gameBetting.getNickname());
+        log.info("Performing {} action for user {}", action, gameBetting.getNickname());
         Betting betting = Betting.valueOf(action.toUpperCase());
         return switch (betting) {
             case CHECK -> performCheckAction(game, user, turn);
@@ -56,7 +56,7 @@ public class GamePlayService {
     private GameState performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
         boolean isFirstTurn = turn.getCurrentPlayer().equals(user.getNickname());
-        log.debug("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
+        log.info("Check action: isFirstTurn={}, user={}, currentPot={}, betAmount={}",
                 isFirstTurn, user.getEmail(), game.getPot(), game.getBetAmount());
 
         if (game.isCheckStatus()) {
@@ -76,36 +76,19 @@ public class GamePlayService {
         return GameState.ACTION;
     }
 
-    private GameState gameEnd(User user, Game game) {
-        log.debug("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
-        if (user.getPoints() >= game.getBetAmount()) {
-            user.setPoints(user.getPoints() - game.getBetAmount());
-            game.setPot(game.getPot() + game.getBetAmount());
-        } else {
-            game.setPot(game.getPot() + user.getPoints());
-            user.setPoints(0);
-        }
-        log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
-        return GameState.END;
-    }
-
-    private GameState performRaiseAction(Game game, User user, Turn turn, int point) {
+    private GameState performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
         int userPoints = user.getPoints();
-        log.debug("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
+        log.info("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
 
         if (userPoints <= 0) {
             log.warn("User has insufficient points to raise");
             return GameState.END;
         }
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        int raiseAmount = 0;
-
         /* RAISE 베팅 액 설정*/
-        raiseAmount = point;
-        log.debug("Raise amount entered: {}", raiseAmount);
+        log.info("Raise amount entered: {}", raiseAmount);
 
-        user.setPoints(userPoints - raiseAmount);
-        game.setPot(game.getPot() + raiseAmount);
+        user.setPoints(userPoints - (game.getBetAmount() + raiseAmount));
+        game.setPot(game.getPot() + (game.getBetAmount() + raiseAmount));
         game.setBetAmount(raiseAmount);
         game.updateRaise();
         turn.nextTurn();
@@ -129,6 +112,19 @@ public class GamePlayService {
 
         game.setFoldedUser(user);
         log.info("Die action completed, game ended. Winner: {}", winner.getEmail());
+        return GameState.END;
+    }
+
+    private GameState gameEnd(User user, Game game) {
+        log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
+        if (user.getPoints() >= game.getBetAmount()) {
+            user.setPoints(user.getPoints() - game.getBetAmount());
+            game.setPot(game.getPot() + game.getBetAmount());
+        } else {
+            game.setPot(game.getPot() + user.getPoints());
+            user.setPoints(0);
+        }
+        log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
         return GameState.END;
     }
 
