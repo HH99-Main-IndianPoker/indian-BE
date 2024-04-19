@@ -2,7 +2,7 @@ package com.service.indianfrog.global.jwt;
 
 import com.service.indianfrog.global.properties.JwtProperties;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
-import com.service.indianfrog.global.security.token.AccessTokenService;
+import com.service.indianfrog.global.security.token.TokenService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -36,7 +36,7 @@ public class JwtUtil {
     private Key accessKey;
     private Key refreshKey;
     private final JwtProperties jwtProperties;
-    private final AccessTokenService tokenService;
+    private final TokenService tokenService;
 
     @PostConstruct
     protected void init() {
@@ -88,7 +88,7 @@ public class JwtUtil {
                         .setSubject(email) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
                         .claim("nickname", nickname)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24)) // 1hour
+                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24/3600)) // 1hour
                         .setIssuedAt(date) // 발급일
                         .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
                         .compact();
