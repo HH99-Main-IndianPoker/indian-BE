@@ -4,10 +4,6 @@ import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface GameRoomRepository extends JpaRepository<GameRoom, Long> {
+public interface GameRoomRepository extends JpaRepository<GameRoom, Long>, CustomGameRoomRepository{
 
-
-    GameRoom findByRoomId(Long gameRoomId);
-
-    GameRoom findByCurrentGame(Game game);
 }
