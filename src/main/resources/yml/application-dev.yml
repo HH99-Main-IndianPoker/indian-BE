@@ -1,7 +1,7 @@
 spring:
   config:
     import:
-    - classpath:/yml/application-secret.yml
+      - classpath:/yml/application-secret.yml
     activate:
       on-profile: dev
 
@@ -21,11 +21,6 @@ spring:
         use_sql_comments: true
     show-sql: true
 
-  data:
-    redis:
-      host: ${dev-redis.host}
-      port: ${dev-redis.port}
-
   mail:
     host: smtp.gmail.com # 서버 호스트
     port: 587 # 서버 포트
@@ -38,6 +33,10 @@ spring:
           timeout: 50000 # Socket Read Timeout 시간(ms)
           starttls:
             enable: true # StartTLS 활성화 여부
+  data:
+    redis:
+      host: ${dev-redis.host}
+      port: ${dev-redis.port}
 
 springdoc:
   show-login-endpoint: true
@@ -59,3 +58,6 @@ cloud:
       secretKey: ${aws.credentials.secretKey}
     s3:
       bucket: ${aws.s3.bucket}
+
+
+
