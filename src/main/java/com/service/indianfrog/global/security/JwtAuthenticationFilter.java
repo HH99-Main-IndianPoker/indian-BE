@@ -61,12 +61,13 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String email = ((UserDetailsImpl) authResult.getPrincipal()).getUsername();
 //        AuthorityType role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getAuthority()
         String nickname = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getNickname();
+        int points = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getPoints();
         String role = "USER";
         GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
         insertInHeaderWithAccessToken(response, tokens);
         insertSetCookieWithRefreshToken(response, tokens);
 
-        CustomResponseUtil.success(response, null);
+        CustomResponseUtil.success(response, points);
     }
 
 

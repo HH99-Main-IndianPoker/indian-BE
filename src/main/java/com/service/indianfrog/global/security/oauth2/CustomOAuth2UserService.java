@@ -63,7 +63,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             userRepository.save(User.builder()
                     .email(email)
                     .password(UUID.randomUUID().toString())
-                    .nickname(UUID.randomUUID().toString())
+                    .nickname(email)
 //                    .authority(AuthorityType.USER)
                     .build());
             return new DefaultOAuth2User(
