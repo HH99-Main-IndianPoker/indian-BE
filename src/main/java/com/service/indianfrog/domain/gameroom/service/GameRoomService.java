@@ -3,6 +3,7 @@ package com.service.indianfrog.domain.gameroom.service;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.ParticipantDto;
 import com.service.indianfrog.domain.gameroom.dto.ParticipantInfo;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
@@ -68,9 +69,17 @@ public class GameRoomService {
                 .map(ValidateRoom::getParticipants)
                 .orElse(null); // 바장이 없으면 null을 반환
 
+        List<ParticipantDto> participants = gameRoom.getValidateRooms().stream()
+                .map(v -> new ParticipantDto(
+                        v.getParticipants(),
+                        userRepository.findByNickname(v.getParticipants()).getPoints(),
+                        userRepository.findByNickname(v.getParticipants()).getImageUrl()
+                ))
+                .collect(Collectors.toList());
+
         // 해당 게임방의 참가자의 수
         int participantCount = gameRoom.getValidateRooms().size();
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState());
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState(), participants);
     }
 
     /**
@@ -90,10 +99,19 @@ public class GameRoomService {
                             .map(ValidateRoom::getParticipants)
                             .orElse(null);
 
+                    List<ParticipantDto> participants = gameRoom.getValidateRooms().stream()
+                            .map(v -> new ParticipantDto(
+                                    v.getParticipants(),
+                                    userRepository.findByNickname(v.getParticipants()).getPoints(),
+                                    userRepository.findByNickname(v.getParticipants()).getImageUrl()
+                            ))
+                            .collect(Collectors.toList());
+
                     int participantCount = gameRoom.getValidateRooms().size();
-                    return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState());
+                    return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState(), participants);
                 });
     }
+
 
     /**
      * 주어진 ID를 가진 게임방을 삭제

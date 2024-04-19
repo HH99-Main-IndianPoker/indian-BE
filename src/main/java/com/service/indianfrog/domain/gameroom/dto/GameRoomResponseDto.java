@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.service.indianfrog.domain.game.entity.GameState;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class GameRoomResponseDto {
 
@@ -25,7 +26,8 @@ public class GameRoomResponseDto {
             String roomName,
             int participantCount,
             String hostNickname,
-            GameState gameState
+            GameState gameState,
+            List<ParticipantDto> participants
 
     ) {
     }
