@@ -6,4 +6,5 @@ import lombok.Getter;
 public class GameBetting {
     private String action;
     private String nickname;
+    private int point;
 }

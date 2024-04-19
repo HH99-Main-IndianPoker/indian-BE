@@ -14,7 +14,7 @@ public class GameRoomResponseDto {
             String hostName,
             int myPoint,
             GameState gameState,
-
+            String hostImgUrl,
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Seoul/Asia")
             LocalDateTime createdAt
     ) {

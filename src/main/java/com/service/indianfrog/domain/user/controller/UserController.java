@@ -1,6 +1,7 @@
 package com.service.indianfrog.domain.user.controller;
 
 import com.service.indianfrog.domain.user.controller.docs.UserControllerDocs;
+import com.service.indianfrog.domain.user.dto.MyPoint;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.EmailSendResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
@@ -72,6 +73,11 @@ public class UserController implements UserControllerDocs {
         @AuthenticationPrincipal UserDetailsImpl userDetails) {
         GetUserResponseDto responseDto = userService.getMember(userDetails.getUsername());
         return ResponseDto.success("회원 정보 조회 성공", responseDto);
+    }
+
+    @GetMapping("/point")
+    public ResponseEntity<MyPoint> getMyPoint(@AuthenticationPrincipal UserDetailsImpl userDetails){
+        return ResponseEntity.ok(userService.getMyPoint(userDetails.getUsername()));
     }
 
     /*email duplicate*/

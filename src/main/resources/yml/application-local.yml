@@ -38,3 +38,15 @@ jwt:
     key:
       access: ${secret.key.access}
       refresh: ${secret.key.refresh}
+
+cloud:
+  aws:
+    region:
+      static: ${aws.region.static}
+    stack:
+      auto: ${aws.stack.auto}
+    credentials:
+      accessKey: ${aws.credentials.accessKey}
+      secretKey: ${aws.credentials.secretKey}
+    s3:
+      bucket: ${aws.s3.bucket}

@@ -50,6 +50,7 @@ public class GameValidator {
             repositoryHolder.gameRoomRepository.save(gameRoom);
             game = gameRoom.getCurrentGame();
         }
+
         return game;
     }
 
