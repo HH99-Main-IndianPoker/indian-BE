@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.UnsupportedEncodingException;
@@ -28,10 +29,10 @@ public class RefreshController {
     }
 
     @DeleteMapping("token/logout")
-    public ResponseDto logout(@RequestHeader("Authorization") final String accessToken) {
+    public ResponseDto logout(@RequestHeader("Authorization") String accessToken, HttpServletRequest request, HttpServletResponse response) {
 
         // 엑세스 토큰으로 현재 Redis 정보 삭제
-        tokenService.removeRefreshToken(accessToken);
+        tokenService.removeTokens(accessToken, request, response);
         return ResponseDto.success("로그아웃 성공", null);
     }
 
