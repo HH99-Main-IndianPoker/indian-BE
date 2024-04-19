@@ -1,5 +1,6 @@
 package com.service.indianfrog.domain.user.service;
 
+import com.service.indianfrog.domain.user.dto.MyPoint;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
@@ -70,5 +71,10 @@ public class UserService {
 
     public void OAuth2Signup() {
 
+    }
+
+    public MyPoint getMyPoint(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        return new MyPoint(user.getPoints());
     }
 }

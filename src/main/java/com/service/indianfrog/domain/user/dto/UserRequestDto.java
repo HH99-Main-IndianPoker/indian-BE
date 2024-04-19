@@ -51,12 +51,12 @@ public class UserRequestDto {
     ) {
     }
 
-    public record KakaoUserInfoDto(
-            Long id,
-            String nickname,
-            String email
-    ) {
-        public KakaoUserInfoDto {
-        }
-    }
+//    public record KakaoUserInfoDto(
+//            Long id,
+//            String nickname,
+//            String email
+//    ) {
+//        public KakaoUserInfoDto {
+//        }
+//    }
 }

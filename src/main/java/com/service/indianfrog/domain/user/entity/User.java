@@ -34,14 +34,28 @@ public class User extends Timestamped {
     private int wins;
     private int losses;
 
+    private String imageUrl;
+    private String originFileName;
+
     @Builder
-    public User(Long id, String nickname, String email, String password) {
+    public User(Long id, String nickname, String email, String password, String imageUrl, String originFileName) {
         this.id = id;
         this.nickname = nickname;
         this.email = email;
         this.password = password;
         this.points = 100;
+        this.imageUrl = imageUrl;
+        this.originFileName = originFileName;
 //        this.authority = authority;
+    }
+
+    public User() {
+
+    }
+
+    public void imgUpdate(String originFileName, String imageUrl) {
+        this.originFileName = originFileName;
+        this.imageUrl = imageUrl;
     }
 
     public User(String nickname, String encodedPassword, String email, Long socialId) {
@@ -50,10 +64,6 @@ public class User extends Timestamped {
 
     public User(String nickname, String email, String socialId) {
         super();
-    }
-
-    public User() {
-
     }
 
     public User kakaoIdUpdate(Long socialId) {

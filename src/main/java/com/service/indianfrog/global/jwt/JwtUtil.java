@@ -88,7 +88,7 @@ public class JwtUtil {
                         .setSubject(email) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
                         .claim("nickname", nickname)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 4*5/3600)) // 1hour
+                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24)) // 1hour
                         .setIssuedAt(date) // 발급일
                         .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
                         .compact();
