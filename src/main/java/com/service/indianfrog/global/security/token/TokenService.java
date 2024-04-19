@@ -12,7 +12,6 @@ public class TokenService {
 
     private final RedisTemplate<String,String> redisTemplate;
 //    3900 35분(5분정도시간늘림)
-    private static final long ACCESS_TOKEN_EXPIRATION = 1;
     private static final long REFRESH_TOKEN_EXPIRATION = 60*60*24;
 
     public TokenService(RedisTemplate<String, String> redisTemplate) {
@@ -21,9 +20,6 @@ public class TokenService {
 
     @Transactional
     public void saveTokenInfo(String email, String refreshToken, String accessToken) {
-        String accessTokenKey = "accessToken:"+ email;
-        setTokenWithExpiration(accessTokenKey, accessToken,ACCESS_TOKEN_EXPIRATION);
-
         String refreshTokenKey = "refreshToken:" + email;
         setTokenWithExpiration(refreshTokenKey,refreshToken,REFRESH_TOKEN_EXPIRATION);
     }

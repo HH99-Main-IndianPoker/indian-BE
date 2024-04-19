@@ -1,5 +1,7 @@
 package com.service.indianfrog.global.security.token;
 
+import static com.service.indianfrog.global.exception.ErrorCode.NOT_EXPIRED_ACCESS_TOKEN;
+
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
@@ -41,9 +43,7 @@ public class RefreshTokenService {
 
     @Transactional
     public void removeTokens(String email, HttpServletRequest request, HttpServletResponse response) {
-        String accessTokenKey = ACCESS_TOKEN_KEY_PREFIX + email;
         String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX + email;
-        redisTemplate.delete(accessTokenKey);
         redisTemplate.delete(refreshTokenKey);
 
         CookieDelete(request, response);
@@ -54,7 +54,7 @@ public class RefreshTokenService {
      * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
     @Transactional
     public String republishAccessTokenWithRotate(String accessToken,HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
-        Claims claims = (Claims) extractClaims(accessToken.substring(7));
+        Claims claims = extractClaims(accessToken.substring(7));
         String email = claims.getSubject();
 
         String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX+ email;
@@ -83,12 +83,13 @@ public class RefreshTokenService {
         }
         /*
          * 1.지금은 만료안된 엑세스토큰*/
-        throw new RestApiException(ErrorCode.NOT_EXPIRED_ACCESS_TOKEN.getMessage());
+        throw new RestApiException(NOT_EXPIRED_ACCESS_TOKEN.getMessage());
     }
 
-    private Object extractClaims(String accessToken) {
+    private Claims extractClaims(String accessToken) {
         try {
-            return jwtUtil.getUid(accessToken);
+            log.error("accessToken not expired");
+            throw new RestApiException(NOT_EXPIRED_ACCESS_TOKEN.getMessage());
         } catch (ExpiredJwtException e) {
            return e.getClaims();
         }
