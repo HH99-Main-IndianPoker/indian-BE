@@ -205,7 +205,7 @@ public class GameRoomService {
                 .filter(ValidateRoom::isHost)
                 .map(ValidateRoom::getParticipants)
                 .findFirst()
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_HOST.getMessage()));
         String participant = validateRooms.stream()
                 .filter(p -> !p.isHost())
                 .map(ValidateRoom::getParticipants)
