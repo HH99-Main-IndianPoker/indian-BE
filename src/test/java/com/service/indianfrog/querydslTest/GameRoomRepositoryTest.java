@@ -1,4 +1,4 @@
-package com.service.indianfrog.gameroom;
+package com.service.indianfrog.querydslTest;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.service.indianfrog.domain.game.entity.GameState;
