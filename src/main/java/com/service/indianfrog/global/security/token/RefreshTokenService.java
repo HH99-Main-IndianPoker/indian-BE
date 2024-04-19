@@ -42,7 +42,9 @@ public class RefreshTokenService {
     private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
 
     @Transactional
-    public void removeTokens(String email, HttpServletRequest request, HttpServletResponse response) {
+    public void removeTokens(String accessToken, HttpServletRequest request, HttpServletResponse response) {
+        Claims claims = extractClaims(accessToken.substring(7));
+        String email = claims.getSubject();
         String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX + email;
         redisTemplate.delete(refreshTokenKey);
 

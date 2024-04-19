@@ -29,10 +29,10 @@ public class RefreshController {
     }
 
     @DeleteMapping("token/logout")
-    public ResponseDto logout(String email, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseDto logout(@RequestHeader("Authorization") String accessToken, HttpServletRequest request, HttpServletResponse response) {
 
         // 엑세스 토큰으로 현재 Redis 정보 삭제
-        tokenService.removeTokens(email, request, response);
+        tokenService.removeTokens(accessToken, request, response);
         return ResponseDto.success("로그아웃 성공", null);
     }
 
