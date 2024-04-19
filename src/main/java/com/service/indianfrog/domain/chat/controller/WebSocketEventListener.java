@@ -52,9 +52,10 @@ public class WebSocketEventListener {
         if (username != null && roomId != null) {
             logger.info("연결해제 : 유저네임 - " + username + ", 방번호 - " + roomId);
 
-            ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setType(ChatMessage.MessageType.LEAVE);
-            chatMessage.setSender(username);
+            ChatMessage chatMessage = ChatMessage.builder()
+                    .type(ChatMessage.MessageType.LEAVE)
+                    .sender(username)
+                    .build();
 
             messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, chatMessage);
         }

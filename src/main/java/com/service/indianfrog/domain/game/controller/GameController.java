@@ -1,10 +1,7 @@
 package com.service.indianfrog.domain.game.controller;
 
-import com.service.indianfrog.domain.game.dto.GameBetting;
-import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
-import com.service.indianfrog.domain.game.dto.GameInfo;
-import com.service.indianfrog.domain.game.dto.GameStatus;
-import com.service.indianfrog.domain.game.dto.UserChoices;
+import com.service.indianfrog.domain.game.dto.*;
+import com.service.indianfrog.domain.game.dto.GameDto.*;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.service.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,36 +37,8 @@ public class GameController {
         this.readyService = readyService;
     }
 
-    @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
-    public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
-                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices) {
 
-        log.info(gameState);
-
-        switch (gameState) {
-            case "START" -> {
-                StartRoundResponse response = startGameService.startRound(gameRoomId);
-                sendUserGameMessage(response); // 유저별 메시지 전송
-            }
-            case "ACTION", "END", "GAME_END", "USER_CHOICE" -> {
-                Object response = switch (gameState) {
-                    case "ACTION" ->
-                            gamePlayService.playerAction(gameRoomId, gameBetting.getNickname(), gameBetting.getAction());
-                    case "END" -> endGameService.endRound(gameRoomId);
-                    case "GAME_END" -> endGameService.endGame(gameRoomId);
-                    case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, userChoices);
-                    default -> throw new IllegalStateException("Unexpected value: " + gameState);
-                };
-                // 공통 메시지 전송
-                String destination = "/topic/gameRoom/" + gameRoomId;
-                messagingTemplate.convertAndSend(destination, response);
-            }
-
-            default -> throw new IllegalStateException("Invalid game state: " + gameState);
-        }
-    }
-
-    // /pub 사용 게임 준비
+    /* pub 사용 게임 준비 */
     @MessageMapping("/gameRoom/{gameRoomId}/ready")
     public void gameReady(
             @DestinationVariable Long gameRoomId, Principal principal) {
@@ -79,21 +48,109 @@ public class GameController {
         messagingTemplate.convertAndSend(destination, gameStatus);
     }
 
-    private void sendUserGameMessage(StartRoundResponse response) {
-        /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
-        log.info(response.getGameState(), response.getTurn().toString());
-        log.info(response.getPlayerOneInfo().getId(), response.getPlayerOneInfo().getCard().toString());
-        log.info(response.getPlayerTwoInfo().getId(), response.getPlayerTwoInfo().getCard().toString());
-        String playerOneId = response.getPlayerOneInfo().getId();
-        Card playerTwoCard = response.getPlayerTwoInfo().getCard();
-        String playerTwoId = response.getPlayerTwoInfo().getId();
-        Card playerOneCard = response.getPlayerOneInfo().getCard();
+    @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
+    public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
+                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices, Principal principal) {
+
+        log.info("gameState -> {}", gameState);
+
+        switch (gameState) {
+            case "START"-> {
+                StartRoundResponse response = startGameService.startRound(gameRoomId);
+                sendUserGameMessage(response, principal); // 유저별 메시지 전송
+            }
+            case "ACTION", "USER_CHOICE" -> {
+                Object response = switch (gameState) {
+                    case "ACTION" ->
+                            gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
+                    case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, userChoices);
+                    default -> throw new IllegalStateException("Unexpected value: " + gameState);
+                };
+                // 공통 메시지 전송
+                String destination = "/topic/gameRoom/" + gameRoomId;
+                messagingTemplate.convertAndSend(destination, response);
+            }
+            case "END" -> {
+                EndRoundResponse response = endGameService.endRound(gameRoomId);
+                sendUserEndRoundMessage(response, principal);
+            }
+            case "GAME_END" -> {
+                EndGameResponse response = endGameService.endGame(gameRoomId);
+                sendUserEndGameMessage(response, principal);
+            }
+
+            default -> throw new IllegalStateException("Invalid game state: " + gameState);
+        }
+    }
+
+    private void sendUserEndRoundMessage(EndRoundResponse response, Principal principal) {
+
+        log.info("who are you? -> {}", principal.getName());
+       try {
+        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endRoundInfo", new EndRoundInfo(
+                        response.getNowState(),
+                        response.getNextState(),
+                        response.getRound(),
+                        response.getRoundWinner().getNickname(),
+                        response.getRoundLoser().getNickname(),
+                        response.getRoundPot()));
+                log.info("Message sent successfully.");
+            }
+            catch (Exception e) {
+            log.error("Failed to send message", e);
+        }
+
+    }
+
+    private void sendUserEndGameMessage(EndGameResponse response, Principal principal) {
+
+        log.info("who are you? -> {}", principal.getName());
+
         try {
-            messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(playerTwoCard, response.getTurn()));
-            messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(playerOneCard, response.getTurn()));
-            log.info("Message sent successfully.");
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endGameInfo", new EndGameInfo(
+                        response.getNowState(),
+                        response.getNextState(),
+                        response.getGameWinner().getNickname(),
+                        response.getGameLoser().getNickname(),
+                        response.getWinnerPot(),
+                        response.getLoserPot()));
+                log.info("Message sent successfully.");
         } catch (Exception e) {
             log.error("Failed to send message", e);
         }
     }
+
+    private void sendUserGameMessage(StartRoundResponse response, Principal principal) {
+        /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
+        log.info("who are you? -> {}", principal.getName());
+        log.info(response.getGameState(), response.getTurn().toString());
+        log.info(response.getPlayerOneInfo().getEmail(), response.getPlayerOneInfo().getCard().toString());
+        log.info(response.getPlayerTwoInfo().getEmail(), response.getPlayerTwoInfo().getCard().toString());
+        String playerOneId = response.getPlayerOneInfo().getEmail();
+        Card playerTwoCard = response.getPlayerTwoInfo().getCard();
+        String playerTwoId = response.getPlayerTwoInfo().getEmail();
+        Card playerOneCard = response.getPlayerOneInfo().getCard();
+        try {
+            if (principal.getName().equals(playerOneId)) {
+                messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(
+                        playerTwoCard,
+                        response.getTurn(),
+                        response.getFirstBet(),
+                        response.getRoundPot()));
+                log.info("Message sent successfully.");
+            }
+
+            if (principal.getName().equals(playerTwoId)) {
+                messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(
+                        playerOneCard,
+                        response.getTurn(),
+                        response.getFirstBet(),
+                        response.getRoundPot()));
+                log.info("Message sent successfully.");
+            }
+        } catch (Exception e) {
+            log.error("Failed to send message", e);
+        }
+    }
+
 }

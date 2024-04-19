@@ -111,6 +111,23 @@ public class JwtUtil {
         return TokenVerificationResult.INVALID;
     }
 
+    public TokenVerificationResult verifyRefreshToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(refreshKey).build().parseClaimsJws(token);
+            return TokenVerificationResult.VALID;
+        } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
+            log.error("Invalid JWT signature, 유효하지 않는 JWT 서명입니다.");
+        } catch (ExpiredJwtException e) {
+            log.error("Expired JWT token, 만료된 JWT AccessToken 입니다.");
+            return TokenVerificationResult.EXPIRED;
+        } catch (UnsupportedJwtException e) {
+            log.error("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
+        } catch (IllegalArgumentException e) {
+            log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
+        }
+        return TokenVerificationResult.INVALID;
+    }
+
 
     // 토큰에서 사용자 정보 가져오기
     public Claims getUserInfoFromToken(String token) {

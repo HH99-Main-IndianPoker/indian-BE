@@ -2,6 +2,10 @@ package com.service.indianfrog.domain.chat.controller;
 
 import com.service.indianfrog.domain.chat.entity.ChatMessage;
 import com.service.indianfrog.domain.gameroom.service.GameRoomService;
+import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.repository.UserRepository;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -10,16 +14,20 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
+
 @Controller
 @Slf4j
 public class ChatController {
 
-    private SimpMessageSendingOperations messagingTemplate; //이 심플메세지프로토콜을 이용하면 목적지와,메세지를 지정할수 있음
-    private GameRoomService gameRoomService;
+    private final SimpMessageSendingOperations messagingTemplate; //이 심플메세지프로토콜을 이용하면 목적지와,메세지를 지정할수 있음
+    private final GameRoomService gameRoomService;
+    private final UserRepository userRepository;
 
-    public ChatController(SimpMessageSendingOperations messagingTemplate, GameRoomService gameRoomService) {
+    public ChatController(SimpMessageSendingOperations messagingTemplate, GameRoomService gameRoomService,UserRepository userRepository) {
         this.messagingTemplate = messagingTemplate;
         this.gameRoomService = gameRoomService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -37,12 +45,16 @@ public class ChatController {
 
         // 욕설 필터링
         String filteredContent = gameRoomService.filterMessage(chatMessage.getContent());
-        chatMessage.setContent(filteredContent);
+        ChatMessage responseChatMessage = ChatMessage.builder()
+                .type(chatMessage.getType())
+                .sender(chatMessage.getSender())
+                .content(filteredContent)
+                .build();
 
         // 동적으로 메시지를 라우팅할 주소를 생성.
         String destination = "/topic/gameRoom/" + gameRoomId;
 
-        messagingTemplate.convertAndSend(destination, chatMessage);
+        messagingTemplate.convertAndSend(destination, responseChatMessage);
     }
 
     /**
@@ -53,7 +65,7 @@ public class ChatController {
      * @param headerAccessor 메시지 헤더 접근자
      */
     @MessageMapping("/chat.addUser/{gameRoomId}")
-    public void addUser(@DestinationVariable Long gameRoomId, @Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+    public void addUser(@DestinationVariable Long gameRoomId, @Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor, Principal principal) {
 
         if (!gameRoomService.existsById(gameRoomId)) {
             return;
@@ -64,8 +76,20 @@ public class ChatController {
         headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
         String destination = "/topic/gameRoom/" + gameRoomId;
 
-        // 입장 메시지 전송.
-        messagingTemplate.convertAndSend(destination, chatMessage);
-    }
+        String email = principal.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
+        ChatMessage responseChatMessage = ChatMessage.builder()
+                .type(chatMessage.getType())
+                .sender(chatMessage.getSender())
+                .imgUrl(user.getImageUrl())
+                .points(user.getPoints())
+                .build();
+
+        log.info("내포인트는? : " + chatMessage.getPoint());
+
+        // 입장 메시지 전송.
+        messagingTemplate.convertAndSend(destination, responseChatMessage);
+    }
 }

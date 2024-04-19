@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends Timestamped {
 
     @Id
@@ -27,20 +26,36 @@ public class User extends Timestamped {
 //    @Enumerated(EnumType.STRING)
 //    private AuthorityType authority;
 
-    private int points = 100;
+    private int points;
 
     /*
-     * rank*/
+     * rank
+     */
     private int wins;
     private int losses;
 
+    private String imageUrl;
+    private String originFileName;
+
     @Builder
-    public User(Long id, String nickname, String email, String password) {
+    public User(Long id, String nickname, String email, String password, String imageUrl, String originFileName) {
         this.id = id;
         this.nickname = nickname;
         this.email = email;
         this.password = password;
+        this.points = 100;
+        this.imageUrl = imageUrl;
+        this.originFileName = originFileName;
 //        this.authority = authority;
+    }
+
+    public User() {
+
+    }
+
+    public void imgUpdate(String originFileName, String imageUrl) {
+        this.originFileName = originFileName;
+        this.imageUrl = imageUrl;
     }
 
     public User(String nickname, String encodedPassword, String email, Long socialId) {
@@ -71,7 +86,7 @@ public class User extends Timestamped {
         this.losses++;
     }
 
-    public void increasePoints(int points) {
-        this.points += points;
+    public void updatePoint(int point) {
+        this.points += point;
     }
 }
