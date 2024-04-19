@@ -17,11 +17,11 @@ public class SwaggerConfig {
                         new SecurityRequirement().addList("Bearer Authentication")
                 )
                 .components(
-                        new Components().addSecuritySchemes("Bearer Authentication", createAPIKeySchme())
+                        new Components().addSecuritySchemes("Bearer Authentication", createAPIKeyScheme())
                 );
     }
 
-    private SecurityScheme createAPIKeySchme() {
+    private SecurityScheme createAPIKeyScheme() {
         return new SecurityScheme().type(SecurityScheme.Type.HTTP)
                 .bearerFormat("JWT")
                 .scheme("bearer")

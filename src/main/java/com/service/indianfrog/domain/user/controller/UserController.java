@@ -3,6 +3,7 @@ package com.service.indianfrog.domain.user.controller;
 import com.service.indianfrog.domain.user.controller.docs.UserControllerDocs;
 import com.service.indianfrog.domain.user.dto.MyPoint;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
+import com.service.indianfrog.domain.user.dto.UserResponseDto.EmailAuthResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.EmailSendResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
@@ -92,4 +93,12 @@ public class UserController implements UserControllerDocs {
         return ResponseDto.success("이메일 인증 코드 발송 성공", new EmailSendResponseDto(emailCode));
     }
 
+    @PostMapping("/user/email-auth")
+    public ResponseDto<EmailAuthResponseDto> emailAuthCheck(@RequestParam("email") String email,
+        @RequestParam("emailCode")
+        @NotBlank(message = "인증 코드를 입력해주세요", groups = NotBlankGroup.class)
+        String emailCode) {
+        boolean success = emailService.emailAuthCheck(email, emailCode);
+        return ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success));
+    }
 }
