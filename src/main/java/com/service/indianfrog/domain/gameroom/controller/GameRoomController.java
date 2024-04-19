@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
+import static com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetAllGameRoomResponseDto;
 import static com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
 
 @Slf4j
@@ -41,8 +42,8 @@ public class GameRoomController {
      * @return 조회된 게임 방의 페이징된 목록
      */
     @GetMapping("") // 전체페이지 조회
-    public ResponseDto<Page<GetGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
-        Page<GetGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
+    public ResponseDto<Page<GetAllGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
+        Page<GetAllGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
         return ResponseDto.success("모든 게임방 조회 기능", gameRooms);
     }
 
@@ -52,11 +53,12 @@ public class GameRoomController {
      * @param gameRoomId 게임 방 ID
      * @return 조회된 게임 방 정보
      */
-    @GetMapping("/{gameRoomId}") //특정 게임방 조회
+    @GetMapping("/{gameRoomId}") // 특정 게임방 조회
     public ResponseDto<GetGameRoomResponseDto> getGameRoomById(@PathVariable Long gameRoomId) {
         GetGameRoomResponseDto gameRoom = gameRoomService.getGameRoomById(gameRoomId);
         return ResponseDto.success("게임방 조회 기능", gameRoom);
     }
+
 
     /**
      * 새로운 게임 방을 생성
