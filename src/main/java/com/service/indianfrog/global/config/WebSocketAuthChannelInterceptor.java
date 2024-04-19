@@ -41,7 +41,8 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
      */
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        StompHeaderAccessor accessor = MessageHeaderAccessor
+                .getAccessor(message, StompHeaderAccessor.class);
 
         // 클라이언트가 보낸 메세지에서 Authorization 추출.
         // getFirstNativeHeader는 STOMP를 사용하는 웹소켓에서 헤더에 접근할수 있게 해주는 프로토콜
@@ -61,6 +62,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
                 // STOMP에 사용자 인증정보 설정해서 해당 메세지 처리하는 동안 사용자가 인증된 상태 유지.
                 accessor.setUser(authentication);
                 log.info("Authentication set for user: {}", email);
+                log.info("토큰이 잘 들어가려나? " + authentication);
                 return message;
             } else {
                 String errorMessage = "인증 실패. ";
