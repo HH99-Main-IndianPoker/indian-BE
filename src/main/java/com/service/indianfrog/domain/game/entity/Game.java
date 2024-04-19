@@ -2,9 +2,7 @@ package com.service.indianfrog.domain.game.entity;
 
 import com.service.indianfrog.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,6 +45,9 @@ public class Game {
 
     // 라운드 정보
     private int round;
+
+    private boolean checkStatus;
+    private boolean raiseStatus;
 
     // Constructor and methods
     public Game(User playerOne, User playerTwo) {
@@ -113,6 +114,8 @@ public class Game {
         this.pot = 0;
         this.playerOneCard = null;
         this.playerTwoCard = null;
+        this.checkStatus = false;
+        this.raiseStatus = false;
     }
 
     // 게임과 관련된 상태를 초기화하는 메서드
@@ -121,8 +124,19 @@ public class Game {
          * 게임에서 각 유저가 획득한 포인트,
          * 라운드 정보 초기화*/
         usedCards.clear();
-        playerOneRoundPoints = 0;
-        playerTwoRoundPoints = 0;
-        round = 0;
+        this.playerOneRoundPoints = 0;
+        this.playerTwoRoundPoints = 0;
+        this.round = 0;
+        this.checkStatus = false;
+        this.raiseStatus = false;
     }
+
+    public void updateCheck() {
+        this.checkStatus = true;
+    }
+
+    public void updateRaise() {
+        this.raiseStatus = true;
+    }
+
 }

@@ -8,21 +8,16 @@ import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
-import com.service.indianfrog.domain.game.utils.RepositoryHolder;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
-import com.service.indianfrog.global.exception.ErrorCode;
-import com.service.indianfrog.global.exception.RestApiException;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @Tag(name = "게임/라운드 종료 서비스", description = "게임/라운드 종료 서비스 로직")
 @Slf4j
@@ -30,14 +25,11 @@ import java.util.Random;
 public class EndGameService {
 
     private final GameValidator gameValidator;
-    private final RepositoryHolder repositoryHolder;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
 
-    public EndGameService(GameValidator gameValidator, RepositoryHolder repositoryHolder,
-                          GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
         this.gameValidator = gameValidator;
-        this.repositoryHolder = repositoryHolder;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
     }
@@ -53,22 +45,22 @@ public class EndGameService {
         승자에게 라운드 포인트 할당
         라운드 포인트 값 가져오기*/
         GameResult gameResult = determineGameResult(game);
-        log.debug("Round result determined: winnerId={}, loserId={}", gameResult.getWinnerId(), gameResult.getLoserId());
+        log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
         assignRoundPointsToWinner(game, gameResult);
         int roundPot = game.getPot();
 
         /* 라운드 승자가 선턴을 가지도록 설정*/
-        initializeTurnForGame(game, gameResult.getWinnerId());
+        initializeTurnForGame(game, gameResult);
 
         /* 라운드 정보 초기화*/
         game.resetRound();
         log.debug("Round reset for gameRoomId={}", gameRoomId);
 
         /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
-        String gameState = determineGameState(game);
-        log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, gameState);
+        String nextState = determineGameState(game);
+        log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-        return new EndRoundResponse(gameState, game.getRound(), gameResult.getWinnerId(), gameResult.getLoserId(), roundPot);
+        return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot);
     }
 
     /* 게임 종료 로직*/
@@ -85,13 +77,12 @@ public class EndGameService {
         CurrentGameStatus.updateGameState(GameState.READY);
 
         log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
-                gameRoomId, gameResult.getWinnerId(), gameResult.getLoserId());
+                gameRoomId, gameResult.getWinner(), gameResult.getLoser());
 
-        /* 유저 선택 상태 반환*/
-        return new EndGameResponse("USER_CHOICE", gameResult.getWinnerId(), gameResult.getLoserId(),
+        /* 유저 선택 상태 반환 */
+        return new EndGameResponse("GAME_END" ,"USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
                 gameResult.getWinnerPot(), gameResult.getLoserPot());
     }
-
 
     /* 검증 메서드 필드*/
     /* 라운드 승자, 패자 선정 메서드 */
@@ -112,14 +103,14 @@ public class EndGameService {
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
 
-        log.debug("Game result determined: winnerId={}, loserId={}", result.getWinnerId(), result.getLoserId());
+        log.info("Game result determined: winnerId={}, loserId={}", result.getWinner(), result.getLoser());
         return result;
     }
 
+
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
-        User winner = repositoryHolder.userRepository.findById(gameResult.getWinnerId())
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User winner = gameResult.getWinner();
 
         int pointsToAdd = game.getPot();
 
@@ -130,7 +121,7 @@ public class EndGameService {
         } else {
             game.addPlayerTwoRoundPoints(pointsToAdd);
         }
-        log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getId(), pointsToAdd);
+        log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
     }
 
     /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드*/
@@ -168,19 +159,15 @@ public class EndGameService {
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
     }
 
-    /* 1라운드 이후 턴 설정 메서드*/
-    private void initializeTurnForGame(Game game, Long winnerId) {
+    /* 1라운드 이후 턴 설정 메서드 */
+    private void initializeTurnForGame(Game game, GameResult gameResult) {
         List<User> players = new ArrayList<>();
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
-        User roundWinner = repositoryHolder.userRepository.findById(winnerId)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
-        players.add(roundWinner);
+        players.add(gameResult.getWinner());
+        players.add(gameResult.getLoser());
 
-        User player = (!roundWinner.equals(game.getPlayerOne()))
-                ? game.getPlayerTwo() : game.getPlayerOne();
-        players.add(player);
-
-        gameTurnService.setTurn(game.getId(), new Turn(players));
+        Turn turn = new Turn(players);
+        gameTurnService.setTurn(game.getId(), turn);
     }
 }

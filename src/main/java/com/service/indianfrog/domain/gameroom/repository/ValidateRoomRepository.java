@@ -8,19 +8,17 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long> {
-    boolean existsByGameRoomRoomId(Long roomId);
-
-    List<ValidateRoom> findAllByGameRoomRoomIdAndParticipants(Long roomId, String participant);
-
     Optional<ValidateRoom> findByGameRoomAndParticipants(GameRoom gameRoom, String participant);
 
     List<ValidateRoom> findAllByGameRoomRoomId(Long roomId);
 
-    ValidateRoom findByHostTrue();
-
-    ValidateRoom findByHostFalse();
-
     List<ValidateRoom> findAllByReadyTrue();
 
     List<ValidateRoom> findAllByParticipants(String email);
+
+    ValidateRoom findByGameRoomRoomIdAndParticipants(Long roomId, String nickname);
+
+    ValidateRoom findByGameRoomRoomId(Long roomId);
+
+    int countByGameRoomRoomId(Long roomId);
 }

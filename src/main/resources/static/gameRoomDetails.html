@@ -71,16 +71,9 @@
     }
   }
 
-  window.addEventListener('beforeunload', function(event) {
-    leaveRoom();
-    var confirmationMessage = '게임방에서 나가시겠습니까?';
-    (event || window.event).returnValue = confirmationMessage;
-    return confirmationMessage;
-  });
-
   function leaveRoom() {
-    if (stompClient && roomId && participantInfo) {
-      stompClient.send(`/app/${roomId}/leave`, {}, JSON.stringify({sender: participantInfo.nickname}));
+    if (stompClient && roomId) {
+      stompClient.send(`/app//${roomId}/leave`, {}, JSON.stringify({}));
       alert(`게임방 ${roomId}에서 나갑니다.`);
       window.location.href = 'index.html';
     }

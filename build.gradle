@@ -38,6 +38,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-reactor-netty")
 
+    //S3
+    implementation platform('com.amazonaws:aws-java-sdk-bom:1.12.701')
+    implementation 'com.amazonaws:aws-java-sdk-s3'
+
 //view
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-freemarker'
@@ -72,11 +76,13 @@ dependencies {
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     testImplementation 'org.springframework.security:spring-security-test'
 
-    //junit
+//junit
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 
-    //oauth2
+//oauth2
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+// email
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 test {
