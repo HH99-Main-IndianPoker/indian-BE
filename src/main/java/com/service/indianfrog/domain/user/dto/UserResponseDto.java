@@ -23,15 +23,18 @@ public class UserResponseDto {
             Long id,
             String email,
             String nickname,
+
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            Integer points
     ) {
         public GetUserResponseDto(User user) {
             this(
                     user.getId(),
                     user.getEmail(),
                     user.getNickname(),
-                    user.getCreatedAt()
+                    user.getCreatedAt(),
+                    user.getPoints()
             );
         }
     }
