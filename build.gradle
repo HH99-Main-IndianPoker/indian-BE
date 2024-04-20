@@ -81,6 +81,10 @@ dependencies {
 
     //oauth2
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // Application Monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 }
 
 test {

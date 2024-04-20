@@ -1,0 +1,19 @@
+# 모니터링 관련 설정
+management:
+  server:
+    port: 9090 # Actuator 를 위한 별도 포트
+  endpoints:
+    web:
+      exposure:
+        include: info, health, prometheus # info, health, prometheus endpoint 만 enable
+      base-path: /indian-frog-management
+    jmx:
+      exposure:
+        exclude: '*' # jmx 비활성화, 보안을 위한 조치
+  metrics:
+    tags:
+      application: 'indian frog' # tag 이름 설정
+  prometheus:
+    metrics:
+      export:
+        enabled: true
