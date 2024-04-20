@@ -131,7 +131,17 @@ public class JwtUtil {
 
     // 토큰에서 사용자 정보 가져오기
     public Claims getUserInfoFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token).getBody();
+        try {
+            return Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token)
+                .getBody();
+        } catch (ExpiredJwtException e) {
+            log.error("Access Token Expired: " + e.getMessage());
+            return e.getClaims();
+        } catch (JwtException e) {
+            log.error("JWT processing failed "+ e.getMessage());
+            throw new RuntimeException("JWT processing failed", e);
+        }
+
     }
 
     public String getJwtFromHeader(HttpServletRequest request) {

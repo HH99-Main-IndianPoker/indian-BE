@@ -42,7 +42,7 @@ public class RefreshController {
     public ResponseEntity<TokenResponseStatus> refresh(@RequestHeader("Authorization") String accessToken,
         HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
 
-        String newAccessToken = tokenService.republishAccessTokenWithRotate(accessToken,request, response);
-        return ResponseEntity.ok(TokenResponseStatus.addStatus(200, newAccessToken));
+        tokenService.republishAccessTokenWithRotate(accessToken,request, response);
+        return ResponseEntity.ok(TokenResponseStatus.addStatus(200));
     }
 }

@@ -67,40 +67,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                 return;
             }
         }
-
-//        String tokenValue = request.getHeader("Authorization");
-//
-//        // 토큰 검사 생략(모두 허용 URL의 경우 토큰 검사 통과)
-//        if (!StringUtils.hasText(tokenValue)) {
-//            doFilter(request, response, filterChain);
-//            return;
-//        }
-//
-//        // AccessToken을 검증하고, 만료되었을경우 예외를 발생시킨다.
-//        if (!jwtUtil.verifyToken(tokenValue)) {
-//            throw new JwtException("Access Token 만료!");
-//        }
-//
-//        // AccessToken의 값이 있고, 유효한 경우에 진행한다.
-//        if (jwtUtil.verifyToken(tokenValue)) {
-//
-//            // AccessToken 내부의 payload에 있는 email로 user를 조회한다. 없다면 예외를 발생시킨다 -> 정상 케이스가 아님
-//            User findMember = userRepository.findByEmail(jwtUtil.getUid(tokenValue))
-//                    .orElseThrow(IllegalStateException::new);
-//
-//            // SecurityContext에 등록할 User 객체를 만들어준다.
-//            SecurityUserDto userDto = SecurityUserDto.builder()
-//                    .memberNo(findMember.getId())
-//                    .email(findMember.getEmail())
-//                    .role("ROLE_".concat(String.valueOf(findMember.getAuthority())))
-//                    .nickname(findMember.getNickname())
-//                    .build();
-//
-//            // SecurityContext에 인증 객체를 등록해준다.
-//            Authentication auth = getAuthentication(userDto);
-//            SecurityContextHolder.getContext().setAuthentication(auth);
-//        }
-
         filterChain.doFilter(request, response);
     }
 

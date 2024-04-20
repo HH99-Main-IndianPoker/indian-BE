@@ -11,6 +11,7 @@ import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,12 +39,12 @@ public class RefreshTokenService {
         this.userRepository = userRepository;
     }
 
-    private static final String ACCESS_TOKEN_KEY_PREFIX = "accessToken:";
     private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
 
     @Transactional
     public void removeTokens(String accessToken, HttpServletRequest request, HttpServletResponse response) {
-        Claims claims = extractClaims(accessToken.substring(7));
+        String jwtFromHeader = jwtUtil.getJwtFromHeader(request);
+        Claims claims = jwtUtil.getUserInfoFromToken(jwtFromHeader);
         String email = claims.getSubject();
         String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX + email;
         redisTemplate.delete(refreshTokenKey);
@@ -56,7 +57,7 @@ public class RefreshTokenService {
      * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
     @Transactional
     public String republishAccessTokenWithRotate(String accessToken,HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
-        Claims claims = extractClaims(accessToken.substring(7));
+        Claims claims = jwtUtil.getUserInfoFromToken(accessToken.substring(7));
         String email = claims.getSubject();
 
         String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX+ email;
@@ -86,15 +87,7 @@ public class RefreshTokenService {
         /*
          * 1.지금은 만료안된 엑세스토큰*/
         throw new RestApiException(NOT_EXPIRED_ACCESS_TOKEN.getMessage());
-    }
-
-    private Claims extractClaims(String accessToken) {
-        try {
-            log.error("accessToken not expired");
-            throw new RestApiException(NOT_EXPIRED_ACCESS_TOKEN.getMessage());
-        } catch (ExpiredJwtException e) {
-           return e.getClaims();
-        }
+        /*메인페이지 로그인화면으로 리다이렉트*/
     }
 
     private static void CookieDelete(HttpServletRequest request, HttpServletResponse response) {

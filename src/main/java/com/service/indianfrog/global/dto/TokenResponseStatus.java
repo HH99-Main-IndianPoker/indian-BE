@@ -8,9 +8,8 @@ import lombok.Getter;
 public class TokenResponseStatus {
 
     private Integer status;
-    private String accessToken;
 
-    public static TokenResponseStatus addStatus(Integer status, String accessToken) {
-        return new TokenResponseStatus(status, accessToken);
+    public static TokenResponseStatus addStatus(Integer status) {
+        return new TokenResponseStatus(status);
     }
 }

@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import static com.service.indianfrog.domain.gameroom.entity.QValidateRoom.validateRoom;
 
-
 public class CustomValidateRoomRepositoryImpl implements CustomValidateRoomRepository {
 
     private final JPAQueryFactory queryFactory;
