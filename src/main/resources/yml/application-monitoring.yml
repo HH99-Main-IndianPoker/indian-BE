@@ -1,11 +1,16 @@
 # 모니터링 관련 설정
+spring:
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true
 management:
   server:
     port: 9090 # Actuator 를 위한 별도 포트
   endpoints:
     web:
       exposure:
-        include: info, health, prometheus # info, health, prometheus endpoint 만 enable
+        include: info, health, prometheus, metrics # info, health, prometheus, metrics endpoint 만 enable
       base-path: /indian-frog-management
     jmx:
       exposure:
@@ -13,6 +18,11 @@ management:
   metrics:
     tags:
       application: 'indian frog' # tag 이름 설정
+    binders:
+      jpa:
+        enabled: true
+      datasource:
+        enabled: true
   prometheus:
     metrics:
       export:
