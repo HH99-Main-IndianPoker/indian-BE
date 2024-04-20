@@ -20,13 +20,25 @@ public class GameRoomResponseDto {
     ) {
     }
 
-    public record GetGameRoomResponseDto(
+    public record GetAllGameRoomResponseDto(
             Long roomId,
             String roomName,
             int participantCount,
             String hostNickname,
             GameState gameState
-
     ) {
     }
+    public record GetGameRoomResponseDto(
+            Long roomId,
+            String roomName,
+            GameState gameState,
+            int participantCount,
+            String hostNickname,
+            int hostPoints,
+            String hostImageUrl,
+            String participantNickname,
+            int participantPoints,
+            String participantImageUrl
+    ) {}
+
 }

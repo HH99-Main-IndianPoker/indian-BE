@@ -2,6 +2,7 @@ package com.service.indianfrog.domain.gameroom.service;
 
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
+import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetAllGameRoomResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.ParticipantInfo;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
@@ -55,23 +56,47 @@ public class GameRoomService {
      * @return 조회된 게임방의 상세 정보를 담은 Dto
      */
     public GetGameRoomResponseDto getGameRoomById(Long roomId) {
-        // roomId르 이용하여 해당 게임방을 조회
+        // roomId를 이용하여 해당 게임방을 조회
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
-        // 해당 게임방에 등록된 모든 ValidateRoom 객체들을 가져와서 그 중에서 방장을 찾음
-        String hostName = gameRoom.getValidateRooms().stream()
+        // 방장 정보 추출
+        ValidateRoom host = gameRoom.getValidateRooms().stream()
                 .filter(ValidateRoom::isHost)
-                // 게임방에는 방장이 1명만 존재하기때문에 findFirst()를 사용해서 방장을 찾음
                 .findFirst()
-                // 해당 ValidateRoom에 방장 닉네임을 반환
-                .map(ValidateRoom::getParticipants)
-                .orElse(null); // 바장이 없으면 null을 반환
+                .orElse(null);
 
-        // 해당 게임방의 참가자의 수
-        int participantCount = gameRoom.getValidateRooms().size();
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState());
+        // 초기화 안해주니까 에러남.
+        String hostNickname = null;
+        int hostPoints = 0;
+        String hostImageUrl = null;
+
+        if (host != null) {
+            hostNickname = host.getParticipants();
+            hostPoints = userRepository.findByNickname(hostNickname).getPoints();
+            hostImageUrl = userRepository.findByNickname(hostNickname).getImageUrl();
+        }
+
+        String participantNickname = null;
+        int participantPoints = 0;
+        String participantImageUrl = null;
+
+        // 다른 참가자 찾기
+        ValidateRoom participant = gameRoom.getValidateRooms().stream()
+                .filter(v -> !v.isHost()) // 방장 제외
+                .findFirst()
+                .orElse(null);
+
+        if (participant != null) {
+            participantNickname = participant.getParticipants();
+            participantPoints = userRepository.findByNickname(participantNickname).getPoints();
+            participantImageUrl = userRepository.findByNickname(participantNickname).getImageUrl();
+        }
+
+        // 게임방 정보와 참가자 정보 반환
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(),gameRoom.getGameState(), gameRoom.getValidateRooms().size(), hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
     }
+
 
     /**
      * 모든 게임방을 페이지 단위로 조회
@@ -79,7 +104,7 @@ public class GameRoomService {
      * @param pageable 페이징 정보
      * @return 페이징 처리된 게임방 목록
      */
-    public Page<GetGameRoomResponseDto> getAllGameRooms(Pageable pageable) { //로직 자체는 특정방 조회와 같으나 페이징 처리
+    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) { //로직 자체는 특정방 조회와 같으나 페이징 처리
         return gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
                 .map(gameRoom -> {
@@ -91,9 +116,10 @@ public class GameRoomService {
                             .orElse(null);
 
                     int participantCount = gameRoom.getValidateRooms().size();
-                    return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState());
+                    return new GetAllGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState());
                 });
     }
+
 
     /**
      * 주어진 ID를 가진 게임방을 삭제
@@ -205,7 +231,7 @@ public class GameRoomService {
                 .filter(ValidateRoom::isHost)
                 .map(ValidateRoom::getParticipants)
                 .findFirst()
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_HOST.getMessage()));
         String participant = validateRooms.stream()
                 .filter(p -> !p.isHost())
                 .map(ValidateRoom::getParticipants)

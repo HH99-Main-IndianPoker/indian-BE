@@ -6,7 +6,6 @@ import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
@@ -52,10 +51,10 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         // 토큰 유효성 검사
         if (StringUtils.hasText(token) && token.startsWith(JwtUtil.BEARER_PREFIX)) {
             token = token.substring(7);
-            // jwt로 유효성 검사
-            if (jwtUtil.verifyAccessToken(token) == TokenVerificationResult.VALID) {
-                String email = jwtUtil.getUid(token);
+            TokenVerificationResult result = jwtUtil.verifyAccessToken(token);
 
+            if (result == TokenVerificationResult.VALID) {
+                String email = jwtUtil.getUid(token);
                 // 이메일을 이용해서 인증객체 생성. new AuthenticatedUser(email) 이걸로 principal 사용.
                 Authentication authentication = new UsernamePasswordAuthenticationToken(new AuthenticatedUser(email), null, Collections.emptyList());
                 //SecurityContext에 담아서 다른데서도 인증된 사용자 정보를 조회할수 있음.
@@ -63,6 +62,20 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
                 // STOMP에 사용자 인증정보 설정해서 해당 메세지 처리하는 동안 사용자가 인증된 상태 유지.
                 accessor.setUser(authentication);
                 log.info("Authentication set for user: {}", email);
+                log.info("토큰이 잘 들어가려나? " + authentication);
+                return message;
+            } else {
+                String errorMessage = "인증 실패. ";
+                switch (result) {
+                    case EXPIRED:
+                        errorMessage += "토큰이 만료되었다네요.";
+                        break;
+                    case INVALID:
+                        errorMessage += "유효하지 않는 토큰이래요...";
+                        break;
+                }
+                accessor.setHeader("error", errorMessage);
+                return MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
             }
         }
         return message;
