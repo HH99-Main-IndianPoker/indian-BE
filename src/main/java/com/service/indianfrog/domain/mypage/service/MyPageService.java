@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.service.indianfrog.domain.mypage.dto.MyPageInfo;
 import com.service.indianfrog.domain.mypage.dto.MyProfile;
 import com.service.indianfrog.domain.mypage.dto.PointChange;
+import com.service.indianfrog.domain.ranking.service.RankingService;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
@@ -72,7 +73,6 @@ public class MyPageService {
         return new MyProfile(s3UrlText);
     }
 
-
     private int getUserRanking(String username) {
 
         List<User> userList = userRepository.findAll();
@@ -85,6 +85,5 @@ public class MyPageService {
         });
 
         return IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage()));
-
     }
 }
