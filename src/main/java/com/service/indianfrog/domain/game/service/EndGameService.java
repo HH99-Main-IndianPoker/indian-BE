@@ -45,6 +45,7 @@ public class EndGameService {
         승자에게 라운드 포인트 할당
         라운드 포인트 값 가져오기*/
         GameResult gameResult = determineGameResult(game);
+
         log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
         assignRoundPointsToWinner(game, gameResult);
         int roundPot = game.getPot();
@@ -89,11 +90,10 @@ public class EndGameService {
     private GameResult determineGameResult(Game game) {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
-        User foldedUser = game.getFoldedUser();
 
-        if (foldedUser != null && foldedUser.equals(playerOne)){
+        if (game.getFoldedUser().equals(playerOne)) {
             return new GameResult(playerTwo, playerOne);
-        } else if (foldedUser != null && foldedUser.equals(playerTwo)){
+        } else if(game.getFoldedUser().equals(playerTwo)){
             return new GameResult(playerOne, playerTwo);
         }
 
@@ -102,11 +102,10 @@ public class EndGameService {
         log.info("Game result determined: winnerId={}, loserId={}", result.getWinner(), result.getLoser());
         return result;
     }
-    
+
     private GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
-
 
         /* 카드 숫자가 같으면 1번 덱의 카드를 가진 플레이어가 승리*/
         GameResult result;
