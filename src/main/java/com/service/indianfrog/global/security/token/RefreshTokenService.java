@@ -28,13 +28,14 @@ public class RefreshTokenService {
     private final RedisTemplate redisTemplate;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-    private Key accessKey;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public RefreshTokenService(RedisTemplate redisTemplate, JwtUtil jwtUtil,
-        UserRepository userRepository) {
+        UserRepository userRepository, TokenBlacklistService tokenBlacklistService) {
         this.redisTemplate = redisTemplate;
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
@@ -51,48 +52,17 @@ public class RefreshTokenService {
         CookieDelete(request, response);
     }
 
-    /*1.액세스 토큰으로 Refresh 토큰 객체를 조회
-     * 2.RefreshToken 객체를 꺼내온다.
-     * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
-//    @Transactional
-//    public String republishAccessTokenWithRotate(String accessToken,HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
-//        String jwtFromHeader = jwtUtil.deletePrefix(accessToken);
-//        log.info(jwtFromHeader);
-//        Claims claims = jwtUtil.getUserInfoFromToken(jwtFromHeader);
-//        String email = claims.getSubject();
-//
-//        String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX+ email;
-//        String refreshToken = (String) redisTemplate.opsForValue().get(refreshTokenKey);
-//        if (jwtUtil.verifyRefreshToken(refreshToken) != TokenVerificationResult.EXPIRED) {
-//            User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-//            /*
-//             * 1.remove accesstoken
-//             * 2.generate tokens
-//             * 3.update each token*/
-//            redisTemplate.delete(refreshToken);
-//            CookieDelete(request, response);
-//            GeneratedToken updatedToken = jwtUtil.generateToken(user.getEmail(),
-//                "USER", user.getNickname());
-//            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
-//            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
-//            String updatedRefreshToken = URLEncoder.encode(updatedToken.getRefreshToken(),
-//                "utf-8");
-//            Cookie refreshTokenCookie = createCookie("refreshToken", updatedRefreshToken);
-//            response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
-//            log.error("완료");
-//            return updatedToken.getAccessToken();
-//        } else {
-//            throw new RestApiException(ErrorCode.EXPIRED_REFRESH_TOKEN.getMessage());
-//        }
-//        /*메인페이지 로그인화면으로 리다이렉트*/
-//    }
-
     @Transactional
     public void republishAccessTokenWithRotate(String accessToken, HttpServletRequest request,
         HttpServletResponse response) throws UnsupportedEncodingException {
+        String token = jwtUtil.deletePrefix(accessToken);
+        if (tokenBlacklistService.isTokenBlacklisted(token)) {
+            throw new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_REFRESH_TOKEN.getMessage());
+        }
+
         Claims claims;
         try {
+            tokenBlacklistService.blackListToken(token);
             claims = jwtUtil.getUserInfoFromToken(accessToken.substring(7));
         } catch (ExpiredJwtException e) {
             claims = e.getClaims(); // 만료된 토큰에서도 사용자 정보를 추출
@@ -111,6 +81,11 @@ public class RefreshTokenService {
                 () -> new UsernameNotFoundException("User not found with email: " + email));
         GeneratedToken generatedToken = jwtUtil.generateToken(user.getEmail(), "USER",
             user.getNickname());
+        updateResponseWithTokens(response, generatedToken);
+    }
+
+    private void updateResponseWithTokens(HttpServletResponse response, GeneratedToken generatedToken)
+        throws UnsupportedEncodingException {
         response.setHeader("Authorization", generatedToken.getAccessToken());
         String updatedRefreshToken = URLEncoder.encode(generatedToken.getRefreshToken(), "utf-8");
         Cookie refreshTokenCookie = createCookie("refreshToken", updatedRefreshToken);

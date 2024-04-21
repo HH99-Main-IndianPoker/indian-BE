@@ -5,6 +5,8 @@ import com.service.indianfrog.global.jwt.JwtUtil;
 import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import com.service.indianfrog.global.security.dto.SecurityUserDto;
 import com.service.indianfrog.global.security.filter.CustomResponseUtil;
+import com.service.indianfrog.global.security.token.TokenBlacklistService;
+import com.service.indianfrog.global.security.token.TokenService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,22 +32,29 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
     private final UserRepository userRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtAuthorizationFilter(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService, UserRepository userRepository) {
+    public JwtAuthorizationFilter(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService,
+        UserRepository userRepository,
+        TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.userRepository = userRepository;
-    }
-
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return request.getRequestURI().contains("token/refresh");
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return path.contains("/token/refresh") || path.startsWith("/user/signup")
+            || path.startsWith("/user/login");
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+        FilterChain filterChain) throws ServletException, IOException {
         // request Header에서 AccessToken을 가져온다.
         String tokenValue = jwtUtil.getJwtFromHeader(request);
-
         if (StringUtils.hasText(tokenValue)) {
             if (jwtUtil.verifyAccessToken(tokenValue) == TokenVerificationResult.INVALID) {
                 log.error("Token Error");
@@ -72,7 +81,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     public Authentication getAuthentication(SecurityUserDto member) {
         return new UsernamePasswordAuthenticationToken(member, "",
-                List.of(new SimpleGrantedAuthority(member.role())));
+            List.of(new SimpleGrantedAuthority(member.role())));
     }
 
     // 인증 처리
@@ -87,6 +96,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     // 인증 객체 생성
     private Authentication createAuthentication(String username) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(userDetails, null,
+            userDetails.getAuthorities());
     }
 }

@@ -7,6 +7,8 @@ import com.service.indianfrog.global.security.JwtAuthorizationFilter;
 import com.service.indianfrog.global.security.UserDetailsServiceImpl;
 import com.service.indianfrog.global.security.oauth2.CustomOAuth2UserService;
 import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.service.indianfrog.global.security.token.TokenBlacklistService;
+import com.service.indianfrog.global.security.token.TokenService;
 import java.util.List;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -36,17 +38,20 @@ public class WebSecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler customSuccessHandler;
     private final UserRepository userRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public WebSecurityConfig(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService,
         AuthenticationConfiguration authenticationConfiguration,
         CustomOAuth2UserService customOAuth2UserService,
-        OAuth2AuthenticationSuccessHandler customSuccessHandler, UserRepository userRepository) {
+        OAuth2AuthenticationSuccessHandler customSuccessHandler, UserRepository userRepository,
+        TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.authenticationConfiguration = authenticationConfiguration;
         this.customOAuth2UserService = customOAuth2UserService;
         this.customSuccessHandler = customSuccessHandler;
         this.userRepository = userRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Bean
@@ -69,7 +74,7 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtUtil, userDetailsService, userRepository);
+        return new JwtAuthorizationFilter(jwtUtil, userDetailsService, userRepository,tokenBlacklistService);
     }
 
     // 시큐리티 CORS 설정
