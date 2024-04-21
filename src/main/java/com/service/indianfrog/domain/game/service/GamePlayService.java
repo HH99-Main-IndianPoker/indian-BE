@@ -131,6 +131,7 @@ public class GamePlayService {
         }
 
         game.setFoldedUser(user);
+        game.setBetAmount(0);
 
         log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
 
