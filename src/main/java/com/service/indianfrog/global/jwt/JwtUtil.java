@@ -3,18 +3,23 @@ package com.service.indianfrog.global.jwt;
 import com.service.indianfrog.global.properties.JwtProperties;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
 import com.service.indianfrog.global.security.token.TokenService;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import java.security.Key;
+import java.util.Base64;
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
 
 @Slf4j
 @Service
@@ -54,7 +59,8 @@ public class JwtUtil {
 
     // 토큰에서 ROLE(권한)만 추출한다.
     public String getRole(String token) {
-        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody().get("role", String.class);
+        return Jwts.parser().setSigningKey(accessKey).parseClaimsJws(token).getBody()
+            .get("role", String.class);
     }
 
 
@@ -63,7 +69,7 @@ public class JwtUtil {
         String accessToken = generateAccessToken(email, role, nickname);
 
         // 토큰을 Redis에 저장한다.
-        tokenService.saveTokenInfo(email, refreshToken, accessToken);
+        tokenService.saveTokenInfo(email, refreshToken);
         return new GeneratedToken(accessToken, refreshToken);
     }
 
@@ -71,34 +77,35 @@ public class JwtUtil {
         Date date = new Date();
 
         return Jwts.builder()
-                .setSubject(email) // 사용자 식별자값(ID)
-                .claim(AUTHORIZATION_KEY, role) // 사용자 권한
-                .claim("nickname", nickname)
-                .setExpiration(new Date(date.getTime() + TOKEN_TIME)) // 만료 시간
-                .setIssuedAt(date) // 발급일
-                .signWith(refreshKey, signatureAlgorithm) // 암호화 알고리즘
-                .compact();
+            .setSubject(email) // 사용자 식별자값(ID)
+            .claim(AUTHORIZATION_KEY, role) // 사용자 권한
+            .claim("nickname", nickname)
+            .setExpiration(new Date(date.getTime() + TOKEN_TIME)) // 만료 시간
+            .setIssuedAt(date) // 발급일
+            .signWith(refreshKey, signatureAlgorithm) // 암호화 알고리즘
+            .compact();
     }
 
 
     public String generateAccessToken(String email, String role, String nickname) {
         Date date = new Date();
         return BEARER_PREFIX +
-                Jwts.builder()
-                        .setSubject(email) // 사용자 식별자값(ID)
-                        .claim(AUTHORIZATION_KEY, role) // 사용자 권한
-                        .claim("nickname", nickname)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24)) // 1hour
-                        .setIssuedAt(date) // 발급일
-                        .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
-                        .compact();
+            Jwts.builder()
+                .setSubject(email) // 사용자 식별자값(ID)
+                .claim(AUTHORIZATION_KEY, role) // 사용자 권한
+                .claim("nickname", nickname)
+                .setExpiration(new Date(date.getTime() + TOKEN_TIME / 24 / 3600)) // 1hour
+                .setIssuedAt(date) // 발급일
+                .signWith(accessKey, signatureAlgorithm) // 암호화 알고리즘
+                .compact();
     }
 
     public TokenVerificationResult verifyAccessToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token);
             return TokenVerificationResult.VALID;
-        } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
+        } catch (SecurityException | MalformedJwtException |
+                 io.jsonwebtoken.security.SignatureException e) {
             log.error("Invalid JWT signature, 유효하지 않는 JWT 서명입니다.");
         } catch (ExpiredJwtException e) {
             log.error("Expired JWT token, 만료된 JWT AccessToken 입니다.");
@@ -115,7 +122,8 @@ public class JwtUtil {
         try {
             Jwts.parserBuilder().setSigningKey(refreshKey).build().parseClaimsJws(token);
             return TokenVerificationResult.VALID;
-        } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
+        } catch (SecurityException | MalformedJwtException |
+                 io.jsonwebtoken.security.SignatureException e) {
             log.error("Invalid JWT signature, 유효하지 않는 JWT 서명입니다.");
         } catch (ExpiredJwtException e) {
             log.error("Expired JWT token, 만료된 JWT AccessToken 입니다.");
@@ -138,7 +146,7 @@ public class JwtUtil {
             log.error("Access Token Expired: " + e.getMessage());
             return e.getClaims();
         } catch (JwtException e) {
-            log.error("JWT processing failed "+ e.getMessage());
+            log.error("JWT processing failed " + e.getMessage());
             throw new RuntimeException("JWT processing failed", e);
         }
 
@@ -150,5 +158,9 @@ public class JwtUtil {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+    public String deletePrefix(String accessToken) {
+        return accessToken.substring(7);
     }
 }

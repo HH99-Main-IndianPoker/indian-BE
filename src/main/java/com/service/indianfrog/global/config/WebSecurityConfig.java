@@ -7,6 +7,7 @@ import com.service.indianfrog.global.security.JwtAuthorizationFilter;
 import com.service.indianfrog.global.security.UserDetailsServiceImpl;
 import com.service.indianfrog.global.security.oauth2.CustomOAuth2UserService;
 import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import java.util.List;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,8 +26,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
@@ -38,7 +37,10 @@ public class WebSecurityConfig {
     private final OAuth2AuthenticationSuccessHandler customSuccessHandler;
     private final UserRepository userRepository;
 
-    public WebSecurityConfig(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService, AuthenticationConfiguration authenticationConfiguration, CustomOAuth2UserService customOAuth2UserService, OAuth2AuthenticationSuccessHandler customSuccessHandler, UserRepository userRepository) {
+    public WebSecurityConfig(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService,
+        AuthenticationConfiguration authenticationConfiguration,
+        CustomOAuth2UserService customOAuth2UserService,
+        OAuth2AuthenticationSuccessHandler customSuccessHandler, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.authenticationConfiguration = authenticationConfiguration;
@@ -53,7 +55,8 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+        throws Exception {
         return configuration.getAuthenticationManager();
     }
 
@@ -91,7 +94,8 @@ public class WebSecurityConfig {
         configuration.addAllowedMethod("*");
         configuration.addAllowedOriginPattern("*");
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
+        configuration.setExposedHeaders(
+            List.of("Authorization", "Set-Cookie", "Cache-Control", "Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -108,7 +112,7 @@ public class WebSecurityConfig {
 
         // JWT 방식을 사용하기 위한 설정
         http.sessionManagement((sessionManagement) ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
 
         /*oauth2*/
@@ -119,16 +123,18 @@ public class WebSecurityConfig {
 //                        .successHandler(customSuccessHandler));// OAuth2 로그인 성공 시, 후작업을 진행할 UserService 인터페이스 구현체 등록
 
         http.authorizeHttpRequests((authorizeHttpRequests) ->
-                        authorizeHttpRequests
-                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() // resources 접근 허용 설정
-                                .requestMatchers("/", "/user/**", "/login/**", "/oauth2/**", "/token/**", "/**").permitAll() // 메인 페이지 요청 허가
-                                .requestMatchers("/ws/**").permitAll() // WebSocket 경로 허가
-                                .requestMatchers("/topic/**").permitAll() // WebSocket 메시지 브로커 경로 허가
+                authorizeHttpRequests
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
+                    .permitAll() // resources 접근 허용 설정
+                    .requestMatchers("/", "/user/**", "/login/**", "/oauth2/**", "/token/**", "/**")
+                    .permitAll() // 메인 페이지 요청 허가
+                    .requestMatchers("/ws/**").permitAll() // WebSocket 경로 허가
+                    .requestMatchers("/topic/**").permitAll() // WebSocket 메시지 브로커 경로 허가
 //                        .requestMatchers("/app/**").permitAll()
 //                        .requestMatchers("/user/queue/**").permitAll()
-                                .requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
-                                .anyRequest().authenticated() // 그 외 모든 요청 인증처리
+                    .requestMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
+                    .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );
 
         http.formLogin(AbstractHttpConfigurer::disable);

@@ -1,7 +1,5 @@
 package com.service.indianfrog.global.security.token;
 
-import static com.service.indianfrog.global.exception.ErrorCode.NOT_EXPIRED_ACCESS_TOKEN;
-
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
@@ -11,7 +9,6 @@ import com.service.indianfrog.global.jwt.TokenVerificationResult;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,6 +17,7 @@ import java.net.URLEncoder;
 import java.security.Key;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +40,8 @@ public class RefreshTokenService {
     private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
 
     @Transactional
-    public void removeTokens(String accessToken, HttpServletRequest request, HttpServletResponse response) {
+    public void removeTokens(String accessToken, HttpServletRequest request,
+        HttpServletResponse response) {
         String jwtFromHeader = jwtUtil.getJwtFromHeader(request);
         Claims claims = jwtUtil.getUserInfoFromToken(jwtFromHeader);
         String email = claims.getSubject();
@@ -55,39 +54,67 @@ public class RefreshTokenService {
     /*1.액세스 토큰으로 Refresh 토큰 객체를 조회
      * 2.RefreshToken 객체를 꺼내온다.
      * 3.email, role 를 추출해 새로운 액세스토큰을 만들어 반환*/
+//    @Transactional
+//    public String republishAccessTokenWithRotate(String accessToken,HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
+//        String jwtFromHeader = jwtUtil.deletePrefix(accessToken);
+//        log.info(jwtFromHeader);
+//        Claims claims = jwtUtil.getUserInfoFromToken(jwtFromHeader);
+//        String email = claims.getSubject();
+//
+//        String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX+ email;
+//        String refreshToken = (String) redisTemplate.opsForValue().get(refreshTokenKey);
+//        if (jwtUtil.verifyRefreshToken(refreshToken) != TokenVerificationResult.EXPIRED) {
+//            User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+//            /*
+//             * 1.remove accesstoken
+//             * 2.generate tokens
+//             * 3.update each token*/
+//            redisTemplate.delete(refreshToken);
+//            CookieDelete(request, response);
+//            GeneratedToken updatedToken = jwtUtil.generateToken(user.getEmail(),
+//                "USER", user.getNickname());
+//            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
+//            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
+//            String updatedRefreshToken = URLEncoder.encode(updatedToken.getRefreshToken(),
+//                "utf-8");
+//            Cookie refreshTokenCookie = createCookie("refreshToken", updatedRefreshToken);
+//            response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
+//            log.error("완료");
+//            return updatedToken.getAccessToken();
+//        } else {
+//            throw new RestApiException(ErrorCode.EXPIRED_REFRESH_TOKEN.getMessage());
+//        }
+//        /*메인페이지 로그인화면으로 리다이렉트*/
+//    }
+
     @Transactional
-    public String republishAccessTokenWithRotate(String accessToken,HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
-        Claims claims = jwtUtil.getUserInfoFromToken(accessToken.substring(7));
-        String email = claims.getSubject();
-
-        String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX+ email;
-        String refreshToken = (String) redisTemplate.opsForValue().get(refreshTokenKey);
-
-        if (jwtUtil.verifyRefreshToken(refreshToken) != TokenVerificationResult.EXPIRED) {
-            User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-            /*
-             * 1.remove accesstoken
-             * 2.generate tokens
-             * 3.update each token*/
-
-            removeTokens(email,request,response);
-            GeneratedToken updatedToken = jwtUtil.generateToken(user.getEmail(),
-                "USER", user.getNickname());
-            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
-            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, updatedToken.getAccessToken());
-
-            String updatedRefreshToken = URLEncoder.encode(updatedToken.getRefreshToken(),
-                "utf-8");
-            Cookie refreshTokenCookie = createCookie("refreshTokenInfo", updatedRefreshToken);
-            response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
-
-            return updatedToken.getAccessToken();
+    public void republishAccessTokenWithRotate(String accessToken, HttpServletRequest request,
+        HttpServletResponse response) throws UnsupportedEncodingException {
+        Claims claims;
+        try {
+            claims = jwtUtil.getUserInfoFromToken(accessToken.substring(7));
+        } catch (ExpiredJwtException e) {
+            claims = e.getClaims(); // 만료된 토큰에서도 사용자 정보를 추출
         }
-        /*
-         * 1.지금은 만료안된 엑세스토큰*/
-        throw new RestApiException(NOT_EXPIRED_ACCESS_TOKEN.getMessage());
-        /*메인페이지 로그인화면으로 리다이렉트*/
+
+        String email = claims.getSubject();
+        String refreshToken = (String) redisTemplate.opsForValue()
+            .get(REFRESH_TOKEN_KEY_PREFIX + email);
+        if (jwtUtil.verifyRefreshToken(refreshToken) == TokenVerificationResult.EXPIRED) {
+            throw new RestApiException(ErrorCode.EXPIRED_REFRESH_TOKEN.getMessage());
+        }
+        redisTemplate.delete(refreshToken);
+        CookieDelete(request, response);
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
+        GeneratedToken generatedToken = jwtUtil.generateToken(user.getEmail(), "USER",
+            user.getNickname());
+        response.setHeader("Authorization", generatedToken.getAccessToken());
+        String updatedRefreshToken = URLEncoder.encode(generatedToken.getRefreshToken(), "utf-8");
+        Cookie refreshTokenCookie = createCookie("refreshToken", updatedRefreshToken);
+        response.addCookie(refreshTokenCookie);
     }
 
     private static void CookieDelete(HttpServletRequest request, HttpServletResponse response) {
