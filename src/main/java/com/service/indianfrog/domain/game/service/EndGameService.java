@@ -45,6 +45,7 @@ public class EndGameService {
         승자에게 라운드 포인트 할당
         라운드 포인트 값 가져오기*/
         GameResult gameResult = determineGameResult(game);
+
         log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
         assignRoundPointsToWinner(game, gameResult);
         int roundPot = game.getPot();
@@ -90,6 +91,19 @@ public class EndGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
+        if (game.getFoldedUser().equals(playerOne)) {
+            return new GameResult(playerTwo, playerOne);
+        } else if(game.getFoldedUser().equals(playerTwo)){
+            return new GameResult(playerOne, playerTwo);
+        }
+
+        GameResult result = getGameResult(game, playerOne, playerTwo);
+
+        log.info("Game result determined: winnerId={}, loserId={}", result.getWinner(), result.getLoser());
+        return result;
+    }
+
+    private GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
 
@@ -102,11 +116,8 @@ public class EndGameService {
             result = playerOneCard.getDeckNumber() == 1 ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
-
-        log.info("Game result determined: winnerId={}, loserId={}", result.getWinner(), result.getLoser());
         return result;
     }
-
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
