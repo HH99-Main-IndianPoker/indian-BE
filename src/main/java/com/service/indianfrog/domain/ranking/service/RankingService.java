@@ -42,7 +42,7 @@ public class RankingService {
 
         int myRanking = IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage())) + 1;
 
-        return new GetRankingInfo(rankings, user.getImageUrl(), user.getNickname(),myRanking, user.getPoints());
+        return new GetRankingInfo(rankings, user.getImageUrl(), user.getNickname(), myRanking, user.getPoints());
 
     }
 
