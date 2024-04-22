@@ -27,14 +27,16 @@ public class MyPageService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final AmazonS3 s3Client;
+    private final RankingService rankingService;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    public MyPageService(UserRepository userRepository, S3Service s3Service, AmazonS3 s3Client) {
+    public MyPageService(UserRepository userRepository, S3Service s3Service, AmazonS3 s3Client, RankingService rankingService) {
         this.userRepository = userRepository;
         this.s3Service = s3Service;
         this.s3Client = s3Client;
+        this.rankingService = rankingService;
     }
 
     @Transactional(readOnly = true)
@@ -42,7 +44,7 @@ public class MyPageService {
 
         User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-        int ranking = getUserRanking(username) + 1;
+        int ranking = rankingService.getUserRanking(username);
 
         return new MyPageInfo(user.getNickname(), username, ranking, user.getPoints(), user.getImageUrl());
     }
@@ -73,17 +75,4 @@ public class MyPageService {
         return new MyProfile(s3UrlText);
     }
 
-    private int getUserRanking(String username) {
-
-        List<User> userList = userRepository.findAll();
-
-        userList.sort(new Comparator<User>() {
-            @Override
-            public int compare(User o1, User o2) {
-                return Integer.compare(o2.getPoints(), o1.getPoints());
-            }
-        });
-
-        return IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage()));
-    }
 }
