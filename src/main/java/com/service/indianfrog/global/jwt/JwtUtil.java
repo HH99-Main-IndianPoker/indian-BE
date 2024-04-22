@@ -63,7 +63,6 @@ public class JwtUtil {
             .get("role", String.class);
     }
 
-
     public GeneratedToken generateToken(String email, String role, String nickname) {
         String refreshToken = generateRefreshToken(email, role, nickname);
         String accessToken = generateAccessToken(email, role, nickname);
