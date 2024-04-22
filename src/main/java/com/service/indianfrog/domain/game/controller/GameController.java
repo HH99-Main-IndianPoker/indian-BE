@@ -136,7 +136,8 @@ public class GameController {
                         playerTwoCard,
                         response.getTurn(),
                         response.getFirstBet(),
-                        response.getRoundPot()));
+                        response.getRoundPot(),
+                        response.getRound()));
                 log.info("Message sent successfully.");
             }
 
@@ -145,7 +146,8 @@ public class GameController {
                         playerOneCard,
                         response.getTurn(),
                         response.getFirstBet(),
-                        response.getRoundPot()));
+                        response.getRoundPot(),
+                        response.getRound()));
                 log.info("Message sent successfully.");
             }
         } catch (Exception e) {

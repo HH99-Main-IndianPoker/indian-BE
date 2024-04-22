@@ -10,11 +10,13 @@ public class GameInfo {
     private String currentPlayer;
     private int firstBet;
     private int roundPot;
+    private int round;
 
-    public GameInfo(Card playerCard, Turn turn, int firstBet, int pot) {
+    public GameInfo(Card playerCard, Turn turn, int firstBet, int pot, int round) {
         this.playerCard = playerCard;
         this.currentPlayer = turn.getCurrentPlayer();
         this.firstBet = firstBet;
         this.roundPot = pot;
+        this.round = round;
     }
 }
