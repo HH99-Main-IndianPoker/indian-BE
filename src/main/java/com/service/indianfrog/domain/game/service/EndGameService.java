@@ -11,6 +11,8 @@ import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,62 +29,100 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
+    private final MeterRegistry registry;
+    private final Timer totalRoundEndTimer;
+    private final Timer totalGameEndTimer;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository) {
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService,
+                          GameRoomRepository gameRoomRepository, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
+        this.registry = registry;
+        this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
+        this.totalGameEndTimer = registry.timer("totalGameEnd.time");
     }
 
     /* 라운드 종료 로직*/
     @Transactional
     public EndRoundResponse endRound(Long gameRoomId) {
-        log.info("Ending round for gameRoomId={}", gameRoomId);
-        GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-        Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+        return totalRoundEndTimer.record(() -> {
+            log.info("Ending round for gameRoomId={}", gameRoomId);
+            Timer.Sample validateGameRoomTimer = Timer.start(registry);
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            validateGameRoomTimer.stop(registry.timer("game.end.validateGameRoom"));
 
-        /* 라운드 승자 패자 결정
-        승자에게 라운드 포인트 할당
-        라운드 포인트 값 가져오기*/
-        GameResult gameResult = determineGameResult(game);
+            Timer.Sample validateGameTimer = Timer.start(registry);
+            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            validateGameTimer.stop(registry.timer("game.end.validateGame"));
 
-        log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
-        assignRoundPointsToWinner(game, gameResult);
-        int roundPot = game.getPot();
+            /* 라운드 승자 패자 결정
+            승자에게 라운드 포인트 할당
+            라운드 포인트 값 가져오기*/
+            Timer.Sample gameResultTimer = Timer.start(registry);
+            GameResult gameResult = determineGameResult(game);
+            gameResultTimer.stop(registry.timer("game.end.gameResult"));
 
-        /* 라운드 승자가 선턴을 가지도록 설정*/
-        initializeTurnForGame(game, gameResult);
+            log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
+            Timer.Sample roundPointsTimer = Timer.start(registry);
+            assignRoundPointsToWinner(game, gameResult);
+            roundPointsTimer.stop(registry.timer("game.end.roundPoints"));
+            int roundPot = game.getPot();
 
-        /* 라운드 정보 초기화*/
-        game.resetRound();
-        log.debug("Round reset for gameRoomId={}", gameRoomId);
+            /* 라운드 승자가 선턴을 가지도록 설정*/
+            Timer.Sample setTurnTimer = Timer.start(registry);
+            initializeTurnForGame(game, gameResult);
+            setTurnTimer.stop(registry.timer("game.end.setTurn"));
 
-        /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
-        String nextState = determineGameState(game);
-        log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
+            /* 라운드 정보 초기화*/
+            Timer.Sample resetRoundTimer = Timer.start(registry);
+            game.resetRound();
+            resetRoundTimer.stop(registry.timer("game.end.resetRound"));
+            log.debug("Round reset for gameRoomId={}", gameRoomId);
 
-        return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot);
+            /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
+            Timer.Sample nextStateTimer = Timer.start(registry);
+            String nextState = determineGameState(game);
+            nextStateTimer.stop(registry.timer("game.end.nextState"));
+            log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
+
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot);
+        });
     }
 
     /* 게임 종료 로직*/
     @Transactional
     public EndGameResponse endGame(Long gameRoomId) {
-        log.info("Ending game for gameRoomId={}", gameRoomId);
-        GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-        Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+        return totalGameEndTimer.record(() -> {
+            log.info("Ending game for gameRoomId={}", gameRoomId);
+            Timer.Sample validateGameRoomTimer = Timer.start(registry);
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            validateGameRoomTimer.stop(registry.timer("game.endGame.validateGameRoom"));
 
-        /* 게임 결과 처리 및 게임 정보 초기화*/
-        GameResult gameResult = processGameResults(game);
+            Timer.Sample validateGameTimer = Timer.start(registry);
+            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            validateGameTimer.stop(registry.timer("game.endGame.validateGame"));
 
-        GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
-        CurrentGameStatus.updateGameState(GameState.READY);
+            /* 게임 결과 처리 및 게임 정보 초기화*/
+            Timer.Sample gameResultTimer = Timer.start(registry);
+            GameResult gameResult = processGameResults(game);
+            gameResultTimer.stop(registry.timer("game.endGame.gameResult"));
 
-        log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
-                gameRoomId, gameResult.getWinner(), gameResult.getLoser());
+            Timer.Sample gameStateTimer = Timer.start(registry);
+            GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
+            gameStateTimer.stop(registry.timer("game.endGame.gameState"));
 
-        /* 유저 선택 상태 반환 */
-        return new EndGameResponse("GAME_END" ,"USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
-                gameResult.getWinnerPot(), gameResult.getLoserPot());
+            Timer.Sample updateGameStateTimer = Timer.start(registry);
+            CurrentGameStatus.updateGameState(GameState.READY);
+            updateGameStateTimer.stop(registry.timer("game.endGame.updateGameState"));
+
+            log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
+                    gameRoomId, gameResult.getWinner(), gameResult.getLoser());
+
+            /* 유저 선택 상태 반환 */
+            return new EndGameResponse("GAME_END", "USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
+                    gameResult.getWinnerPot(), gameResult.getLoserPot());
+        });
     }
 
     /* 검증 메서드 필드*/
@@ -93,7 +133,7 @@ public class EndGameService {
 
         if (game.getFoldedUser().equals(playerOne)) {
             return new GameResult(playerTwo, playerOne);
-        } else if(game.getFoldedUser().equals(playerTwo)){
+        } else if (game.getFoldedUser().equals(playerTwo)) {
             return new GameResult(playerOne, playerTwo);
         }
 

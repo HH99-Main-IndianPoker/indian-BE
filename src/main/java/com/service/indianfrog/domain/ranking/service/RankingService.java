@@ -5,6 +5,8 @@ import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,22 +18,20 @@ import java.util.stream.IntStream;
 public class RankingService {
 
     private final UserRepository userRepository;
+    private final MeterRegistry registry;
 
-    public RankingService(UserRepository userRepository) {
+    public RankingService(UserRepository userRepository, MeterRegistry registry) {
         this.userRepository = userRepository;
+        this.registry = registry;
     }
 
     @Transactional(readOnly = true)
     public GetRankingInfo getRanking(String username) {
+        Timer.Sample getRankingTimer = Timer.start(registry);
 
         List<User> userList = userRepository.findAll();
 
-        userList.sort(new Comparator<User>() {
-            @Override
-            public int compare(User o1, User o2) {
-                return Integer.compare(o2.getPoints(), o1.getPoints());
-            }
-        });
+        userList.sort((o1, o2) -> Integer.compare(o2.getPoints(), o1.getPoints()));
 
         List<GetRanking> rankings = IntStream.range(0, userList.size())
                 .limit(100)
@@ -45,10 +45,8 @@ public class RankingService {
 
         int myRanking = IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage())) + 1;
 
+        getRankingTimer.stop(registry.timer("rank.getRanking.time"));
         return new GetRankingInfo(rankings, user.getNickname(), myRanking, user.getPoints());
 
     }
-
-
-
 }

@@ -10,14 +10,12 @@ import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 
 @Tag(name = "게임 플레이 서비스", description = "게임 플레이 서비스 로직")
 @Slf4j
@@ -27,39 +25,46 @@ public class GamePlayService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRepository gameRepository;
+    private final MeterRegistry registry;
+    private final Timer totalGamePlayTimer;
 
-    public GamePlayService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository) {
+    public GamePlayService(GameValidator gameValidator, GameTurnService gameTurnService,
+                           GameRepository gameRepository, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRepository = gameRepository;
+        this.registry = registry;
+        this.totalGamePlayTimer = registry.timer("getGamePlay.time");
     }
 
     @Transactional
     public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
-        log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
-        GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-        Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
-        User user = gameValidator.findUserByNickname(gameBetting.getNickname());
-        Turn turn = gameTurnService.getTurn(game.getId());
+        return totalGamePlayTimer.record(() -> {
+            log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            User user = gameValidator.findUserByNickname(gameBetting.getNickname());
+            Turn turn = gameTurnService.getTurn(game.getId());
 
-        /* 유저의 턴이 맞는지 확인*/
-        if (!turn.getCurrentPlayer().equals(user.getNickname())) {
-            log.warn("It's not the turn of the user: {}", gameBetting.getNickname());
-            throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
-        }
+            /* 유저의 턴이 맞는지 확인*/
+            if (!turn.getCurrentPlayer().equals(user.getNickname())) {
+                log.warn("It's not the turn of the user: {}", gameBetting.getNickname());
+                throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
+            }
 
-        log.info("Performing {} action for user {}", action, gameBetting.getNickname());
-        Betting betting = Betting.valueOf(action.toUpperCase());
-        return switch (betting) {
-            case CHECK -> performCheckAction(game, user, turn);
-            case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint());
-            case DIE -> performDieAction(game, user);
-        };
-
+            log.info("Performing {} action for user {}", action, gameBetting.getNickname());
+            Betting betting = Betting.valueOf(action.toUpperCase());
+            return switch (betting) {
+                case CHECK -> performCheckAction(game, user, turn);
+                case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint());
+                case DIE -> performDieAction(game, user);
+            };
+        });
     }
 
     private ActionDto performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
+        Timer.Sample checkTimer = Timer.start(registry);
         log.info("Check action: currentPlayer={}, user={}, currentPot={}, betAmount={}",
                 user.getNickname(), user.getEmail(), game.getPot(), game.getBetAmount());
 
@@ -78,6 +83,7 @@ public class GamePlayService {
         turn.nextTurn();
         log.info("First turn check completed, moving to next turn " + turn.getPlayers().toString());
 
+        checkTimer.stop(registry.timer("game.play.check"));
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.ACTION)
@@ -89,6 +95,7 @@ public class GamePlayService {
     }
 
     private ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
+        Timer.Sample raiseTimer = Timer.start(registry);
         int userPoints = user.getPoints();
         log.info("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
 
@@ -106,6 +113,7 @@ public class GamePlayService {
         turn.nextTurn();
         log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
 
+        raiseTimer.stop(registry.timer("game.play.raise"));
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.ACTION)
@@ -117,6 +125,7 @@ public class GamePlayService {
     }
 
     private ActionDto performDieAction(Game game, User user) {
+        Timer.Sample dieTimer = Timer.start(registry);
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
         User winner = user.equals(playerOne) ? playerTwo : playerOne;
@@ -135,6 +144,7 @@ public class GamePlayService {
 
         log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
 
+        dieTimer.stop(registry.timer("game.play.die"));
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.END)

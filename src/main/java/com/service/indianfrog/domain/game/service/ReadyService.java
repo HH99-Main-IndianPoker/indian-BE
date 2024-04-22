@@ -10,6 +10,8 @@ import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,24 +24,29 @@ public class ReadyService {
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
+    private final MeterRegistry registry;
 
-    public ReadyService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository) {
+    public ReadyService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository,
+                        UserRepository userRepository, MeterRegistry registry) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
+        this.registry = registry;
     }
 
     @Transactional
     public GameStatus gameReady(Long gameRoomId, Principal principal) {
+        Timer.Sample totalGameReadyTimer = Timer.start(registry);
 
         User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
         GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
-
         ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
 
         validateRoom.revert(validateRoom.isReady());
 
+        Timer.Sample getValidateRoomTimer = Timer.start(registry);
         List<ValidateRoom> validateRooms = validateRoomRepository.findAllByReadyTrue();
+        getValidateRoomTimer.stop(registry.timer("ready.get.validateRoom"));
 
         if (validateRooms.size() == 2) {
             return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
@@ -53,6 +60,7 @@ public class ReadyService {
             return new GameStatus(gameRoomId, user.getNickname(), GameState.UNREADY);
         }
 
+        totalGameReadyTimer.stop(registry.timer("ready.totalReady"));
         return new GameStatus(gameRoomId, user.getNickname(), GameState.NO_ONE_READY);
     }
 

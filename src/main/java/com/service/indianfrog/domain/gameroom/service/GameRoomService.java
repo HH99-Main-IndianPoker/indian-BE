@@ -14,6 +14,7 @@ import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import io.micrometer.core.instrument.Timer;
 
 @Service
 @Slf4j
@@ -41,12 +43,21 @@ public class GameRoomService {
     private final UserRepository userRepository;
     private Pattern pattern;
     private SessionMappingStorage sessionMappingStorage;
+    private final Timer getGameRoomTimer;
+    private final Timer getParticipantTimer;
+    private final Timer getAllGameRoomTimer;
+    private final MeterRegistry registry;
 
-    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository, SessionMappingStorage sessionMappingStorage) {
+    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
+                           SessionMappingStorage sessionMappingStorage, MeterRegistry registry) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
         this.sessionMappingStorage = sessionMappingStorage;
+        this.getGameRoomTimer = registry.timer("getGameRoomById.time");
+        this.getParticipantTimer = registry.timer("getParticipant.time");
+        this.getAllGameRoomTimer = registry.timer("getAllGameRoom.time");
+        this.registry = registry;
     }
 
     /**
@@ -58,44 +69,46 @@ public class GameRoomService {
     @Transactional(readOnly = true)
     public GetGameRoomResponseDto getGameRoomById(Long roomId) {
         // roomId를 이용하여 해당 게임방을 조회
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+        return getGameRoomTimer.record(() -> {
+            GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
-        // 방장 정보 추출
-        ValidateRoom host = gameRoom.getValidateRooms().stream()
-                .filter(ValidateRoom::isHost)
-                .findFirst()
-                .orElse(null);
+            // 방장 정보 추출
+            ValidateRoom host = gameRoom.getValidateRooms().stream()
+                    .filter(ValidateRoom::isHost)
+                    .findFirst()
+                    .orElse(null);
 
-        // 초기화 안해주니까 에러남.
-        String hostNickname = null;
-        int hostPoints = 0;
-        String hostImageUrl = null;
+            // 초기화 안해주니까 에러남.
+            String hostNickname = null;
+            int hostPoints = 0;
+            String hostImageUrl = null;
 
-        if (host != null) {
-            hostNickname = host.getParticipants();
-            hostPoints = userRepository.findByNickname(hostNickname).getPoints();
-            hostImageUrl = userRepository.findByNickname(hostNickname).getImageUrl();
-        }
+            if (host != null) {
+                hostNickname = host.getParticipants();
+                hostPoints = userRepository.findByNickname(hostNickname).getPoints();
+                hostImageUrl = userRepository.findByNickname(hostNickname).getImageUrl();
+            }
 
-        String participantNickname = null;
-        int participantPoints = 0;
-        String participantImageUrl = null;
+            String participantNickname = null;
+            int participantPoints = 0;
+            String participantImageUrl = null;
 
-        // 다른 참가자 찾기
-        ValidateRoom participant = gameRoom.getValidateRooms().stream()
-                .filter(v -> !v.isHost()) // 방장 제외
-                .findFirst()
-                .orElse(null);
+            // 다른 참가자 찾기
+            ValidateRoom participant = getParticipantTimer.record(() -> gameRoom.getValidateRooms().stream()
+                    .filter(v -> !v.isHost())
+                    .findFirst()
+                    .orElse(null));
 
-        if (participant != null) {
-            participantNickname = participant.getParticipants();
-            participantPoints = userRepository.findByNickname(participantNickname).getPoints();
-            participantImageUrl = userRepository.findByNickname(participantNickname).getImageUrl();
-        }
+            if (participant != null) {
+                participantNickname = participant.getParticipants();
+                participantPoints = userRepository.findByNickname(participantNickname).getPoints();
+                participantImageUrl = userRepository.findByNickname(participantNickname).getImageUrl();
+            }
 
-        // 게임방 정보와 참가자 정보 반환
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(),gameRoom.getGameState(), gameRoom.getValidateRooms().size(), hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
+            // 게임방 정보와 참가자 정보 반환
+            return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getGameState(), gameRoom.getValidateRooms().size(), hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
+        });
     }
 
 
@@ -106,7 +119,7 @@ public class GameRoomService {
      * @return 페이징 처리된 게임방 목록
      */
     public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) { //로직 자체는 특정방 조회와 같으나 페이징 처리
-        return gameRoomRepository.findAll(pageable)
+        return getAllGameRoomTimer.record(() -> gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
                 .map(gameRoom -> {
                     // 각 게임방 방장의 닉네임을 찾음
@@ -118,7 +131,7 @@ public class GameRoomService {
 
                     int participantCount = gameRoom.getValidateRooms().size();
                     return new GetAllGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), participantCount, hostName, gameRoom.getGameState());
-                });
+                }));
     }
 
 
@@ -128,7 +141,9 @@ public class GameRoomService {
      * @param roomId 삭제할 게임방 ID
      */
     public void deleteGameRoom(Long roomId) {
+        Timer.Sample deleteRoomTimer = Timer.start(registry);
         gameRoomRepository.deleteById(roomId);
+        deleteRoomTimer.stop(registry.timer("gameRoom.delete.time"));
     }
 
     /**
@@ -178,6 +193,8 @@ public class GameRoomService {
      */
     @Transactional
     public GameRoomCreateResponseDto createGameRoom(GameRoomCreateRequestDto gameRoomDto, Principal principal) {
+        Timer.Sample createRoomTimer = Timer.start(registry);
+
         String email = principal.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
@@ -192,6 +209,7 @@ public class GameRoomService {
                 .build();
         validateRoomRepository.save(validateRoom);
         // 방생성시 최초의 인원은 1명이니까 participantCount를 1로 설정
+        createRoomTimer.stop(registry.timer("gameRoom.create.time"));
         return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, user.getNickname(), user.getPoints(), savedGameRoom.getGameState(), user.getImageUrl(),now);
     }
 
@@ -204,6 +222,8 @@ public class GameRoomService {
      */
     @Transactional
     public ParticipantInfo addParticipant(Long roomId, UserDetails userDetails) {
+        Timer.Sample addParticipantTimer = Timer.start(registry);
+
         String email = userDetails.getUsername();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
@@ -245,6 +265,7 @@ public class GameRoomService {
 
         int hostPoint = hostInfo.getPoints();
 
+        addParticipantTimer.stop(registry.timer("gameRoom.addParticipant.time"));
         return new ParticipantInfo(participant, host, participantPoint, hostPoint, user.getImageUrl(), hostInfo.getImageUrl());
     }
 
@@ -257,6 +278,8 @@ public class GameRoomService {
      */
     @Transactional
     public void removeParticipant(Long roomId, Principal participant) {
+        Timer.Sample removeParticipantTimer = Timer.start(registry);
+
         String email = participant.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
@@ -275,6 +298,7 @@ public class GameRoomService {
             ValidateRoom newHost = validateRoomRepository.findByGameRoomRoomId(roomId);
             newHost.updateHost();
         }
+        removeParticipantTimer.stop(registry.timer("gameRoom.removeParticipant.time"));
     }
 
     /**
@@ -284,6 +308,7 @@ public class GameRoomService {
      */
     @Transactional
     public void removeParticipantBySessionId(String sessionId) {
+        Timer.Sample removeSessionTimer = Timer.start(registry);
         // 세션 저장소에서 주어진 세션 ID에 해당하는 사용자의 닉네임을 조회
         String nickname = sessionMappingStorage.getNicknameBySessionId(sessionId);
         if (nickname == null) {
@@ -296,6 +321,6 @@ public class GameRoomService {
         validateRoomRepository.deleteAll(validateRooms);
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
+        removeSessionTimer.stop(registry.timer("gameRoom.removeSession.time"));
     }
-
 }

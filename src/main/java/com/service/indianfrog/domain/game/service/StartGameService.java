@@ -9,6 +9,8 @@ import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,15 +27,19 @@ public class StartGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRepository gameRepository;
+    private final MeterRegistry registry;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRepository = gameRepository;
+        this.registry = registry;
     }
 
     @Transactional
     public StartRoundResponse startRound(Long gameRoomId) {
+        Timer.Sample totalRoundStartTimer = Timer.start(registry);
+
         log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
 
         log.info("게임룸 검증 및 검색 중.");
@@ -47,7 +53,9 @@ public class StartGameService {
         Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
         log.info("게임 초기화 또는 검색 완료.");
 
+        Timer.Sample roundStartTimer = Timer.start(registry);
         int firstBet = performRoundStart(game);
+        roundStartTimer.stop(registry.timer("game.start.performRoundStart"));
         log.info("라운드 시작 작업 수행 완료.");
 
         gameValidator.saveGameRoomState(gameRoom);
@@ -59,6 +67,7 @@ public class StartGameService {
         Turn turn = gameTurnService.getTurn(game.getId());
         log.info("현재 턴 가져옴.");
 
+        totalRoundStartTimer.stop(registry.timer("game.start.totalRoundStart"));
         log.info("StartRoundResponse 반환 중.");
         return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
                 game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);

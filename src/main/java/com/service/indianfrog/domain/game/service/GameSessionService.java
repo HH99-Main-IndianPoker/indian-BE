@@ -5,6 +5,8 @@ import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.user.entity.User;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,26 +22,32 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameSessionService {
 
     private final GameValidator gameValidator;
+    private final MeterRegistry registry;
 
-    public GameSessionService(GameValidator gameValidator) {
+
+    public GameSessionService(GameValidator gameValidator, MeterRegistry registry) {
         this.gameValidator = gameValidator;
+        this.registry = registry;
     }
 
     private final Map<Long, Map<String, String>> gameChoices = new ConcurrentHashMap<>();
 
     @Transactional
     public Object processUserChoices(Long gameRoomId, UserChoices choices) {
+        Timer.Sample totalUserChoiceTimer = Timer.start(registry);
+
         /* 입력 값 검증*/
         log.info("Processing user choices for gameRoomId={} with nickname={}", gameRoomId, choices.getNickname());
         gameValidator.validateAndRetrieveGameRoom(gameRoomId);
         User player = gameValidator.findUserByNickname(choices.getNickname());
-
         String nickname = player.getNickname();
         String choice = choices.getUserChoice().toString();
         log.debug("User choice received: gameRoomId={}, nickname={}, choice={}", gameRoomId, nickname, choice);
 
         /* 유저 선택 저장*/
+        Timer.Sample saveChoiceTimer = Timer.start(registry);
         gameChoices.computeIfAbsent(gameRoomId, k -> new ConcurrentHashMap<>()).put(nickname, choice);
+        saveChoiceTimer.stop(registry.timer("choice.save.userChoices"));
         log.debug("Current game choices: {}", gameChoices.get(gameRoomId));
 
         /* 모든 유저의 선택이 완료되었는지 확인*/
@@ -50,6 +58,7 @@ public class GameSessionService {
         }
 
         log.info("Waiting for other player's choices in gameRoomId={}", gameRoomId);
+        totalUserChoiceTimer.stop(registry.timer("choice.totalUserChoice"));
         return "다른 플레이어의 선택을 기다려주세요";
     }
 
