@@ -61,13 +61,15 @@ public class GameRoomService {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
+        // 해당 게임방의 모든 유효성 검증방 정보를 한 번에 불러옴
+        List<ValidateRoom> validateRooms = validateRoomRepository.findAllValidateRoomsByRoomId(roomId);
+
         // 방장 정보 추출
-        ValidateRoom host = gameRoom.getValidateRooms().stream()
+        ValidateRoom host = validateRooms.stream()
                 .filter(ValidateRoom::isHost)
                 .findFirst()
                 .orElse(null);
 
-        // 초기화 안해주니까 에러남.
         String hostNickname = null;
         int hostPoints = 0;
         String hostImageUrl = null;
@@ -83,7 +85,7 @@ public class GameRoomService {
         String participantImageUrl = null;
 
         // 다른 참가자 찾기
-        ValidateRoom participant = gameRoom.getValidateRooms().stream()
+        ValidateRoom participant = validateRooms.stream()
                 .filter(v -> !v.isHost()) // 방장 제외
                 .findFirst()
                 .orElse(null);
@@ -95,8 +97,9 @@ public class GameRoomService {
         }
 
         // 게임방 정보와 참가자 정보 반환
-        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(),gameRoom.getGameState(), gameRoom.getValidateRooms().size(), hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
+        return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getGameState(), validateRooms.size(), hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
     }
+
 
 
     /**
@@ -105,7 +108,8 @@ public class GameRoomService {
      * @param pageable 페이징 정보
      * @return 페이징 처리된 게임방 목록
      */
-    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) { //로직 자체는 특정방 조회와 같으나 페이징 처리
+    @Transactional(readOnly = true)
+    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
         return gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
                 .map(gameRoom -> {
@@ -127,9 +131,18 @@ public class GameRoomService {
      *
      * @param roomId 삭제할 게임방 ID
      */
+    @Transactional
     public void deleteGameRoom(Long roomId) {
-        gameRoomRepository.deleteById(roomId);
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+
+        validateRoomRepository.deleteAll(gameRoom.getValidateRooms());
+        validateRoomRepository.flush();
+
+        gameRoomRepository.delete(gameRoom);
+        gameRoomRepository.flush();
     }
+
 
     /**
      * 주어진 ID의 게임방이 존재하는지 여부를 확인
@@ -233,6 +246,7 @@ public class GameRoomService {
                 .map(ValidateRoom::getParticipants)
                 .findFirst()
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_HOST.getMessage()));
+
         String participant = validateRooms.stream()
                 .filter(p -> !p.isHost())
                 .map(ValidateRoom::getParticipants)
