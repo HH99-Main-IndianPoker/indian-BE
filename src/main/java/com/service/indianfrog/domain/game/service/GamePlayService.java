@@ -109,7 +109,7 @@ public class GamePlayService {
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.ACTION)
-                .actionType(Betting.CHECK)
+                .actionType(Betting.RAISE)
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
@@ -131,6 +131,7 @@ public class GamePlayService {
         }
 
         game.setFoldedUser(user);
+        game.setBetAmount(0);
 
         log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
 

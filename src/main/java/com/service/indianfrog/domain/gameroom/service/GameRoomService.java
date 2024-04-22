@@ -15,13 +15,13 @@ import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,6 +55,7 @@ public class GameRoomService {
      * @param roomId 게임방 ID
      * @return 조회된 게임방의 상세 정보를 담은 Dto
      */
+    @Transactional(readOnly = true)
     public GetGameRoomResponseDto getGameRoomById(Long roomId) {
         // roomId를 이용하여 해당 게임방을 조회
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
