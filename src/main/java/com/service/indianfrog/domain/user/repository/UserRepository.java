@@ -15,6 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LIMIT 100", nativeQuery = true)
     List<Object[]> findUsersWithRank();
 
+
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
@@ -22,5 +23,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByNickname(String nickname);
 
     User findByNickname(String nickname);
-//    String findByAuthority(AuthorityType authorityType);
+//    String findByAuthority(AuthorityType authorityType)
 }

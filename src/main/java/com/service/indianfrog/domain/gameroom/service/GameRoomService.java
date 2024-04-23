@@ -44,7 +44,7 @@ public class GameRoomService {
     private Pattern pattern;
     private SessionMappingStorage sessionMappingStorage;
     private final Timer getGameRoomTimer;
-    private final Timer getParticipantTimer;
+    private final Timer getValidateRoomsTimer;
     private final Timer getAllGameRoomTimer;
     private final MeterRegistry registry;
 
@@ -55,7 +55,7 @@ public class GameRoomService {
         this.userRepository = userRepository;
         this.sessionMappingStorage = sessionMappingStorage;
         this.getGameRoomTimer = registry.timer("getGameRoomById.time");
-        this.getParticipantTimer = registry.timer("getParticipant.time");
+        this.getValidateRoomsTimer = registry.timer("getParticipant.time");
         this.getAllGameRoomTimer = registry.timer("getAllGameRoom.time");
         this.registry = registry;
     }
@@ -72,6 +72,10 @@ public class GameRoomService {
         return getGameRoomTimer.record(() -> {
             GameRoom gameRoom = gameRoomRepository.findById(roomId)
                     .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+
+            // 해당 게임방의 모든 유효성 검증방 정보를 한 번에 불러옴
+            List<ValidateRoom> validateRooms = getValidateRoomsTimer.record(() ->
+                    validateRoomRepository.findAllValidateRoomsByRoomId(roomId));
 
             // 방장 정보 추출
             ValidateRoom host = gameRoom.getValidateRooms().stream()
@@ -95,10 +99,10 @@ public class GameRoomService {
             String participantImageUrl = null;
 
             // 다른 참가자 찾기
-            ValidateRoom participant = getParticipantTimer.record(() -> gameRoom.getValidateRooms().stream()
+            ValidateRoom participant =  gameRoom.getValidateRooms().stream()
                     .filter(v -> !v.isHost())
                     .findFirst()
-                    .orElse(null));
+                    .orElse(null);
 
             if (participant != null) {
                 participantNickname = participant.getParticipants();
@@ -107,7 +111,8 @@ public class GameRoomService {
             }
 
             // 게임방 정보와 참가자 정보 반환
-            return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getGameState(), gameRoom.getValidateRooms().size(), hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
+            return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getGameState(), validateRooms.size(),
+                    hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
         });
     }
 
@@ -142,7 +147,14 @@ public class GameRoomService {
      */
     public void deleteGameRoom(Long roomId) {
         Timer.Sample deleteRoomTimer = Timer.start(registry);
-        gameRoomRepository.deleteById(roomId);
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+
+        validateRoomRepository.deleteAll(gameRoom.getValidateRooms());
+        validateRoomRepository.flush();
+
+        gameRoomRepository.delete(gameRoom);
+        gameRoomRepository.flush();
         deleteRoomTimer.stop(registry.timer("deleteGameRoom.time"));
     }
 
