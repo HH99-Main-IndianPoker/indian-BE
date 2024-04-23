@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -36,7 +37,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         String provider = oAuth2User.getAttribute("provider");
-        String nickname = ((UserDetailsImpl) authentication.getPrincipal()).getUser().getNickname();
         /*
          * CustomOAuth2UserService에서 셋팅한 로그인한 회원 존재 여부를 가져온다.
          * OAuth2User로 부터 Role을 얻어온다.*/
@@ -51,7 +51,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 회원이 존재할경우
         if (isExist) {
 
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
@@ -59,10 +59,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
             response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
 
-            CustomResponseUtil.success(response, null);
+            response.sendRedirect("https://indianfrog.com/");
         } else {
             // 새로 생성된 사용자의 토큰 생성 및 전달
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
+            GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
             response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
             response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
@@ -70,7 +70,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
             response.addCookie(refreshTokenCookie);
 
-            CustomResponseUtil.success(response, null);
+            response.sendRedirect("https://indianfrog.com/");
         }
     }
 
@@ -78,7 +78,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(24 * 60 * 60);
-        //cookie.setSecure(true); https에 추가
+        cookie.setSecure(true); //https에 추가
+        cookie.setAttribute("SameSite", "None");
+        cookie.setHttpOnly(true);
         cookie.setPath("/");
 
         return cookie;

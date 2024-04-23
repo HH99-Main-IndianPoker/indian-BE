@@ -22,6 +22,8 @@
   비밀번호: <input type="password" id="password"><br>
   <button type="submit">로그인</button>
   <button id="refreshToken" disabled>토큰 재발급</button>
+  <input type="button" value="Naver Login" onclick="onNaverLogin()">
+  <input type="button" value="Google Login" onclick="onGoogleLogin()">
 </form>
 
 <h2>게임방</h2>
@@ -36,7 +38,7 @@
 <script src="app.js"></script>
 
 <script>
-  const apiUrl = 'http://localhost:8080';
+  const apiUrl = 'http://localhost:8081';
 
   document.getElementById('registerForm').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -53,6 +55,14 @@
       alert('회원가입 실패');
     });
   });
+
+  function onNaverLogin() {
+    window.location.href = "http://localhost:8081/oauth2/authorization/naver";
+  }
+
+  function onGoogleLogin() {
+    window.location.href = "http://localhost:8081/oauth2/authorization/google";
+  }
 
   document.getElementById('refreshToken').addEventListener('click', function () {
     const refreshToken = localStorage.getItem('Authorization'); // Refresh token을 로컬 스토리지에서 가져옴
