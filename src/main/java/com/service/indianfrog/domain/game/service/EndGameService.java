@@ -11,6 +11,9 @@ import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.repository.UserRepository;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,15 +32,17 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
+    private final UserRepository userRepository;
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService,
-                          GameRoomRepository gameRoomRepository, MeterRegistry registry) {
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
+                          UserRepository userRepository, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
+        this.userRepository = userRepository;
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
@@ -45,11 +50,24 @@ public class EndGameService {
 
     /* 라운드 종료 로직*/
     @Transactional
-    public EndRoundResponse endRound(Long gameRoomId) {
+    public EndRoundResponse endRound(Long gameRoomId, String name) {
         return totalRoundEndTimer.record(() -> {
             log.info("Ending round for gameRoomId={}", gameRoomId);
+
+            User user = userRepository.findByEmail(name).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+
+            Card otherCard = null;
+
+            if (user.equals(game.getPlayerOne())) {
+                otherCard = game.getPlayerTwoCard();
+            }
+
+            if(user.equals(game.getPlayerTwo())){
+                otherCard = game.getPlayerOneCard();
+            }
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -75,7 +93,7 @@ public class EndGameService {
             String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot);
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, otherCard);
         });
     }
 

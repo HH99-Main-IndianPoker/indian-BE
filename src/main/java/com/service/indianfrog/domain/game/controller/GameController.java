@@ -71,7 +71,7 @@ public class GameController {
                 messagingTemplate.convertAndSend(destination, response);
             }
             case "END" -> {
-                EndRoundResponse response = endGameService.endRound(gameRoomId);
+                EndRoundResponse response = endGameService.endRound(gameRoomId, principal.getName());
                 sendUserEndRoundMessage(response, principal);
             }
             case "GAME_END" -> {
@@ -93,7 +93,8 @@ public class GameController {
                         response.getRound(),
                         response.getRoundWinner().getNickname(),
                         response.getRoundLoser().getNickname(),
-                        response.getRoundPot()));
+                        response.getRoundPot(),
+                        response.getOtherCard()));
                 log.info("Message sent successfully.");
             }
             catch (Exception e) {
