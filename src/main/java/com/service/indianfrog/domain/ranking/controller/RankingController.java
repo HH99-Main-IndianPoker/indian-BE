@@ -15,11 +15,9 @@ public class RankingController {
 
     private final RankingService rankingService;
 
-
     public RankingController(RankingService rankingService) {
         this.rankingService = rankingService;
     }
-
 
     @GetMapping
     public ResponseEntity<GetRankingInfo> getRanking(@AuthenticationPrincipal UserDetailsImpl userDetails){
