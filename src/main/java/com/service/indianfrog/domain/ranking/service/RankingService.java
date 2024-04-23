@@ -1,16 +1,14 @@
 package com.service.indianfrog.domain.ranking.service;
 
-import com.service.indianfrog.domain.ranking.dto.Ranking.*;
+import com.service.indianfrog.domain.ranking.dto.Ranking.GetRanking;
+import com.service.indianfrog.domain.ranking.dto.Ranking.GetRankingInfo;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
