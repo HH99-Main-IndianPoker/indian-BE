@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -25,10 +26,10 @@ public class ValidateRoom {
     @Column(name = "ready")
     private boolean ready;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
+    @BatchSize(size = 5)
     private GameRoom gameRoom;
-
 
     @Builder
     public ValidateRoom(String participants, boolean host, boolean ready, GameRoom gameRoom) {

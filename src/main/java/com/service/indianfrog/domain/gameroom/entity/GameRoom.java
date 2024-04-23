@@ -10,6 +10,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,10 +31,14 @@ public class GameRoom extends Timestamped {
     private String roomName;
 
     @OneToMany(mappedBy = "gameRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 5) //혹시 몰라서 2로 안하고 5로 함.
+    @Fetch(FetchMode.SUBSELECT)
     private Set<ValidateRoom> validateRooms = new HashSet<>();
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "current_game_id")
     private Game currentGame;
+
 
     @Enumerated(EnumType.STRING)
     private GameState gameState;
