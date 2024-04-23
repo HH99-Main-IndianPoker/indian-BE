@@ -23,21 +23,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
-    private final MeterRegistry registry;
 
     public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder,
-                       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler, MeterRegistry registry) {
+                       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
         this.userRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
-        this.registry = registry;
     }
 
     // 회원가입
     @Transactional
     public SignupResponseDto signup(SignupUserRequestDto requestDto) {
-        Timer.Sample signupTimer = Timer.start(registry);
-
         if (userRepository.existsByEmail(requestDto.email())) {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());
         }
@@ -50,18 +46,15 @@ public class UserService {
         User member = userRepository.save(requestDto.toEntity(password));
         LocalDateTime now = LocalDateTime.now();
 
-        signupTimer.stop(registry.timer("signup.time"));
         return new SignupResponseDto(member.getEmail(), now);
     }
 
     // 회원 정보 조회
     @Transactional(readOnly = true)
     public GetUserResponseDto getMember(String email) {
-        Timer.Sample getMemberTimer = Timer.start(registry);
         User member = userRepository.findByEmail(email).orElseThrow(() ->
                 new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-        getMemberTimer.stop(registry.timer("getMember.time"));
         return new GetUserResponseDto(member);
     }
 

@@ -18,17 +18,13 @@ import java.util.stream.IntStream;
 public class RankingService {
 
     private final UserRepository userRepository;
-    private final MeterRegistry registry;
 
-    public RankingService(UserRepository userRepository, MeterRegistry registry) {
+    public RankingService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.registry = registry;
     }
 
     @Transactional(readOnly = true)
     public GetRankingInfo getRanking(String username) {
-        Timer.Sample getRankingTimer = Timer.start(registry);
-
         List<User> userList = userRepository.findAll();
 
         userList.sort((o1, o2) -> Integer.compare(o2.getPoints(), o1.getPoints()));
@@ -45,7 +41,6 @@ public class RankingService {
 
         int myRanking = IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage())) + 1;
 
-        getRankingTimer.stop(registry.timer("getTotalRanking.time"));
         return new GetRankingInfo(rankings, user.getNickname(), myRanking, user.getPoints());
 
     }
