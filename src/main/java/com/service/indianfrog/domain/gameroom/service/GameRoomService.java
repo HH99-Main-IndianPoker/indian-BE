@@ -143,7 +143,7 @@ public class GameRoomService {
     public void deleteGameRoom(Long roomId) {
         Timer.Sample deleteRoomTimer = Timer.start(registry);
         gameRoomRepository.deleteById(roomId);
-        deleteRoomTimer.stop(registry.timer("gameRoom.delete.time"));
+        deleteRoomTimer.stop(registry.timer("deleteGameRoom.time"));
     }
 
     /**
@@ -209,7 +209,7 @@ public class GameRoomService {
                 .build();
         validateRoomRepository.save(validateRoom);
         // 방생성시 최초의 인원은 1명이니까 participantCount를 1로 설정
-        createRoomTimer.stop(registry.timer("gameRoom.create.time"));
+        createRoomTimer.stop(registry.timer("createGameRoom.time"));
         return new GameRoomCreateResponseDto(savedGameRoom.getRoomId(), savedGameRoom.getRoomName(), 1, user.getNickname(), user.getPoints(), savedGameRoom.getGameState(), user.getImageUrl(),now);
     }
 
@@ -265,7 +265,7 @@ public class GameRoomService {
 
         int hostPoint = hostInfo.getPoints();
 
-        addParticipantTimer.stop(registry.timer("gameRoom.addParticipant.time"));
+        addParticipantTimer.stop(registry.timer("addParticipant.time"));
         return new ParticipantInfo(participant, host, participantPoint, hostPoint, user.getImageUrl(), hostInfo.getImageUrl());
     }
 
@@ -298,7 +298,7 @@ public class GameRoomService {
             ValidateRoom newHost = validateRoomRepository.findByGameRoomRoomId(roomId);
             newHost.updateHost();
         }
-        removeParticipantTimer.stop(registry.timer("gameRoom.removeParticipant.time"));
+        removeParticipantTimer.stop(registry.timer("removeParticipant.time"));
     }
 
     /**
@@ -321,6 +321,6 @@ public class GameRoomService {
         validateRoomRepository.deleteAll(validateRooms);
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
-        removeSessionTimer.stop(registry.timer("gameRoom.removeSession.time"));
+        removeSessionTimer.stop(registry.timer("removeSession.time"));
     }
 }
