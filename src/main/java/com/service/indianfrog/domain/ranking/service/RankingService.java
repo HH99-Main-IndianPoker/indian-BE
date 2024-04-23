@@ -45,7 +45,7 @@ public class RankingService {
 
         int myRanking = IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage())) + 1;
 
-        getRankingTimer.stop(registry.timer("rank.getRanking.time"));
+        getRankingTimer.stop(registry.timer("getTotalRanking.time"));
         return new GetRankingInfo(rankings, user.getNickname(), myRanking, user.getPoints());
 
     }

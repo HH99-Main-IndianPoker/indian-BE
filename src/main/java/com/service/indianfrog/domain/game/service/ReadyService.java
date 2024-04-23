@@ -25,6 +25,7 @@ public class ReadyService {
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
     private final MeterRegistry registry;
+    private final Timer totalGameReadyTimer;
 
     public ReadyService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository,
                         UserRepository userRepository, MeterRegistry registry) {
@@ -32,36 +33,35 @@ public class ReadyService {
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
         this.registry = registry;
+        this.totalGameReadyTimer = registry.timer("totalReady.time");
     }
 
     @Transactional
     public GameStatus gameReady(Long gameRoomId, Principal principal) {
-        Timer.Sample totalGameReadyTimer = Timer.start(registry);
+        return totalGameReadyTimer.record(() -> {
+            User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+            GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
 
-        User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
-        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
-        ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
+            validateRoom.revert(validateRoom.isReady());
 
-        validateRoom.revert(validateRoom.isReady());
+            Timer.Sample getValidateRoomTimer = Timer.start(registry);
+            List<ValidateRoom> validateRooms = validateRoomRepository.findAllByReadyTrue();
+            getValidateRoomTimer.stop(registry.timer("readyValidate.time"));
 
-        Timer.Sample getValidateRoomTimer = Timer.start(registry);
-        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByReadyTrue();
-        getValidateRoomTimer.stop(registry.timer("ready.get.validateRoom"));
+            if (validateRooms.size() == 2) {
+                return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
+            }
 
-        if (validateRooms.size() == 2) {
-            return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
-        }
+            if (validateRooms.size() == 1 && validateRoom.isReady() == true) {
+                return new GameStatus(gameRoomId, user.getNickname(), GameState.READY);
+            }
 
-        if (validateRooms.size() == 1 && validateRoom.isReady() == true) {
-            return new GameStatus(gameRoomId, user.getNickname(), GameState.READY);
-        }
+            if (validateRooms.size() == 1 && validateRoom.isReady() == false) {
+                return new GameStatus(gameRoomId, user.getNickname(), GameState.UNREADY);
+            }
 
-        if (validateRooms.size() == 1 && validateRoom.isReady() == false) {
-            return new GameStatus(gameRoomId, user.getNickname(), GameState.UNREADY);
-        }
-
-        totalGameReadyTimer.stop(registry.timer("ready.totalReady"));
-        return new GameStatus(gameRoomId, user.getNickname(), GameState.NO_ONE_READY);
+            return new GameStatus(gameRoomId, user.getNickname(), GameState.NO_ONE_READY);
+        });
     }
-
 }

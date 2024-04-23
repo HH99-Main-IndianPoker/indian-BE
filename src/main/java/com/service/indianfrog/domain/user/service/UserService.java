@@ -50,7 +50,7 @@ public class UserService {
         User member = userRepository.save(requestDto.toEntity(password));
         LocalDateTime now = LocalDateTime.now();
 
-        signupTimer.stop(registry.timer("user.signup.time"));
+        signupTimer.stop(registry.timer("signup.time"));
         return new SignupResponseDto(member.getEmail(), now);
     }
 
@@ -61,7 +61,7 @@ public class UserService {
         User member = userRepository.findByEmail(email).orElseThrow(() ->
                 new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-        getMemberTimer.stop(registry.timer("user.getMember.time"));
+        getMemberTimer.stop(registry.timer("getMember.time"));
         return new GetUserResponseDto(member);
     }
 

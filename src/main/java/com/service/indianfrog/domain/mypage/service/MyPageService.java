@@ -48,7 +48,7 @@ public class MyPageService {
 
         int ranking = getUserRanking(username) + 1;
 
-        getMyPageTimer.stop(registry.timer("myPage.getPage.time"));
+        getMyPageTimer.stop(registry.timer("getMyPage.time"));
         return new MyPageInfo(user.getNickname(), username, ranking, user.getPoints(), user.getImageUrl());
     }
 
@@ -60,7 +60,7 @@ public class MyPageService {
 
         user.updatePoint(point);
 
-        rechargeTimer.stop(registry.timer("myPage.recharge.time"));
+        rechargeTimer.stop(registry.timer("reCharge.time"));
         return new PointChange(user.getPoints());
     }
 
@@ -78,7 +78,7 @@ public class MyPageService {
 
         user.imgUpdate(originFileName, s3UrlText);
 
-        updateProfileTimer.stop(registry.timer("myPage.update.time"));
+        updateProfileTimer.stop(registry.timer("profileUpdate.time"));
         return new MyProfile(s3UrlText);
     }
 
@@ -89,7 +89,7 @@ public class MyPageService {
 
         userList.sort((o1, o2) -> Integer.compare(o2.getPoints(), o1.getPoints()));
 
-        getRankingTimer.stop(registry.timer("myPage.getRanking.time"));
+        getRankingTimer.stop(registry.timer("getRanking.time"));
         return IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage()));
     }
 }

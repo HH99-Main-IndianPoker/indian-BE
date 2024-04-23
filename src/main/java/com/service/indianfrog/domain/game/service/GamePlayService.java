@@ -34,7 +34,7 @@ public class GamePlayService {
         this.gameTurnService = gameTurnService;
         this.gameRepository = gameRepository;
         this.registry = registry;
-        this.totalGamePlayTimer = registry.timer("getGamePlay.time");
+        this.totalGamePlayTimer = registry.timer("totalGamePlay.time");
     }
 
     @Transactional
@@ -83,7 +83,7 @@ public class GamePlayService {
         turn.nextTurn();
         log.info("First turn check completed, moving to next turn " + turn.getPlayers().toString());
 
-        checkTimer.stop(registry.timer("game.play.check"));
+        checkTimer.stop(registry.timer("playCheck.time"));
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.ACTION)
@@ -113,7 +113,7 @@ public class GamePlayService {
         turn.nextTurn();
         log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
 
-        raiseTimer.stop(registry.timer("game.play.raise"));
+        raiseTimer.stop(registry.timer("playRaise.time"));
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.ACTION)
@@ -144,7 +144,7 @@ public class GamePlayService {
 
         log.info("Die action completed, game ended. Winner: {}", winner.getNickname());
 
-        dieTimer.stop(registry.timer("game.play.die"));
+        dieTimer.stop(registry.timer("playDie.time"));
         return ActionDto.builder()
                 .nowState(GameState.ACTION)
                 .nextState(GameState.END)
@@ -177,5 +177,4 @@ public class GamePlayService {
                 .currentPlayer(user.getNickname())
                 .build();
     }
-
 }

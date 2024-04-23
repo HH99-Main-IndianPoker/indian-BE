@@ -27,50 +27,50 @@ public class StartGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRepository gameRepository;
-    private final MeterRegistry registry;
+    private final Timer totalRoundStartTimer;
+    private final Timer performRoundStartTimer;
 
     public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRepository = gameRepository;
-        this.registry = registry;
+        this.totalRoundStartTimer = registry.timer("totalRoundStart.time");
+        this.performRoundStartTimer = registry.timer("performRoundStart.time");
     }
 
     @Transactional
     public StartRoundResponse startRound(Long gameRoomId) {
-        Timer.Sample totalRoundStartTimer = Timer.start(registry);
+        return totalRoundStartTimer.record(() -> {
+            log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
 
-        log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
+            log.info("게임룸 검증 및 검색 중.");
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            log.info("게임룸 검증 및 검색 완료.");
 
-        log.info("게임룸 검증 및 검색 중.");
-        GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-        log.info("게임룸 검증 및 검색 완료.");
+            gameRoom.updateGameState(GameState.START);
+            log.info("게임 상태를 START로 업데이트 함.");
 
-        gameRoom.updateGameState(GameState.START);
-        log.info("게임 상태를 START로 업데이트 함.");
+            log.info("게임 초기화 또는 검색 중.");
+            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            log.info("게임 초기화 또는 검색 완료.");
 
-        log.info("게임 초기화 또는 검색 중.");
-        Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
-        log.info("게임 초기화 또는 검색 완료.");
+            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
 
-        Timer.Sample roundStartTimer = Timer.start(registry);
-        int firstBet = performRoundStart(game);
-        roundStartTimer.stop(registry.timer("game.start.performRoundStart"));
-        log.info("라운드 시작 작업 수행 완료.");
+            log.info("라운드 시작 작업 수행 완료.");
 
-        gameValidator.saveGameRoomState(gameRoom);
-        log.info("게임룸 상태 저장 완료.");
+            gameValidator.saveGameRoomState(gameRoom);
+            log.info("게임룸 상태 저장 완료.");
 
-        int round = game.getRound();
+            int round = game.getRound();
 
-        log.info("게임의 현재 턴 가져오는 중.");
-        Turn turn = gameTurnService.getTurn(game.getId());
-        log.info("현재 턴 가져옴.");
+            log.info("게임의 현재 턴 가져오는 중.");
+            Turn turn = gameTurnService.getTurn(game.getId());
+            log.info("현재 턴 가져옴.");
 
-        totalRoundStartTimer.stop(registry.timer("game.start.totalRoundStart"));
-        log.info("StartRoundResponse 반환 중.");
-        return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
-                game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);
+            log.info("StartRoundResponse 반환 중.");
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
+                    game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);
+        });
     }
 
     private int performRoundStart(Game game) {
