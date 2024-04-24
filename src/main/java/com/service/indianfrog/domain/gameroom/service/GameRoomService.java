@@ -78,7 +78,7 @@ public class GameRoomService {
                     validateRoomRepository.findAllValidateRoomsByRoomId(roomId));
 
             // 방장 정보 추출
-            ValidateRoom host = gameRoom.getValidateRooms().stream()
+            ValidateRoom host = validateRooms.stream()
                     .filter(ValidateRoom::isHost)
                     .findFirst()
                     .orElse(null);
@@ -99,8 +99,8 @@ public class GameRoomService {
             String participantImageUrl = null;
 
             // 다른 참가자 찾기
-            ValidateRoom participant =  gameRoom.getValidateRooms().stream()
-                    .filter(v -> !v.isHost())
+            ValidateRoom participant = validateRooms.stream()
+                    .filter(v -> !v.isHost()) // 방장 제외
                     .findFirst()
                     .orElse(null);
 
@@ -123,7 +123,8 @@ public class GameRoomService {
      * @param pageable 페이징 정보
      * @return 페이징 처리된 게임방 목록
      */
-    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) { //로직 자체는 특정방 조회와 같으나 페이징 처리
+    @Transactional(readOnly = true)
+    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
         return getAllGameRoomTimer.record(() -> gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
                 .map(gameRoom -> {
@@ -145,6 +146,7 @@ public class GameRoomService {
      *
      * @param roomId 삭제할 게임방 ID
      */
+    @Transactional
     public void deleteGameRoom(Long roomId) {
         Timer.Sample deleteRoomTimer = Timer.start(registry);
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
@@ -157,6 +159,7 @@ public class GameRoomService {
         gameRoomRepository.flush();
         deleteRoomTimer.stop(registry.timer("deleteGameRoom.time"));
     }
+
 
     /**
      * 주어진 ID의 게임방이 존재하는지 여부를 확인
@@ -265,6 +268,7 @@ public class GameRoomService {
                 .map(ValidateRoom::getParticipants)
                 .findFirst()
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_HOST.getMessage()));
+
         String participant = validateRooms.stream()
                 .filter(p -> !p.isHost())
                 .map(ValidateRoom::getParticipants)

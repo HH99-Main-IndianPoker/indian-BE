@@ -129,9 +129,9 @@ public class EndGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        if (game.getFoldedUser().equals(playerOne)) {
+        if (game.getFoldedUser() != null && game.getFoldedUser().equals(playerOne)) {
             return new GameResult(playerTwo, playerOne);
-        } else if (game.getFoldedUser().equals(playerTwo)) {
+        } else if(game.getFoldedUser() != null && game.getFoldedUser().equals(playerTwo)){
             return new GameResult(playerOne, playerTwo);
         }
 
