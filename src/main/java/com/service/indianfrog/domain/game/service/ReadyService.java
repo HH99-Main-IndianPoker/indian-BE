@@ -10,6 +10,8 @@ import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,38 +24,44 @@ public class ReadyService {
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
+    private final MeterRegistry registry;
+    private final Timer totalGameReadyTimer;
 
-    public ReadyService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository) {
+    public ReadyService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository,
+                        UserRepository userRepository, MeterRegistry registry) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
+        this.registry = registry;
+        this.totalGameReadyTimer = registry.timer("totalReady.time");
     }
 
     @Transactional
     public GameStatus gameReady(Long gameRoomId, Principal principal) {
+        return totalGameReadyTimer.record(() -> {
+            User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+            GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
 
-        User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
-        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+            validateRoom.revert(validateRoom.isReady());
 
-        ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
+            Timer.Sample getValidateRoomTimer = Timer.start(registry);
+            List<ValidateRoom> validateRooms = validateRoomRepository.findAllByReadyTrue();
+            getValidateRoomTimer.stop(registry.timer("readyValidate.time"));
 
-        validateRoom.revert(validateRoom.isReady());
+            if (validateRooms.size() == 2) {
+                return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
+            }
 
-        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByReadyTrue();
+            if (validateRooms.size() == 1 && validateRoom.isReady() == true) {
+                return new GameStatus(gameRoomId, user.getNickname(), GameState.READY);
+            }
 
-        if (validateRooms.size() == 2) {
-            return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
-        }
+            if (validateRooms.size() == 1 && validateRoom.isReady() == false) {
+                return new GameStatus(gameRoomId, user.getNickname(), GameState.UNREADY);
+            }
 
-        if (validateRooms.size() == 1 && validateRoom.isReady() == true) {
-            return new GameStatus(gameRoomId, user.getNickname(), GameState.READY);
-        }
-
-        if (validateRooms.size() == 1 && validateRoom.isReady() == false) {
-            return new GameStatus(gameRoomId, user.getNickname(), GameState.UNREADY);
-        }
-
-        return new GameStatus(gameRoomId, user.getNickname(), GameState.NO_ONE_READY);
+            return new GameStatus(gameRoomId, user.getNickname(), GameState.NO_ONE_READY);
+        });
     }
-
 }

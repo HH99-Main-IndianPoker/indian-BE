@@ -22,7 +22,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder, OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
+    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder,
+                       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
         this.userRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
@@ -42,6 +43,7 @@ public class UserService {
         String password = passwordEncoder.encode(requestDto.password());
         User member = userRepository.save(requestDto.toEntity(password));
         LocalDateTime now = LocalDateTime.now();
+
         return new SignupResponseDto(member.getEmail(), now);
     }
 
@@ -50,6 +52,7 @@ public class UserService {
     public GetUserResponseDto getMember(String email) {
         User member = userRepository.findByEmail(email).orElseThrow(() ->
                 new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
         return new GetUserResponseDto(member);
     }
 
