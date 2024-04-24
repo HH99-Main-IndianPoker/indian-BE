@@ -59,7 +59,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
             setResponseTokens(response, tokens);
 
-            response.sendRedirect("http://localhost:5500/");
+            response.sendRedirect("https://indianfrog.com/");
 //            response.sendRedirect("https://indianfrog.com/");
     }
 
