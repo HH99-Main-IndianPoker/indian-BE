@@ -1,9 +1,6 @@
 package com.service.indianfrog.global.security.oauth2;
 
-import java.net.URI;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,22 +13,15 @@ public class Oauth2ProxyController {
     @Autowired
     private RestTemplate restTemplate;
 
-    @GetMapping("/proxy/{service}")
-    public ResponseEntity<String> proxyRequest(@PathVariable String service) {
+    @GetMapping("/oauth2/url/{service}")
+    public ResponseEntity<Object> proxyRequest(@PathVariable String service) {
         String url = determineUrl(service);
         if (url.isEmpty()) {
             return ResponseEntity.badRequest().body("Unsupported service");
         }
 
         // 외부 서비스를 호출합니다.
-        try {
-            URI uri = new URI(url);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(uri);
-            return new ResponseEntity<>(headers, HttpStatus.FOUND);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error during redirection: " + e.getMessage());
-        }
+        return ResponseEntity.ok(new UrlResponse(url));
     }
 
     private String determineUrl(String service) {
@@ -47,6 +37,18 @@ public class Oauth2ProxyController {
                 return "https://api.indianfrog.com/oauth2/authorization/google";
             default:
                 return "";
+        }
+    }
+
+    private static class UrlResponse{
+        private String url;
+
+        public UrlResponse(String url) {
+            this.url = url;
+        }
+
+        public String getUrl() {
+            return url;
         }
     }
 }
