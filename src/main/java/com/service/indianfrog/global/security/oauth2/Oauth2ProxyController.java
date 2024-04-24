@@ -31,8 +31,8 @@ public class Oauth2ProxyController {
 //                return "http://localhost:8081/oauth2/authorization/naver";
                 return "https://api.indianfrog.com/oauth2/authorization/naver";
             case "kakao":
-                return "http://localhost:8081/oauth2/authorization/kakao";
-//                return "https://api.indianfrog.com/oauth2/authorization/kakao";
+//                return "http://localhost:8081/oauth2/authorization/kakao";
+                return "https://api.indianfrog.com/oauth2/authorization/kakao";
             case "google":
 //                return "http://localhost:8081/oauth2/authorization/google";
                 return "https://api.indianfrog.com/oauth2/authorization/google";
