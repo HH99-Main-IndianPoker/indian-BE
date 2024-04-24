@@ -1,6 +1,9 @@
 package com.service.indianfrog.global.security.oauth2;
 
+import java.net.URI;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,24 +18,35 @@ public class Oauth2ProxyController {
 
     @GetMapping("/proxy/{service}")
     public ResponseEntity<String> proxyRequest(@PathVariable String service) {
-        String url = "";
-        switch (service) {
-            case "naver":
-                url = "https://api.indianfrog.com/oauth2/authorization/naver";
-                break;
-            case "kakao":
-                url = "https://api.indianfrog.com/oauth2/authorization/kakao";
-                break;
-            case "google":
-                url = "https://api.indianfrog.com/oauth2/authoizatioin/google";
-                break;
-            default:
-                return ResponseEntity.badRequest().body("Unsupported service");
+        String url = determineUrl(service);
+        if (url.isEmpty()) {
+            return ResponseEntity.badRequest().body("Unsupported service");
         }
-        //외부 서비스를 호출합니다.
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        //결과반환
-        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+
+        // 외부 서비스를 호출합니다.
+        try {
+            URI uri = new URI(url);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(uri);
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error during redirection: " + e.getMessage());
+        }
     }
 
+    private String determineUrl(String service) {
+        switch (service) {
+            case "naver":
+//                return "http://localhost:8081/oauth2/authorization/naver";
+                return "https://api.indianfrog.com/oauth2/authorization/naver";
+            case "kakao":
+//                return "http://localhost:8081/oauth2/authorization/kakao";
+                return "https://api.indianfrog.com/oauth2/authorization/kakao";
+            case "google":
+//                return "http://localhost:8081/oauth2/authorization/google";
+                return "https://api.indianfrog.com/oauth2/authorization/google";
+            default:
+                return "";
+        }
+    }
 }
