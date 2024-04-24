@@ -60,7 +60,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             setResponseTokens(response, tokens);
 
             response.sendRedirect("https://indianfrog.com/");
-//            response.sendRedirect("https://indianfrog.com/");
     }
 
     private void setResponseTokens(HttpServletResponse response, GeneratedToken tokens)
