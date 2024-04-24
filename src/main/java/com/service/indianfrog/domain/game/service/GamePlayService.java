@@ -76,9 +76,9 @@ public class GamePlayService {
             return gameEnd(user, game);
         }
 
-        /* 선턴 유저 CHECK*/
-        user.setPoints(user.getPoints() - game.getBetAmount());
-        game.setPot(game.getPot() + game.getBetAmount());
+        /*유저 CHECK*/
+        user.decreasePoints(game.getBetAmount());
+        game.updatePot(game.getBetAmount());
         game.updateCheck();
         turn.nextTurn();
         log.info("First turn check completed, moving to next turn " + turn.getPlayers().toString());
@@ -106,8 +106,8 @@ public class GamePlayService {
         /* RAISE 베팅 액 설정*/
         log.info("Raise amount entered: {}", raiseAmount);
 
-        user.setPoints(userPoints - (game.getBetAmount() + raiseAmount));
-        game.setPot(game.getPot() + (game.getBetAmount() + raiseAmount));
+        user.decreasePoints(game.getBetAmount() + raiseAmount);
+        game.updatePot(game.getBetAmount() + raiseAmount);
         game.setBetAmount(raiseAmount);
         game.updateRaise();
         turn.nextTurn();
@@ -157,13 +157,12 @@ public class GamePlayService {
 
     private ActionDto gameEnd(User user, Game game) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
-        if (user.getPoints() >= game.getBetAmount()) {
-            user.setPoints(user.getPoints() - game.getBetAmount());
-            game.setPot(game.getPot() + game.getBetAmount());
-        } else {
-            game.setPot(game.getPot() + user.getPoints());
-            user.setPoints(0);
-        }
+
+        int point = user.getPoints();
+        user.decreasePoints(game.getBetAmount());
+        int betPoint = user.getPoints() > 0 ? game.getBetAmount() : point;
+        game.updatePot(betPoint);
+
         log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());
 
         gameRepository.save(game);
