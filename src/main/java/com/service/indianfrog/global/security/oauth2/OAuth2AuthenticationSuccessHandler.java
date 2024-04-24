@@ -1,5 +1,10 @@
 package com.service.indianfrog.global.security.oauth2;
 
+import static com.service.indianfrog.domain.user.dto.UserRequestDto.*;
+
+import com.service.indianfrog.domain.user.dto.UserRequestDto;
+import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.jwt.JwtUtil;
 import com.service.indianfrog.global.security.UserDetailsImpl;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
@@ -8,6 +13,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -48,30 +54,23 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 .getAuthority(); // Role을 가져온다.
 
 
-        // 회원이 존재할경우
-        if (isExist) {
+        // 회원이 존재하지 않는 경우
 
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
-            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+        GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
+            setResponseTokens(response, tokens);
 
-            String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
-            Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
-            response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
+            response.sendRedirect("http://localhost:5500/");
+//            response.sendRedirect("https://indianfrog.com/");
+    }
 
-            response.sendRedirect("https://indianfrog.com/");
-        } else {
-            // 새로 생성된 사용자의 토큰 생성 및 전달
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
-            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+    private void setResponseTokens(HttpServletResponse response, GeneratedToken tokens)
+        throws UnsupportedEncodingException {
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
-            String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
-            Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
-            response.addCookie(refreshTokenCookie);
-
-            response.sendRedirect("https://indianfrog.com/");
-        }
+        String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
+        Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
+        response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
     }
 
     private Cookie createCookie(String key, String value) {

@@ -17,6 +17,7 @@ public enum ErrorCode {
     IMPOSSIBLE_UPDATE_REFRESH_TOKEN("블랙리스트된 엑세스토큰입니다."),
     EXPIRED_REFRESH_TOKEN("리프레시 토큰 만료 됐습니다."),
     GAME_ROOM_NOW_FULL("게임방이 가득 찼습니다."),
+    OAUTH2_AUTHENTICATION_FAIL("OAuth2인증실패"),
     NOT_FOUND_HOST("방장을 찾지 못했습니다.");
 
     private final String message;
