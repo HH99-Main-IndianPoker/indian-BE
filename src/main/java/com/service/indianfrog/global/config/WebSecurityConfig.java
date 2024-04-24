@@ -133,7 +133,8 @@ public class WebSecurityConfig {
                     .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
                     .permitAll() // resources 접근 허용 설정
                     .requestMatchers("/", "/user/**",
-                        "/login/**", "/oauth2/**", "/token/**", "/**", "/indian-frog-management/prometheus/**", "/error/**")
+                        "/login/**", "/oauth2/**", "/token/**"
+                        , "/**", "/indian-frog-management/prometheus/**", "/error/**", "/monitoring/grafana/**")
                     .permitAll() // 메인 페이지 요청 허가
                     .requestMatchers("/ws/**").permitAll() // WebSocket 경로 허가
                     .requestMatchers("/topic/**").permitAll() // WebSocket 메시지 브로커 경로 허가

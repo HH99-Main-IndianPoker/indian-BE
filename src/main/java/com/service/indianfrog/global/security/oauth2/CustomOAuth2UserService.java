@@ -2,6 +2,10 @@ package com.service.indianfrog.global.security.oauth2;
 
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -11,11 +15,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -39,11 +38,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
          * OAuth2Attribute의 속성값들을 Map으로 반환 받는다.*/
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         String userNameAttributeName = userRequest.getClientRegistration()
-                .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
-
+            .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
         OAuth2Attribute oAuth2Attribute =
-                OAuth2Attribute.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
+            OAuth2Attribute.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
         Map<String, Object> memberAttribute = oAuth2Attribute.convertToMap();
 
@@ -61,14 +59,14 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             memberAttribute.put("exist", false);
 
             userRepository.save(User.builder()
-                    .email(email)
-                    .password(UUID.randomUUID().toString())
-                    .nickname(email)
+                .email(email)
+                .password(UUID.randomUUID().toString())
+                .nickname(email)
 //                    .authority(AuthorityType.USER)
-                    .build());
+                .build());
             return new DefaultOAuth2User(
-                    Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                    memberAttribute, "email");
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+                memberAttribute, "email");
         }
 
         /*
@@ -78,8 +76,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         memberAttribute.put("exist", true);
 
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_".concat("USER"))),
-                memberAttribute, "email");
+            Collections.singleton(new SimpleGrantedAuthority("ROLE_".concat("USER"))),
+            memberAttribute, "email");
     }
     //findMember.get().getAuthority().toString() ->userㅇㅔ 기입
 }

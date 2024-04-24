@@ -1,5 +1,6 @@
 package com.service.indianfrog.domain.user.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.service.indianfrog.domain.user.dto.MyPoint;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
 import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
@@ -8,12 +9,17 @@ import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import com.service.indianfrog.global.jwt.JwtUtil;
 import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 public class UserService {
@@ -70,10 +76,6 @@ public class UserService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
         }
         return userRepository.existsByNickname(nickname);
-    }
-
-    public void OAuth2Signup() {
-
     }
 
     public MyPoint getMyPoint(String email) {

@@ -1,6 +1,7 @@
 package com.service.indianfrog.global.security.oauth2;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,8 +31,8 @@ public class Oauth2ProxyController {
 //                return "http://localhost:8081/oauth2/authorization/naver";
                 return "https://api.indianfrog.com/oauth2/authorization/naver";
             case "kakao":
-//                return "http://localhost:8081/oauth2/authorization/kakao";
-                return "https://api.indianfrog.com/oauth2/authorization/kakao";
+                return "http://localhost:8081/oauth2/authorization/kakao";
+//                return "https://api.indianfrog.com/oauth2/authorization/kakao";
             case "google":
 //                return "http://localhost:8081/oauth2/authorization/google";
                 return "https://api.indianfrog.com/oauth2/authorization/google";
@@ -40,7 +41,8 @@ public class Oauth2ProxyController {
         }
     }
 
-    private static class UrlResponse{
+    private static class UrlResponse {
+
         private String url;
 
         public UrlResponse(String url) {
