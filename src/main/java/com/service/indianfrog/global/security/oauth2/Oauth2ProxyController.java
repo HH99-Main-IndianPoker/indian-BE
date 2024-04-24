@@ -37,8 +37,8 @@ public class Oauth2ProxyController {
     private String determineUrl(String service) {
         switch (service) {
             case "naver":
-//                return "http://localhost:8081/oauth2/authorization/naver";
-                return "https://api.indianfrog.com/oauth2/authorization/naver";
+                return "http://localhost:8081/oauth2/authorization/naver";
+//                return "https://api.indianfrog.com/oauth2/authorization/naver";
             case "kakao":
 //                return "http://localhost:8081/oauth2/authorization/kakao";
                 return "https://api.indianfrog.com/oauth2/authorization/kakao";
