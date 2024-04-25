@@ -43,16 +43,19 @@ public class StartGameService {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
 
+
             log.info("게임룸 검증 및 검색 중.");
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             log.info("게임룸 검증 및 검색 완료.");
+
+            gameRoom.updateGameState(GameState.START);
+            log.info("게임 상태를 START로 업데이트 함.");
 
             log.info("게임 초기화 또는 검색 중.");
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
             log.info("게임 초기화 또는 검색 완료.");
 
-            gameRoom.updateGameState(GameState.START);
-            log.info("게임 상태를 START로 업데이트 함.");
+
 
             int firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
 
