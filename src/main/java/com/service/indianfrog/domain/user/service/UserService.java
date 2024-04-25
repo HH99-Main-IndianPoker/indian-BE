@@ -82,12 +82,4 @@ public class UserService {
         return new MyPoint(user.getPoints());
     }
 
-    private static final String senderEmail = "kimmingi722@gmail.com";
-
-    public String generateRandomNumber() {
-        SecureRandom secureRandom = new SecureRandom();
-        int number = secureRandom.nextInt(90000) + 100000;
-        return String.valueOf(number);
-    }
-
 }
