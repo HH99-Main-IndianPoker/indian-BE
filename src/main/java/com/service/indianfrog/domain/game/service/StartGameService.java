@@ -39,7 +39,7 @@ public class StartGameService {
     }
 
     @Transactional
-    public StartRoundResponse startRound(Long gameRoomId) {
+    public StartRoundResponse startRound(Long gameRoomId, String name) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
 
@@ -55,9 +55,7 @@ public class StartGameService {
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
             log.info("게임 초기화 또는 검색 완료.");
 
-
-
-            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
+            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game, name));
 
             log.info("라운드 시작 작업 수행 완료.");
 
@@ -76,7 +74,7 @@ public class StartGameService {
         });
     }
 
-    private int performRoundStart(Game game) {
+    private int performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
@@ -96,9 +94,11 @@ public class StartGameService {
         game.setBetAmount(0);
         game.setPot(betAmount * 2);
 
-        List<Card> availableCards = prepareAvailableCards(game);
-        assignRandomCardsToPlayers(game, availableCards);
-        log.info("플레이어에게 카드 할당됨.");
+        if(playerOne.getEmail().equals(email)){
+            List<Card> availableCards = prepareAvailableCards(game);
+            assignRandomCardsToPlayers(game, availableCards);
+            log.info("플레이어에게 카드 할당됨.");
+        }
 
         gameRepository.save(game);
 

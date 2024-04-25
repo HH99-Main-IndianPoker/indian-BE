@@ -56,7 +56,7 @@ public class GameController {
 
         switch (gameState) {
             case "START"-> {
-                StartRoundResponse response = startGameService.startRound(gameRoomId);
+                StartRoundResponse response = startGameService.startRound(gameRoomId, principal.getName());
                 sendUserGameMessage(response, principal); // 유저별 메시지 전송
             }
             case "ACTION", "USER_CHOICE" -> {
@@ -86,6 +86,8 @@ public class GameController {
     private void sendUserEndRoundMessage(EndRoundResponse response, Principal principal) {
 
         log.info("who are you? -> {}", principal.getName());
+        log.info("player's Card : {}", response.getMyCard());
+
        try {
         messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endRoundInfo", new EndRoundInfo(
                         response.getNowState(),

@@ -62,6 +62,8 @@ public class EndGameService {
                 myCard = game.getPlayerTwoCard();
             }
 
+            log.info("myCard : {}", myCard);
+
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
             라운드 포인트 값 가져오기*/
