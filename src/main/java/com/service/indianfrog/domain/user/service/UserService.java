@@ -9,10 +9,14 @@ import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
@@ -20,13 +24,10 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder,
-                       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
+    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
-        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     }
 
     // 회원가입
@@ -80,4 +81,5 @@ public class UserService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         return new MyPoint(user.getPoints());
     }
+
 }

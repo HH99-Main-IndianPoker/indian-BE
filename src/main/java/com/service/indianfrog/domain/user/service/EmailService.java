@@ -3,9 +3,13 @@ package com.service.indianfrog.domain.user.service;
 import com.service.indianfrog.domain.user.repository.EmailRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+
+import java.security.SecureRandom;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +62,7 @@ public class EmailService {
     }
 
     private String createCertificationNumber()  {
-        Random random = new Random();
+        SecureRandom random = new SecureRandom();
         int num = random.nextInt(888888) + 111111;
         return String.valueOf(num);
     }

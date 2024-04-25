@@ -12,6 +12,8 @@ import com.service.indianfrog.domain.user.service.UserService;
 import com.service.indianfrog.domain.user.valid.UserValidationGroup;
 import com.service.indianfrog.domain.user.valid.UserValidationSequence;
 import com.service.indianfrog.global.dto.ResponseDto;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import com.service.indianfrog.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -98,7 +100,12 @@ public class UserController implements UserControllerDocs {
         @RequestParam("emailCode")
         @NotBlank(message = "인증 코드를 입력해주세요", groups = NotBlankGroup.class)
         String emailCode) {
-        boolean success = emailService.emailAuthCheck(email, emailCode);
-        return ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success));
+        try {
+            boolean success = emailService.emailAuthCheck(email, emailCode);
+            return ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success));
+        } catch (Exception e){
+            throw new RestApiException(ErrorCode.EMAIL_SEND_FAILURE.getMessage());
+        }
+
     }
 }
