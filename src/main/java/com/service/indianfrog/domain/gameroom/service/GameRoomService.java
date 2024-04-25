@@ -16,6 +16,9 @@ import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
@@ -39,6 +42,9 @@ import io.micrometer.core.instrument.Timer;
 @Service
 @Slf4j
 public class GameRoomService {
+
+    @PersistenceContext
+    private EntityManager em;
 
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
@@ -241,15 +247,14 @@ public class GameRoomService {
      */
     @Transactional
     public ParticipantInfo addParticipant(Long roomId, UserDetails userDetails) {
-        Timer.Sample addParticipantTimer = Timer.start(registry);
-
+        GameRoom gameRoom = em.find(GameRoom.class, roomId, LockModeType.PESSIMISTIC_WRITE);
         String email = userDetails.getUsername();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         String nickname = user.getNickname();
 
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+//        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
         if (gameRoom.getValidateRooms().size() >= 2) {
             throw new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage());
@@ -285,7 +290,6 @@ public class GameRoomService {
 
         int hostPoint = hostInfo.getPoints();
 
-        addParticipantTimer.stop(registry.timer("addParticipant.time"));
         return new ParticipantInfo(participant, host, participantPoint, hostPoint, user.getImageUrl(), hostInfo.getImageUrl());
     }
 
@@ -299,6 +303,7 @@ public class GameRoomService {
     @Transactional
     public void removeParticipant(Long roomId, Principal participant) {
         Timer.Sample removeParticipantTimer = Timer.start(registry);
+        em.find(GameRoom.class, roomId, LockModeType.PESSIMISTIC_WRITE);
 
         String email = participant.getName();
         User user = userRepository.findByEmail(email)
