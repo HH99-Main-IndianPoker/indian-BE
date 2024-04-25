@@ -94,7 +94,7 @@ public class GameController {
                         response.getRoundWinner().getNickname(),
                         response.getRoundLoser().getNickname(),
                         response.getRoundPot(),
-                        response.getOtherCard()));
+                        response.getMyCard()));
                 log.info("Message sent successfully.");
             }
             catch (Exception e) {

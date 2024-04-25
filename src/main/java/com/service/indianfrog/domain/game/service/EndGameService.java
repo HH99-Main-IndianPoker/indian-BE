@@ -32,17 +32,15 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
-    private final UserRepository userRepository;
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
 
     public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
-                          UserRepository userRepository, MeterRegistry registry) {
+                           MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
-        this.userRepository = userRepository;
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
@@ -50,23 +48,19 @@ public class EndGameService {
 
     /* 라운드 종료 로직*/
     @Transactional
-    public EndRoundResponse endRound(Long gameRoomId, String name) {
+    public EndRoundResponse endRound(Long gameRoomId, String email) {
         return totalRoundEndTimer.record(() -> {
             log.info("Ending round for gameRoomId={}", gameRoomId);
-
-            User user = userRepository.findByEmail(name).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
-            Card otherCard = null;
+            Card myCard = null;
 
-            if (user.equals(game.getPlayerOne())) {
-                otherCard = game.getPlayerTwoCard();
-            }
-
-            if(user.equals(game.getPlayerTwo())){
-                otherCard = game.getPlayerOneCard();
+            if (email.equals(game.getPlayerOne().getEmail())) {
+                myCard = game.getPlayerOneCard();
+            } else if(email.equals(game.getPlayerTwo().getEmail())){
+                myCard = game.getPlayerTwoCard();
             }
 
             /* 라운드 승자 패자 결정
@@ -93,7 +87,7 @@ public class EndGameService {
             String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, otherCard);
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard);
         });
     }
 
@@ -163,7 +157,7 @@ public class EndGameService {
 
         int pointsToAdd = game.getPot();
 
-        winner.setPoints(winner.getPoints() + pointsToAdd);
+        winner.updatePoint(pointsToAdd);
 
         if (winner.equals(game.getPlayerOne())) {
             game.addPlayerOneRoundPoints(pointsToAdd);
@@ -173,16 +167,26 @@ public class EndGameService {
         log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
     }
 
-    /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드*/
+    /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드 */
+    /* 수정 필요 - 유저 포인트가 0이 있을 때 하는 방법 */
     private String determineGameState(Game game) {
         /* 한 게임의 라운드는 현재 3라운드 까지임
          * 라운드 정보를 확인해 3 라운드일 경우 게임 종료 상태를 반환
          * 라운드 정보가 3보다 적은 경우 다음 라운드 시작을 위한 상태 반환
          * game.getRound >= 3 비교 과정을 게임 시작 시 유저의 입력 값을 통해
-         * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능*/
+         * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능
+         * 게임에 참가 중인 유저의 포인트를 확인해 0이 있을 경우 게임 종료 상태 반환*/
+        /* 3라운드 종료 시*/
         if (game.getRound() >= 3) {
             return "GAME_END";
         }
+
+        /* 플레이어의 포인트가 없을 때*/
+        if (!checkPlayerPoints(game)) {
+            return "GAME_END";
+        }
+
+        /* 정상 실행 상태 */
         return "START";
     }
 
@@ -218,5 +222,9 @@ public class EndGameService {
 
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);
+    }
+
+    private boolean checkPlayerPoints(Game game) {
+        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
     }
 }
