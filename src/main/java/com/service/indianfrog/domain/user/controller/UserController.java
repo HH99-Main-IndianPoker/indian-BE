@@ -100,12 +100,7 @@ public class UserController implements UserControllerDocs {
         @RequestParam("emailCode")
         @NotBlank(message = "인증 코드를 입력해주세요", groups = NotBlankGroup.class)
         String emailCode) {
-        try {
-            boolean success = emailService.emailAuthCheck(email, emailCode);
-            return ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success));
-        } catch (Exception e){
-            throw new RestApiException(ErrorCode.EMAIL_SEND_FAILURE.getMessage());
-        }
-
+        boolean success = emailService.emailAuthCheck(email, emailCode);
+        return ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success));
     }
 }
