@@ -47,12 +47,12 @@ public class StartGameService {
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             log.info("게임룸 검증 및 검색 완료.");
 
-            gameRoom.updateGameState(GameState.START);
-            log.info("게임 상태를 START로 업데이트 함.");
-
             log.info("게임 초기화 또는 검색 중.");
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
             log.info("게임 초기화 또는 검색 완료.");
+
+            gameRoom.updateGameState(GameState.START);
+            log.info("게임 상태를 START로 업데이트 함.");
 
             int firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
 
@@ -86,8 +86,9 @@ public class StartGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        playerOne.setPoints(playerOne.getPoints() - betAmount);
-        playerTwo.setPoints(playerTwo.getPoints() - betAmount);
+        // 이거 왜 유저 포인트 - betAmount 하는 걸까?
+        playerOne.updatePoint(betAmount);
+        playerTwo.updatePoint(betAmount);
 
         game.setBetAmount(0);
         game.setPot(betAmount * 2);

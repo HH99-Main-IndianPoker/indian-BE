@@ -163,7 +163,7 @@ public class EndGameService {
 
         int pointsToAdd = game.getPot();
 
-        winner.setPoints(winner.getPoints() + pointsToAdd);
+        winner.updatePoint(pointsToAdd);
 
         if (winner.equals(game.getPlayerOne())) {
             game.addPlayerOneRoundPoints(pointsToAdd);
@@ -173,16 +173,23 @@ public class EndGameService {
         log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
     }
 
-    /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드*/
+    /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드 */
+    /* 수정 필요 - 유저 포인트가 0이 있을 때 하는 방법 */
     private String determineGameState(Game game) {
         /* 한 게임의 라운드는 현재 3라운드 까지임
          * 라운드 정보를 확인해 3 라운드일 경우 게임 종료 상태를 반환
          * 라운드 정보가 3보다 적은 경우 다음 라운드 시작을 위한 상태 반환
          * game.getRound >= 3 비교 과정을 게임 시작 시 유저의 입력 값을 통해
-         * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능*/
+         * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능
+         * 게임에 참가 중인 유저의 포인트를 확인해 0이 있을 경우 게임 종료 상태 반환*/
         if (game.getRound() >= 3) {
             return "GAME_END";
         }
+
+        if (!checkPlayerPoints(game)) {
+            return "GAME_END";
+        }
+
         return "START";
     }
 
@@ -218,5 +225,9 @@ public class EndGameService {
 
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);
+    }
+
+    private boolean checkPlayerPoints(Game game) {
+        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
     }
 }
