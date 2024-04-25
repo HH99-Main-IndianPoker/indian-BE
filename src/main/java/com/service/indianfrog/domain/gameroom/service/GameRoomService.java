@@ -19,7 +19,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,11 +122,13 @@ public class GameRoomService {
     /**
      * 모든 게임방을 페이지 단위로 조회
      *
-     * @param pageable 페이징 정보
      * @return 페이징 처리된 게임방 목록
      */
     @Transactional(readOnly = true)
-    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
+    public Page<GetAllGameRoomResponseDto> getAllGameRooms() {
+
+        Pageable pageable = PageRequest.of(0, 15, Sort.by("created_at").descending());
+
         return getAllGameRoomTimer.record(() -> gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
                 .map(gameRoom -> {
