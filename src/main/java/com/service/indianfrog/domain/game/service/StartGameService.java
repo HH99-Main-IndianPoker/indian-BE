@@ -39,42 +39,59 @@ public class StartGameService {
     }
 
     @Transactional
-    public StartRoundResponse startRound(Long gameRoomId, String name) {
+    public StartRoundResponse startRound(Long gameRoomId) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
-
-
             log.info("게임룸 검증 및 검색 중.");
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             log.info("게임룸 검증 및 검색 완료.");
 
-            gameRoom.updateGameState(GameState.START);
-            log.info("게임 상태를 START로 업데이트 함.");
+            int firstBet = 0;
+            int round = 0;
+            Turn turn = null;
+            Game game;
 
-            log.info("게임 초기화 또는 검색 중.");
-            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
-            log.info("게임 초기화 또는 검색 완료.");
+            if (gameRoom.getGameState().equals(GameState.READY)) {
+                gameRoom.updateGameState(GameState.START);
+                log.info("게임 상태를 START로 업데이트 함.");
 
-            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game, name));
+                log.info("게임 초기화 또는 검색 중.");
+                game = gameValidator.initializeOrRetrieveGame(gameRoom);
+                log.info("게임 초기화 또는 검색 완료.");
 
-            log.info("라운드 시작 작업 수행 완료.");
+                firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
 
-            gameValidator.saveGameRoomState(gameRoom);
-            log.info("게임룸 상태 저장 완료.");
+                log.info("라운드 시작 작업 수행 완료.");
+                round = game.getRound();
 
-            int round = game.getRound();
+                gameValidator.saveGameRoomState(gameRoom);
+                log.info("게임룸 상태 저장 완료.");
 
-            log.info("게임의 현재 턴 가져오는 중.");
-            Turn turn = gameTurnService.getTurn(game.getId());
-            log.info("현재 턴 가져옴.");
+                log.info("게임의 현재 턴 가져오는 중.");
+                turn = gameTurnService.getTurn(game.getId());
+                log.info("현재 턴 가져옴.");
+            } else {
+                game = gameRoom.getCurrentGame();
+            }
+
+            if (gameRoom.getGameState().equals(GameState.START)){
+                firstBet = game.getBetAmount();
+
+                round = game.getRound();
+
+                log.info("게임의 현재 턴 가져오는 중.");
+                turn = gameTurnService.getTurn(game.getId());
+                log.info("현재 턴 가져옴.");
+            }
 
             log.info("StartRoundResponse 반환 중.");
+
             return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
                     game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);
         });
     }
 
-    private int performRoundStart(Game game, String email) {
+    private int performRoundStart(Game game) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
@@ -94,11 +111,9 @@ public class StartGameService {
         game.setBetAmount(0);
         game.setPot(betAmount * 2);
 
-        if(playerOne.getEmail().equals(email)){
-            List<Card> availableCards = prepareAvailableCards(game);
-            assignRandomCardsToPlayers(game, availableCards);
-            log.info("플레이어에게 카드 할당됨.");
-        }
+        List<Card> availableCards = prepareAvailableCards(game);
+        assignRandomCardsToPlayers(game, availableCards);
+        log.info("플레이어에게 카드 할당됨.");
 
         gameRepository.save(game);
 

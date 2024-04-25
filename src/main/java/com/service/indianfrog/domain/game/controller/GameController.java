@@ -56,7 +56,7 @@ public class GameController {
 
         switch (gameState) {
             case "START"-> {
-                StartRoundResponse response = startGameService.startRound(gameRoomId, principal.getName());
+                StartRoundResponse response = startGameService.startRound(gameRoomId);
                 sendUserGameMessage(response, principal); // 유저별 메시지 전송
             }
             case "ACTION", "USER_CHOICE" -> {
