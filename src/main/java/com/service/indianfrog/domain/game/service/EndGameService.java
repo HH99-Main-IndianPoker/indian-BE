@@ -182,14 +182,17 @@ public class EndGameService {
          * game.getRound >= 3 비교 과정을 게임 시작 시 유저의 입력 값을 통해
          * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능
          * 게임에 참가 중인 유저의 포인트를 확인해 0이 있을 경우 게임 종료 상태 반환*/
+        /* 3라운드 종료 시*/
         if (game.getRound() >= 3) {
             return "GAME_END";
         }
 
+        /* 플레이어의 포인트가 없을 때*/
         if (!checkPlayerPoints(game)) {
             return "GAME_END";
         }
 
+        /* 정상 실행 상태 */
         return "START";
     }
 
