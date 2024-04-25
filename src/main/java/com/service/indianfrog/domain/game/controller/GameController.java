@@ -1,8 +1,9 @@
 package com.service.indianfrog.domain.game.controller;
 
 import com.service.indianfrog.domain.game.dto.*;
-import com.service.indianfrog.domain.game.dto.GameDto.*;
-import com.service.indianfrog.domain.game.entity.Card;
+import com.service.indianfrog.domain.game.dto.GameDto.EndGameResponse;
+import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
+import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
 import com.service.indianfrog.domain.game.service.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
