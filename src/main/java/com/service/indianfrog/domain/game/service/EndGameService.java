@@ -56,7 +56,9 @@ public class EndGameService {
 
             if (email.equals(game.getPlayerOne().getEmail())) {
                 myCard = game.getPlayerOneCard();
-            } else if(email.equals(game.getPlayerTwo().getEmail())){
+            }
+
+            if(email.equals(game.getPlayerTwo().getEmail())){
                 myCard = game.getPlayerTwoCard();
             }
 
