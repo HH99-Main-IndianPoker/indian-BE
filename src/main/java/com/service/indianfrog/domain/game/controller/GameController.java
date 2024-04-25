@@ -56,7 +56,7 @@ public class GameController {
 
         switch (gameState) {
             case "START"-> {
-                StartRoundResponse response = startGameService.startRound(gameRoomId);
+                StartRoundResponse response = startGameService.startRound(gameRoomId, principal.getName());
                 sendUserGameMessage(response, principal); // 유저별 메시지 전송
             }
             case "ACTION", "USER_CHOICE" -> {
@@ -127,16 +127,12 @@ public class GameController {
         /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
         log.info("who are you? -> {}", principal.getName());
         log.info(response.getGameState(), response.getTurn().toString());
-        log.info(response.getPlayerOneInfo().getEmail(), response.getPlayerOneInfo().getCard().toString());
-        log.info(response.getPlayerTwoInfo().getEmail(), response.getPlayerTwoInfo().getCard().toString());
-        String playerOneId = response.getPlayerOneInfo().getEmail();
-        Card playerTwoCard = response.getPlayerTwoInfo().getCard();
-        String playerTwoId = response.getPlayerTwoInfo().getEmail();
-        Card playerOneCard = response.getPlayerOneInfo().getCard();
+        String playerOne = response.getPlayerOne().getEmail();
+        String playerTwo = response.getPlayerTwo().getEmail();
         try {
-            if (principal.getName().equals(playerOneId)) {
-                messagingTemplate.convertAndSendToUser(playerOneId, "/queue/gameInfo", new GameInfo(
-                        playerTwoCard,
+            if (principal.getName().equals(playerOne)) {
+                messagingTemplate.convertAndSendToUser(playerOne, "/queue/gameInfo", new GameInfo(
+                        response.getOtherCard(),
                         response.getTurn(),
                         response.getFirstBet(),
                         response.getRoundPot(),
@@ -144,9 +140,9 @@ public class GameController {
                 log.info("Message sent successfully.");
             }
 
-            if (principal.getName().equals(playerTwoId)) {
-                messagingTemplate.convertAndSendToUser(playerTwoId, "/queue/gameInfo", new GameInfo(
-                        playerOneCard,
+            if (principal.getName().equals(playerTwo)) {
+                messagingTemplate.convertAndSendToUser(playerTwo, "/queue/gameInfo", new GameInfo(
+                        response.getOtherCard(),
                         response.getTurn(),
                         response.getFirstBet(),
                         response.getRoundPot(),
