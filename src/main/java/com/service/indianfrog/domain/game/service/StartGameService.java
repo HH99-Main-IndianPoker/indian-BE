@@ -117,6 +117,9 @@ public class StartGameService {
 
         gameRepository.save(game);
 
+        log.info("{} Card : {}", playerOne, game.getPlayerOneCard());
+        log.info("{} Card : {}", playerTwo, game.getPlayerTwoCard());
+
         if (game.getRound() == 1) {
             initializeTurnForGame(game);
             log.info("첫 라운드에 턴 초기화 됨.");
