@@ -15,6 +15,9 @@ import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
@@ -35,6 +38,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class GameRoomService {
+
+    @PersistenceContext
+    private EntityManager em;
 
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
@@ -217,13 +223,14 @@ public class GameRoomService {
      */
     @Transactional
     public ParticipantInfo addParticipant(Long roomId, UserDetails userDetails) {
+        GameRoom gameRoom = em.find(GameRoom.class, roomId, LockModeType.PESSIMISTIC_WRITE);
         String email = userDetails.getUsername();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         String nickname = user.getNickname();
 
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+//        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
         if (gameRoom.getValidateRooms().size() >= 2) {
             throw new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage());
@@ -271,6 +278,7 @@ public class GameRoomService {
      */
     @Transactional
     public void removeParticipant(Long roomId, Principal participant) {
+        em.find(GameRoom.class, roomId, LockModeType.PESSIMISTIC_WRITE);
         String email = participant.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
@@ -304,12 +312,11 @@ public class GameRoomService {
             return;
         }
 
-        // 사용자의 닉네임을 기준으로 모든 게임방 참여 정보를 조회
-        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
-        // 검색된 모든 참여 정보를 삭제
-        validateRoomRepository.deleteAll(validateRooms);
+//        // 사용자의 닉네임을 기준으로 모든 게임방 참여 정보를 조회
+//        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
+//        // 검색된 모든 참여 정보를 삭제
+//        validateRoomRepository.deleteAll(validateRooms);
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
     }
-
 }
