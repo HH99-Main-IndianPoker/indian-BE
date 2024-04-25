@@ -58,24 +58,25 @@ public class WebSocketEventListener {
         if (username != null && roomId != null) {
             logger.info("연결해제 : 유저네임 - " + username + ", 방번호 - " + roomId);
 
+
+            GameRoom gameRoom = repositoryHolder.gameRoomRepository.findByRoomId(roomId);
+            Game game = gameRoom.getCurrentGame();
+            if (game != null) {
+                User player = (!game.getPlayerOne().getNickname().equals(username)) ? game.getPlayerOne() : game.getPlayerTwo();
+                player.updatePoint(game.getPot());
+                player.incrementWins();
+
+                gameRoom.endCurrentGame();
+
+                messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, "ALONE");
+            }
+
             ChatMessage chatMessage = ChatMessage.builder()
                     .type(ChatMessage.MessageType.LEAVE)
                     .sender(username)
                     .build();
 
             messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, chatMessage);
-        }
-
-        GameRoom gameRoom = repositoryHolder.gameRoomRepository.findByRoomId(roomId);
-        Game game = gameRoom.getCurrentGame();
-        if (game != null) {
-            User player = (!game.getPlayerOne().getNickname().equals(username)) ? game.getPlayerOne() : game.getPlayerTwo();
-            player.updatePoint(game.getPot());
-            player.incrementWins();
-
-            gameRoom.endCurrentGame();
-
-            messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, "ALONE");
         }
 
         // 게임방의 참가자 목록에서 해당 사용자를 제거하여 게임방 상태를 최신 상태로 유지.
