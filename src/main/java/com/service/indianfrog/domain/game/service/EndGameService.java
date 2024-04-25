@@ -50,7 +50,7 @@ public class EndGameService {
             log.info("Ending round for gameRoomId={}", gameRoomId);
 
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            Game game = gameRoom.getCurrentGame();
 
             Card myCard = null;
 
