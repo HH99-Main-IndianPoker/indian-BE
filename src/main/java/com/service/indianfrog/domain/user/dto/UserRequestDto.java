@@ -51,6 +51,11 @@ public class UserRequestDto {
     ) {
     }
 
+    public record PassChangeDto(
+            String originPassword,
+            String updatedPassword
+    ){}
+
 //    public record KakaoUserInfoDto(
 //            Long id,
 //            String nickname,

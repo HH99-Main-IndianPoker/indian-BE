@@ -89,4 +89,8 @@ public class User extends Timestamped {
     public void decreasePoints(int point) {
         this.points = Math.max(this.points - point, 0);
     }
+
+    public void updatePassword(String resetPassword) {
+        this.password = resetPassword;
+    }
 }

@@ -1,19 +1,15 @@
 package com.service.indianfrog.domain.user.controller;
 
 import com.service.indianfrog.domain.user.controller.docs.UserControllerDocs;
-import com.service.indianfrog.domain.user.dto.MyPoint;
+import com.service.indianfrog.domain.user.dto.UserRequestDto.PassChangeDto;
 import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
-import com.service.indianfrog.domain.user.dto.UserResponseDto.EmailAuthResponseDto;
-import com.service.indianfrog.domain.user.dto.UserResponseDto.EmailSendResponseDto;
-import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
-import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
-import com.service.indianfrog.domain.user.service.EmailService;
+import com.service.indianfrog.domain.user.dto.UserResponseDto.*;
+import com.service.indianfrog.domain.user.service.EmailCertService;
+import com.service.indianfrog.domain.user.service.PasswordService;
 import com.service.indianfrog.domain.user.service.UserService;
 import com.service.indianfrog.domain.user.valid.UserValidationGroup;
 import com.service.indianfrog.domain.user.valid.UserValidationSequence;
 import com.service.indianfrog.global.dto.ResponseDto;
-import com.service.indianfrog.global.exception.ErrorCode;
-import com.service.indianfrog.global.exception.RestApiException;
 import com.service.indianfrog.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -33,11 +29,13 @@ import static com.service.indianfrog.domain.user.valid.UserValidationGroup.*;
 public class UserController implements UserControllerDocs {
 
     private final UserService userService;
-    private final EmailService emailService;
+    private final EmailCertService emailCertService;
+    private final PasswordService passwordService;
 
-    public UserController(UserService userService, EmailService emailService) {
+    public UserController(UserService userService, EmailCertService emailCertService, PasswordService passwordService) {
         this.userService = userService;
-        this.emailService = emailService;
+        this.emailCertService = emailCertService;
+        this.passwordService = passwordService;
     }
 
     // 회원가입
@@ -91,7 +89,7 @@ public class UserController implements UserControllerDocs {
         @Email(message = "잘못된 이메일 형식입니다.", groups = EmailGroup.class)
         String email
     ) {
-        String emailCode = emailService.emailSend(email);
+        String emailCode = emailCertService.emailSend(email);
         return ResponseDto.success("이메일 인증 코드 발송 성공", new EmailSendResponseDto(emailCode));
     }
 
@@ -100,7 +98,18 @@ public class UserController implements UserControllerDocs {
         @RequestParam("emailCode")
         @NotBlank(message = "인증 코드를 입력해주세요", groups = NotBlankGroup.class)
         String emailCode) {
-        boolean success = emailService.emailAuthCheck(email, emailCode);
+        boolean success = emailCertService.emailAuthCheck(email, emailCode);
         return ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success));
+    }
+
+    @PostMapping("/user/password-code")
+    public ResponseEntity<PasswordFindDto> passwordFind(@RequestParam("email") String email){
+        return ResponseEntity.ok(passwordService.findPassword(email));
+    }
+
+    @PutMapping("/password-change")
+    public ResponseEntity<ChangedPassDto> passwordChange(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                         @RequestBody PassChangeDto passChangeDto) {
+        return ResponseEntity.ok(passwordService.changePassword(userDetails.getUser(), passChangeDto));
     }
 }
