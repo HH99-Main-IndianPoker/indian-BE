@@ -29,23 +29,22 @@ public class GameValidator {
     @Transactional
     public Game initializeOrRetrieveGame(GameRoom gameRoom) {
         Game game = gameRoom.getCurrentGame();
-        List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
-
-        String host = validateRooms.stream()
-                .filter(ValidateRoom::isHost)
-                .map(ValidateRoom::getParticipants)
-                .findFirst()
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-        String participant = validateRooms.stream()
-                .filter(p -> !p.isHost())
-                .map(ValidateRoom::getParticipants)
-                .findFirst()
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-
-        User playerOne = repositoryHolder.userRepository.findByNickname(host);
-        User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
-
         if (game == null) {
+            List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
+
+            String host = validateRooms.stream()
+                    .filter(ValidateRoom::isHost)
+                    .map(ValidateRoom::getParticipants)
+                    .findFirst()
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+            String participant = validateRooms.stream()
+                    .filter(p -> !p.isHost())
+                    .map(ValidateRoom::getParticipants)
+                    .findFirst()
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+            User playerOne = repositoryHolder.userRepository.findByNickname(host);
+            User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
             gameRoom.startNewGame(playerOne, playerTwo);
             repositoryHolder.gameRoomRepository.save(gameRoom);
             game = gameRoom.getCurrentGame();
