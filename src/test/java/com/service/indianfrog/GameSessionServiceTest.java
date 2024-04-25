@@ -7,6 +7,7 @@ import com.service.indianfrog.domain.game.entity.UserChoice;
 import com.service.indianfrog.domain.game.service.GameSessionService;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -24,12 +25,15 @@ public class GameSessionServiceTest {
     @Mock
     private GameValidator gameValidator;
 
+    @Mock
+    private MeterRegistry registry;
+
     private GameSessionService gameSessionService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        gameSessionService = new GameSessionService(gameValidator);
+        gameSessionService = new GameSessionService(gameValidator, registry);
     }
 
     @Test

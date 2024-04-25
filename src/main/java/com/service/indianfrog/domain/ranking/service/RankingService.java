@@ -9,7 +9,6 @@ import com.service.indianfrog.global.exception.RestApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -47,12 +46,7 @@ public class RankingService {
 
         List<User> userList = userRepository.findAll();
 
-        userList.sort(new Comparator<User>() {
-            @Override
-            public int compare(User o1, User o2) {
-                return Integer.compare(o2.getPoints(), o1.getPoints());
-            }
-        });
+        userList.sort((o1, o2) -> Integer.compare(o2.getPoints(), o1.getPoints()));
 
         return IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage())) + 1;
     }

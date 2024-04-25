@@ -121,11 +121,11 @@ public class WebSecurityConfig {
         );
 
         /*oauth2*/
-//        http
-//                .oauth2Login((oauth2) -> oauth2
-//                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-//                                .userService(customOAuth2UserService))// OAuth2 로그인 성공 이후 사용자 정보를 가져올 때 설정 담당
-//                        .successHandler(customSuccessHandler));// OAuth2 로그인 성공 시, 후작업을 진행할 UserService 인터페이스 구현체 등록
+        http
+                .oauth2Login((oauth2) -> oauth2
+                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+                                .userService(customOAuth2UserService))// OAuth2 로그인 성공 이후 사용자 정보를 가져올 때 설정 담당
+                        .successHandler(customSuccessHandler));// OAuth2 로그인 성공 시, 후작업을 진행할 UserService 인터페이스 구현체 등록
 
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests

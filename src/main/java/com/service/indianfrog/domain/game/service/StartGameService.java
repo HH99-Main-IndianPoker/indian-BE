@@ -9,6 +9,8 @@ import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,43 +27,50 @@ public class StartGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRepository gameRepository;
+    private final Timer totalRoundStartTimer;
+    private final Timer performRoundStartTimer;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRepository = gameRepository;
+        this.totalRoundStartTimer = registry.timer("totalRoundStart.time");
+        this.performRoundStartTimer = registry.timer("performRoundStart.time");
     }
 
     @Transactional
     public StartRoundResponse startRound(Long gameRoomId) {
-        log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
+        return totalRoundStartTimer.record(() -> {
+            log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
 
-        log.info("게임룸 검증 및 검색 중.");
-        GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-        log.info("게임룸 검증 및 검색 완료.");
+            log.info("게임룸 검증 및 검색 중.");
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            log.info("게임룸 검증 및 검색 완료.");
 
-        gameRoom.updateGameState(GameState.START);
-        log.info("게임 상태를 START로 업데이트 함.");
+            log.info("게임 초기화 또는 검색 중.");
+            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            log.info("게임 초기화 또는 검색 완료.");
 
-        log.info("게임 초기화 또는 검색 중.");
-        Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
-        log.info("게임 초기화 또는 검색 완료.");
+            gameRoom.updateGameState(GameState.START);
+            log.info("게임 상태를 START로 업데이트 함.");
 
-        int firstBet = performRoundStart(game);
-        log.info("라운드 시작 작업 수행 완료.");
+            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
 
-        gameValidator.saveGameRoomState(gameRoom);
-        log.info("게임룸 상태 저장 완료.");
+            log.info("라운드 시작 작업 수행 완료.");
 
-        int round = game.getRound();
+            gameValidator.saveGameRoomState(gameRoom);
+            log.info("게임룸 상태 저장 완료.");
 
-        log.info("게임의 현재 턴 가져오는 중.");
-        Turn turn = gameTurnService.getTurn(game.getId());
-        log.info("현재 턴 가져옴.");
+            int round = game.getRound();
 
-        log.info("StartRoundResponse 반환 중.");
-        return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
-                game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);
+            log.info("게임의 현재 턴 가져오는 중.");
+            Turn turn = gameTurnService.getTurn(game.getId());
+            log.info("현재 턴 가져옴.");
+
+            log.info("StartRoundResponse 반환 중.");
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
+                    game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);
+        });
     }
 
     private int performRoundStart(Game game) {
@@ -77,8 +86,9 @@ public class StartGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        playerOne.setPoints(playerOne.getPoints() - betAmount);
-        playerTwo.setPoints(playerTwo.getPoints() - betAmount);
+        // 이거 왜 유저 포인트 - betAmount 하는 걸까?
+        playerOne.updatePoint(betAmount);
+        playerTwo.updatePoint(betAmount);
 
         game.setBetAmount(0);
         game.setPot(betAmount * 2);

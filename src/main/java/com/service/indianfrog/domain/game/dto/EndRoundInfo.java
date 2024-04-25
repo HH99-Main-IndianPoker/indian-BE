@@ -9,16 +9,16 @@ public class EndRoundInfo {
     private String nowState;
     private String nextState;
     private int round;
-    private Card otherCard;
+    private Card myCard;
     private String roundWinner;
     private String roundLoser;
     private int roundPot;
 
-    public EndRoundInfo(String nowState, String nextState, int round, String roundWinner, String roundLoser, int roundPot, Card otherCard) {
+    public EndRoundInfo(String nowState, String nextState, int round, String roundWinner, String roundLoser, int roundPot, Card myCard) {
         this.nowState = nowState;
         this.nextState = nextState;
         this.round = round;
-        this.otherCard = otherCard;
+        this.myCard = myCard;
         this.roundWinner = roundWinner;
         this.roundLoser = roundLoser;
         this.roundPot = roundPot;

@@ -12,6 +12,8 @@ import com.service.indianfrog.domain.user.service.UserService;
 import com.service.indianfrog.domain.user.valid.UserValidationGroup;
 import com.service.indianfrog.domain.user.valid.UserValidationSequence;
 import com.service.indianfrog.global.dto.ResponseDto;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import com.service.indianfrog.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;

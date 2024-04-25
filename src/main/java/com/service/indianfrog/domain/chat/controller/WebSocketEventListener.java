@@ -1,7 +1,11 @@
 package com.service.indianfrog.domain.chat.controller;
 
 import com.service.indianfrog.domain.chat.entity.ChatMessage;
+import com.service.indianfrog.domain.game.entity.Game;
+import com.service.indianfrog.domain.game.utils.RepositoryHolder;
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.service.GameRoomService;
+import com.service.indianfrog.domain.user.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +23,6 @@ public class WebSocketEventListener {
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final GameRoomService gameRoomService;
-
     /**
      * 웹소켓 연결 이벤트 핸들러
      */

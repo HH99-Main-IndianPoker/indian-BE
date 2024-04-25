@@ -8,7 +8,6 @@ import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
-import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +19,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
-
-    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder, OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
+    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
-        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     }
 
     // 회원가입
@@ -42,6 +38,7 @@ public class UserService {
         String password = passwordEncoder.encode(requestDto.password());
         User member = userRepository.save(requestDto.toEntity(password));
         LocalDateTime now = LocalDateTime.now();
+
         return new SignupResponseDto(member.getEmail(), now);
     }
 
@@ -50,6 +47,7 @@ public class UserService {
     public GetUserResponseDto getMember(String email) {
         User member = userRepository.findByEmail(email).orElseThrow(() ->
                 new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
         return new GetUserResponseDto(member);
     }
 
@@ -67,10 +65,6 @@ public class UserService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
         }
         return userRepository.existsByNickname(nickname);
-    }
-
-    public void OAuth2Signup() {
-
     }
 
     public MyPoint getMyPoint(String email) {

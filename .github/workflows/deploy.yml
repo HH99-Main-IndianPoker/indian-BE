@@ -26,7 +26,12 @@ jobs:
         run: |
           echo "${{ secrets.APPLICATION_SECRET_CONTENT }}" > ./src/main/resources/yml/application-secret.yml
 
-      # Github Actions 워크플로우가 실행되는 가상 환경내에 application-dev 설정
+      # Github Actions 워크플로우가 실행되는 가상 환경내에 application-monitoring 설정
+      - name: Generate application-monitoring.yml
+        run: |
+          echo "${{ secrets.APPLICATION_MONITORING }}" > ./src/main/resources/yml/application-monitoring.yml
+
+      # Github Actions 워크플로우가 실행되는 가상 환경내에 application-oauth 설정
       - name: Generate application-oauth.yml
         run: |
           echo "${{ secrets.APPLICATION_OAUTH }}" > ./src/main/resources/yml/application-oauth.yml

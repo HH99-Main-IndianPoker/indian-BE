@@ -11,9 +11,8 @@ import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
-import com.service.indianfrog.domain.user.repository.UserRepository;
-import com.service.indianfrog.global.exception.ErrorCode;
-import com.service.indianfrog.global.exception.RestApiException;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,77 +29,89 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
-    private final UserRepository userRepository;
+    private final MeterRegistry registry;
+    private final Timer totalRoundEndTimer;
+    private final Timer totalGameEndTimer;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, UserRepository userRepository) {
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
+                           MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
-        this.userRepository = userRepository;
+        this.registry = registry;
+        this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
+        this.totalGameEndTimer = registry.timer("totalGameEnd.time");
     }
 
     /* 라운드 종료 로직*/
     @Transactional
-    public EndRoundResponse endRound(Long gameRoomId, String name) {
-        log.info("Ending round for gameRoomId={}", gameRoomId);
+    public EndRoundResponse endRound(Long gameRoomId, String email) {
+        return totalRoundEndTimer.record(() -> {
+            log.info("Ending round for gameRoomId={}", gameRoomId);
 
-        User user = userRepository.findByEmail(name).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
-        GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-        Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            Card myCard = null;
 
-        Card otherCard = null;
+            if (email.equals(game.getPlayerOne().getEmail())) {
+                myCard = game.getPlayerOneCard();
+            } else if(email.equals(game.getPlayerTwo().getEmail())){
+                myCard = game.getPlayerTwoCard();
+            }
 
-        if (user.equals(game.getPlayerOne())) {
-            otherCard = game.getPlayerTwoCard();
-        }
+            /* 라운드 승자 패자 결정
+            승자에게 라운드 포인트 할당
+            라운드 포인트 값 가져오기*/
+            Timer.Sample gameResultTimer = Timer.start(registry);
+            GameResult gameResult = determineGameResult(game);
+            gameResultTimer.stop(registry.timer("roundResult.time"));
 
-        if(user.equals(game.getPlayerTwo())){
-            otherCard = game.getPlayerOneCard();
-        }
+            log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
+            Timer.Sample roundPointsTimer = Timer.start(registry);
+            assignRoundPointsToWinner(game, gameResult);
+            roundPointsTimer.stop(registry.timer("roundPoints.time"));
+            int roundPot = game.getPot();
 
-        /* 라운드 승자 패자 결정
-        승자에게 라운드 포인트 할당
-        라운드 포인트 값 가져오기*/
-        GameResult gameResult = determineGameResult(game);
+            /* 라운드 승자가 선턴을 가지도록 설정*/
+            initializeTurnForGame(game, gameResult);
 
-        log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
-        assignRoundPointsToWinner(game, gameResult);
-        int roundPot = game.getPot();
+            /* 라운드 정보 초기화*/
+            game.resetRound();
+            log.debug("Round reset for gameRoomId={}", gameRoomId);
 
-        /* 라운드 승자가 선턴을 가지도록 설정*/
-        initializeTurnForGame(game, gameResult);
+            /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
+            String nextState = determineGameState(game);
+            log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-        /* 라운드 정보 초기화*/
-        game.resetRound();
-        log.debug("Round reset for gameRoomId={}", gameRoomId);
-
-        /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
-        String nextState = determineGameState(game);
-        log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
-
-        return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, otherCard);
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard);
+        });
     }
 
     /* 게임 종료 로직*/
     @Transactional
     public EndGameResponse endGame(Long gameRoomId) {
-        log.info("Ending game for gameRoomId={}", gameRoomId);
-        GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-        Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+        return totalGameEndTimer.record(() -> {
+            log.info("Ending game for gameRoomId={}", gameRoomId);
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
-        /* 게임 결과 처리 및 게임 정보 초기화*/
-        GameResult gameResult = processGameResults(game);
+            /* 게임 결과 처리 및 게임 정보 초기화*/
+            Timer.Sample gameResultTimer = Timer.start(registry);
+            GameResult gameResult = processGameResults(game);
+            gameResultTimer.stop(registry.timer("endGameResult.time"));
 
-        GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
-        CurrentGameStatus.updateGameState(GameState.READY);
+            GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
 
-        log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
-                gameRoomId, gameResult.getWinner(), gameResult.getLoser());
+            CurrentGameStatus.updateGameState(GameState.READY);
 
-        /* 유저 선택 상태 반환 */
-        return new EndGameResponse("GAME_END" ,"USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
-                gameResult.getWinnerPot(), gameResult.getLoserPot());
+            log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
+                    gameRoomId, gameResult.getWinner(), gameResult.getLoser());
+
+            /* 유저 선택 상태 반환 */
+            return new EndGameResponse("GAME_END", "USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
+                    gameResult.getWinnerPot(), gameResult.getLoserPot());
+        });
     }
 
     /* 검증 메서드 필드*/
@@ -109,9 +120,9 @@ public class EndGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        if (game.getFoldedUser().equals(playerOne)) {
+        if (game.getFoldedUser() != null && game.getFoldedUser().equals(playerOne)) {
             return new GameResult(playerTwo, playerOne);
-        } else if(game.getFoldedUser().equals(playerTwo)){
+        } else if(game.getFoldedUser() != null && game.getFoldedUser().equals(playerTwo)){
             return new GameResult(playerOne, playerTwo);
         }
 
@@ -143,7 +154,7 @@ public class EndGameService {
 
         int pointsToAdd = game.getPot();
 
-        winner.setPoints(winner.getPoints() + pointsToAdd);
+        winner.updatePoint(pointsToAdd);
 
         if (winner.equals(game.getPlayerOne())) {
             game.addPlayerOneRoundPoints(pointsToAdd);
@@ -153,16 +164,26 @@ public class EndGameService {
         log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
     }
 
-    /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드*/
+    /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드 */
+    /* 수정 필요 - 유저 포인트가 0이 있을 때 하는 방법 */
     private String determineGameState(Game game) {
         /* 한 게임의 라운드는 현재 3라운드 까지임
          * 라운드 정보를 확인해 3 라운드일 경우 게임 종료 상태를 반환
          * 라운드 정보가 3보다 적은 경우 다음 라운드 시작을 위한 상태 반환
          * game.getRound >= 3 비교 과정을 게임 시작 시 유저의 입력 값을 통해
-         * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능*/
+         * maxRound 필드 등을 만들어서 비교하는 등의 개선도 가능
+         * 게임에 참가 중인 유저의 포인트를 확인해 0이 있을 경우 게임 종료 상태 반환*/
+        /* 3라운드 종료 시*/
         if (game.getRound() >= 3) {
             return "GAME_END";
         }
+
+        /* 플레이어의 포인트가 없을 때*/
+        if (!checkPlayerPoints(game)) {
+            return "GAME_END";
+        }
+
+        /* 정상 실행 상태 */
         return "START";
     }
 
@@ -198,5 +219,9 @@ public class EndGameService {
 
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);
+    }
+
+    private boolean checkPlayerPoints(Game game) {
+        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
     }
 }

@@ -80,14 +80,13 @@ public class Game {
         this.betAmount = betAmount;
     }
 
-    // 게임 팟을 가져옵니다.
-    public int getPot() {
-        return pot;
-    }
-
     // 게임 팟을 설정합니다.
     public void setPot(int pot) {
         this.pot = pot;
+    }
+
+    public void updatePot(int point) {
+        this.pot = pot + point;
     }
 
     // 게임에서 포기한 유저를 설정합니다.
