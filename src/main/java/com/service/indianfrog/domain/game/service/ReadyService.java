@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.Principal;
 import java.util.List;
 
+import static com.service.indianfrog.global.exception.ErrorCode.INSUFFICIENT_POINTS;
+
 @Service
 public class ReadyService {
 
@@ -43,6 +45,10 @@ public class ReadyService {
             GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
             ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
 
+            if (!checkReadyPoints(user)) {
+                throw new RestApiException(INSUFFICIENT_POINTS.getMessage());
+            }
+
             validateRoom.revert(validateRoom.isReady());
 
             Timer.Sample getValidateRoomTimer = Timer.start(registry);
@@ -63,5 +69,9 @@ public class ReadyService {
 
             return new GameStatus(gameRoomId, user.getNickname(), GameState.NO_ONE_READY);
         });
+    }
+
+    private boolean checkReadyPoints(User user) {
+        return user.getPoints() > 0;
     }
 }

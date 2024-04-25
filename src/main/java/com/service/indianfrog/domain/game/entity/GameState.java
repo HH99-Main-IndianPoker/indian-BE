@@ -26,7 +26,8 @@ public enum GameState {
     BET("BET"),
     LEAVE("LEAVE"),
     GAME_END("GAME_END"),
-    USER_CHOICE("USER_CHOICE");
+    USER_CHOICE("USER_CHOICE"),
+    ALONE("ALONE");
 
     private final String gameState;
 

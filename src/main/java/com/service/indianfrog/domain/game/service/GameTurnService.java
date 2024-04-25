@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class GameTurnService {
 
+    /* 게임 종료 시 MAP에 있는 해당 게임의 턴 정보 삭제하는 메서드 추가 및 endGame에서 호출*/
     private final Map<Long, Turn> gameTurns = new ConcurrentHashMap<>();
 
     public void setTurn(Long gameId, Turn turn) {
