@@ -36,16 +36,16 @@ public class GameDto {
         private String nowState;
         private String nextState;
         private int round;
-        private Card otherCard;
+        private Card myCard;
         private User roundWinner;
         private User roundLoser;
         private int roundPot;
 
-        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card otherCard) {
+        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card myCard) {
             this.nowState = nowState;
             this.nextState = nextState;
             this.round = round;
-            this.otherCard = otherCard;
+            this.myCard = myCard;
             this.roundWinner = roundWinner;
             this.roundLoser = roundLoser;
             this.roundPot = roundPot;
