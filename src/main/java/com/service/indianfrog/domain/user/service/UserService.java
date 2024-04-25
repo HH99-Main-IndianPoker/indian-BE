@@ -20,13 +20,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
-
-    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder,
-                       OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
+    public UserService(UserRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
-        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     }
 
     // 회원가입
@@ -70,10 +66,6 @@ public class UserService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
         }
         return userRepository.existsByNickname(nickname);
-    }
-
-    public void OAuth2Signup() {
-
     }
 
     public MyPoint getMyPoint(String email) {
