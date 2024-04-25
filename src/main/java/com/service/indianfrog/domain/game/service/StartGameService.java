@@ -73,7 +73,8 @@ public class StartGameService {
         });
     }
 
-    private int performRoundStart(Game game, String name) {
+    @Transactional
+    public int performRoundStart(Game game, String name) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
@@ -110,7 +111,8 @@ public class StartGameService {
         return betAmount;
     }
 
-    private int calculateInitialBet(User playerOne, User playerTwo) {
+    @Transactional
+    public int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
         int minPoints = Math.min(playerOnePoints, playerTwoPoints);
@@ -121,7 +123,8 @@ public class StartGameService {
         return Math.min(fivePercentOfMinPoint, 2000);
     }
 
-    private List<Card> prepareAvailableCards(Game game) {
+    @Transactional
+    public List<Card> prepareAvailableCards(Game game) {
         /* 사용한 카드 목록과 전체 카드 목록을 가져옴
          * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
         Set<Card> usedCards = game.getUsedCards();
@@ -130,7 +133,8 @@ public class StartGameService {
         return new ArrayList<>(allCards);
     }
 
-    private void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
+    @Transactional
+    public void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
         /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
          * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
         Collections.shuffle(availableCards);
@@ -150,7 +154,8 @@ public class StartGameService {
 
     }
 
-    private void initializeTurnForGame(Game game) {
+    @Transactional
+    public void initializeTurnForGame(Game game) {
         List<User> players = new ArrayList<>();
         players.add(game.getPlayerOne());
         players.add(game.getPlayerTwo());

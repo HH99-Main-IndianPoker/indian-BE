@@ -26,6 +26,7 @@ public class GameValidator {
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게임방 입니다."));
     }
 
+    @Transactional
     public Game initializeOrRetrieveGame(GameRoom gameRoom) {
         Game game = gameRoom.getCurrentGame();
         List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
