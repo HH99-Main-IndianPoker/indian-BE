@@ -32,17 +32,15 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
-    private final UserRepository userRepository;
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
 
     public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
-                          UserRepository userRepository, MeterRegistry registry) {
+                           MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
-        this.userRepository = userRepository;
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
@@ -50,23 +48,19 @@ public class EndGameService {
 
     /* 라운드 종료 로직*/
     @Transactional
-    public EndRoundResponse endRound(Long gameRoomId, String name) {
+    public EndRoundResponse endRound(Long gameRoomId, String email) {
         return totalRoundEndTimer.record(() -> {
             log.info("Ending round for gameRoomId={}", gameRoomId);
-
-            User user = userRepository.findByEmail(name).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
-            Card otherCard = null;
+            Card myCard = null;
 
-            if (user.equals(game.getPlayerOne())) {
-                otherCard = game.getPlayerTwoCard();
-            }
-
-            if(user.equals(game.getPlayerTwo())){
-                otherCard = game.getPlayerOneCard();
+            if (email.equals(game.getPlayerOne().getEmail())) {
+                myCard = game.getPlayerOneCard();
+            } else if(email.equals(game.getPlayerTwo().getEmail())){
+                myCard = game.getPlayerTwoCard();
             }
 
             /* 라운드 승자 패자 결정
@@ -93,7 +87,7 @@ public class EndGameService {
             String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, otherCard);
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard);
         });
     }
 
