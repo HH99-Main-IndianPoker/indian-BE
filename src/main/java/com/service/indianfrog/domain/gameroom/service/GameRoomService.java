@@ -340,10 +340,10 @@ public class GameRoomService {
             return;
         }
 
-        // 사용자의 닉네임을 기준으로 모든 게임방 참여 정보를 조회
-        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
-        // 검색된 모든 참여 정보를 삭제
-        validateRoomRepository.deleteAll(validateRooms);
+//        // 사용자의 닉네임을 기준으로 모든 게임방 참여 정보를 조회
+//        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
+//        // 검색된 모든 참여 정보를 삭제
+//        validateRoomRepository.deleteAll(validateRooms);
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
         removeSessionTimer.stop(registry.timer("removeSession.time"));
