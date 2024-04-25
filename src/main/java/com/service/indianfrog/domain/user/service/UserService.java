@@ -1,9 +1,7 @@
 package com.service.indianfrog.domain.user.service;
 
-import com.service.indianfrog.domain.user.dto.MyPoint;
-import com.service.indianfrog.domain.user.dto.UserRequestDto.SignupUserRequestDto;
-import com.service.indianfrog.domain.user.dto.UserResponseDto.GetUserResponseDto;
-import com.service.indianfrog.domain.user.dto.UserResponseDto.SignupResponseDto;
+import com.service.indianfrog.domain.user.dto.UserRequestDto.*;
+import com.service.indianfrog.domain.user.dto.UserResponseDto.*;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;

@@ -44,4 +44,10 @@ public class UserResponseDto {
 
     public record EmailAuthResponseDto(Boolean success) {
     }
+
+    public record PasswordFindDto(boolean success){}
+
+    public record MyPoint(int myPoint){}
+
+    public record ChangedPassDto(boolean passwordChange){}
 }

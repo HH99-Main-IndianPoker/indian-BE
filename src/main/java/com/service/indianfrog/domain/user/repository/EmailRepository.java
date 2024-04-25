@@ -14,9 +14,9 @@ public class EmailRepository {
     }
 
     /*이메일 인증 유효기간 5분*/
-    public void saveCertificationNumber(String email, String certificationnumber) {
+    public void saveCertificationNumber(String email, String certificationNumber) {
         redisTemplate.opsForValue()
-            .set(email, certificationnumber, Duration.ofSeconds(300));
+            .set(email, certificationNumber, Duration.ofSeconds(300));
     }
 
     public String getCertificationNumber(String email) {
@@ -29,6 +29,6 @@ public class EmailRepository {
 
     public boolean hashKey(String email) {
         Boolean keyExists = redisTemplate.hasKey(email);
-        return keyExists != null & keyExists;
+        return keyExists != null & Boolean.TRUE.equals(keyExists);
     }
 }
