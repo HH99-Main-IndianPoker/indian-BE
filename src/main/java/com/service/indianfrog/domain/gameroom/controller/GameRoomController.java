@@ -38,12 +38,11 @@ public class GameRoomController {
     /**
      * 모든 게임 방을 페이징하여 조회
      *
-     * @param pageable 페이징 정보
      * @return 조회된 게임 방의 페이징된 목록
      */
-    @GetMapping("") // 전체페이지 조회
-    public ResponseDto<Page<GetAllGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
-        Page<GetAllGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
+    @GetMapping // 전체페이지 조회
+    public ResponseDto<Page<GetAllGameRoomResponseDto>> getAllGameRooms() {
+        Page<GetAllGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms();
         return ResponseDto.success("모든 게임방 조회 기능", gameRooms);
     }
 
