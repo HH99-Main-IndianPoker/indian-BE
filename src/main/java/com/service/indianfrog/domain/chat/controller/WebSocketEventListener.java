@@ -23,16 +23,13 @@ public class WebSocketEventListener {
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final GameRoomService gameRoomService;
-    private final RepositoryHolder repositoryHolder;
-
     /**
      * 웹소켓 연결 이벤트 핸들러
      */
     @Autowired
-    public WebSocketEventListener(SimpMessageSendingOperations messagingTemplate, GameRoomService gameRoomService, RepositoryHolder repositoryHolder) {
+    public WebSocketEventListener(SimpMessageSendingOperations messagingTemplate, GameRoomService gameRoomService) {
         this.messagingTemplate = messagingTemplate;
         this.gameRoomService = gameRoomService;
-        this.repositoryHolder = repositoryHolder;
     }
 
     /**
@@ -57,19 +54,6 @@ public class WebSocketEventListener {
 
         if (username != null && roomId != null) {
             logger.info("연결해제 : 유저네임 - " + username + ", 방번호 - " + roomId);
-
-
-            GameRoom gameRoom = repositoryHolder.gameRoomRepository.findByRoomId(roomId);
-            Game game = gameRoom.getCurrentGame();
-            if (game != null) {
-                User player = (!game.getPlayerOne().getNickname().equals(username)) ? game.getPlayerOne() : game.getPlayerTwo();
-                player.updatePoint(game.getPot());
-                player.incrementWins();
-
-                gameRoom.endCurrentGame();
-
-                messagingTemplate.convertAndSend("/topic/gameRoom/" + roomId, "ALONE");
-            }
 
             ChatMessage chatMessage = ChatMessage.builder()
                     .type(ChatMessage.MessageType.LEAVE)
