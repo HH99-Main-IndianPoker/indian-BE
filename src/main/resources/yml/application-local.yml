@@ -65,5 +65,5 @@ cloud:
     s3:
       bucket: ${aws.s3.bucket}
 server:
-  port: 8081
+  port: 8080
 

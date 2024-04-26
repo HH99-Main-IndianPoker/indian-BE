@@ -34,7 +34,7 @@ public class GameValidator {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     public synchronized Game initializeOrRetrieveGame(GameRoom gameRoom) {
 
-        if (repositoryHolder.gameRepository.existsByGameRoom(gameRoom) == false) {
+        if (!repositoryHolder.gameRepository.existsByGameRoom(gameRoom)) {
             log.info("game is null : {}", repositoryHolder.gameRepository.existsByGameRoom(gameRoom));
 
             List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
