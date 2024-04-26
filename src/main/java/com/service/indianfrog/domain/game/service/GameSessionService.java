@@ -9,7 +9,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.LockModeType;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,7 @@ public class GameSessionService {
     private final Map<Long, Map<String, String>> gameChoices = new ConcurrentHashMap<>();
 
     @Transactional
+    @Lock(LockModeType.PESSIMISTIC_READ)
     public Object processUserChoices(Long gameRoomId, UserChoices choices) {
         return totalUserChoiceTimer.record(() -> {
             /* 입력 값 검증*/

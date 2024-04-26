@@ -20,8 +20,6 @@ public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long
     @Query("SELECT vr FROM ValidateRoom vr JOIN FETCH vr.gameRoom gr WHERE gr.roomId = :roomId")
     List<ValidateRoom> findAllByGameRoomRoomId(Long roomId);
 
-    List<ValidateRoom> findAllByReadyTrue();
-
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("SELECT vr FROM ValidateRoom vr JOIN FETCH vr.gameRoom WHERE vr.gameRoom.roomId = :roomId AND vr.participants = :nickname")
     ValidateRoom findByGameRoomRoomIdAndParticipants(Long roomId, String nickname);
@@ -35,6 +33,8 @@ public interface ValidateRoomRepository extends JpaRepository<ValidateRoom, Long
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("SELECT vr FROM ValidateRoom vr JOIN FETCH vr.gameRoom WHERE vr.gameRoom.roomId = :roomId")
     List<ValidateRoom> findAllValidateRoomsByRoomId(Long roomId);
+
+    List<ValidateRoom> findAllByGameRoomAndReadyTrue(GameRoom gameRoom);
 
 }
 
