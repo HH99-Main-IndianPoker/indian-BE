@@ -10,7 +10,6 @@ public class RepositoryHolder {
     public final GameRoomRepository gameRoomRepository;
     public final UserRepository userRepository;
     public final ValidateRoomRepository validateRoomRepository;
-
     public RepositoryHolder(GameRoomRepository gameRoomRepository, UserRepository userRepository, ValidateRoomRepository validateRoomRepository) {
         this.gameRoomRepository = gameRoomRepository;
         this.userRepository = userRepository;

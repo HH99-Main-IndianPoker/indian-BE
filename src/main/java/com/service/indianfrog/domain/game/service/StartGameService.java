@@ -5,7 +5,6 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
-import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
@@ -26,14 +25,12 @@ public class StartGameService {
     /* 생성자를 통한 필드 주입 */
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
-    private final GameRepository gameRepository;
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository, MeterRegistry registry) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
-        this.gameRepository = gameRepository;
         this.totalRoundStartTimer = registry.timer("totalRoundStart.time");
         this.performRoundStartTimer = registry.timer("performRoundStart.time");
     }
@@ -54,10 +51,6 @@ public class StartGameService {
             log.info("게임 초기화 또는 검색 완료.");
 
             int firstBet = performRoundStartTimer.record(() -> performRoundStart(game, name));
-
-            gameValidator.saveGameRoomState(gameRoom);
-            log.info("게임룸 상태 저장 완료.");
-
             Card card = name.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwoCard() : game.getPlayerOneCard();
 
             log.info("라운드 시작 작업 수행 완료.");
@@ -97,8 +90,6 @@ public class StartGameService {
         List<Card> availableCards = prepareAvailableCards(game);
         assignRandomCardsToPlayers(game, availableCards, name);
         log.info("플레이어에게 카드 할당됨.");
-
-        gameRepository.save(game);
 
         log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
         log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
