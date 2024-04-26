@@ -11,7 +11,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.LockModeType;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +29,6 @@ public class StartGameService {
     private final GameTurnService gameTurnService;
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
-    private long lastAssign;
 
 
     public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
@@ -38,7 +39,7 @@ public class StartGameService {
     }
 
     @Transactional
-    public StartRoundResponse startRound(Long gameRoomId, String name) {
+    public StartRoundResponse startRound(Long gameRoomId, String email) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
             log.info("게임룸 검증 및 검색 중.");
@@ -52,8 +53,8 @@ public class StartGameService {
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
             log.info("게임 초기화 또는 검색 완료.");
 
-            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
-            Card card = name.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwoCard() : game.getPlayerOneCard();
+            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game, email));
+            Card card = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwoCard() : game.getPlayerOneCard();
 
             log.info("라운드 시작 작업 수행 완료.");
             int round = game.getRound();
@@ -69,7 +70,7 @@ public class StartGameService {
     }
 
     @Transactional
-    public int performRoundStart(Game game) {
+    public int performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
         // 마지막 실행 시간을 저장하는 변수
@@ -96,12 +97,7 @@ public class StartGameService {
         }
 
         List<Card> availableCards = prepareAvailableCards(game);
-        long now = System.currentTimeMillis(); // 현재 시간
-        if (now - lastAssign < 5000) { // 마지막 실행 후 5초가 지나지 않았다면
-            return betAmount; // 메소드 실행 중단
-        }
-        assignRandomCardsToPlayers(game, availableCards);
-        lastAssign = now;
+        assignRandomCardsToPlayers(game, availableCards, email);
         log.info("플레이어에게 카드 할당됨.");
 
         log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
@@ -132,18 +128,22 @@ public class StartGameService {
     }
 
     @Transactional
-    public void assignRandomCardsToPlayers(Game game, List<Card> availableCards) {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
         /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
          * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
         Collections.shuffle(availableCards);
-        Card playerOnecard = availableCards.get(0);
-        Card playerTwocard = availableCards.get(1);
-
-        game.setPlayerOneCard(playerOnecard);
-        game.setPlayerTwoCard(playerTwocard);
-
-        game.addUsedCard(playerOnecard);
-        game.addUsedCard(playerTwocard);
+        Card card;
+        if (email.equals(game.getPlayerOne().getEmail())) {
+            card = availableCards.get(1);
+            game.setPlayerTwoCard(card);
+            game.addUsedCard(card);
+        }
+        if (email.equals(game.getPlayerTwo().getEmail())) {
+            card = availableCards.get(0);
+            game.setPlayerOneCard(card);
+            game.addUsedCard(card);
+        }
     }
 
     @Transactional
