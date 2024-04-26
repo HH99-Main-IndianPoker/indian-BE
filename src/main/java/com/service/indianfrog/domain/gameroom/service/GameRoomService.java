@@ -16,10 +16,15 @@ import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,15 +43,17 @@ import io.micrometer.core.instrument.Timer;
 @Slf4j
 public class GameRoomService {
 
+    @PersistenceContext
+    private EntityManager em;
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
-    private Pattern pattern;
-    private SessionMappingStorage sessionMappingStorage;
+    private final SessionMappingStorage sessionMappingStorage;
     private final Timer getGameRoomTimer;
     private final Timer getValidateRoomsTimer;
     private final Timer getAllGameRoomTimer;
     private final MeterRegistry registry;
+    private Pattern pattern;
 
     public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
                            SessionMappingStorage sessionMappingStorage, MeterRegistry registry) {
@@ -81,7 +88,7 @@ public class GameRoomService {
             ValidateRoom host = validateRooms.stream()
                     .filter(ValidateRoom::isHost)
                     .findFirst()
-                    .orElse(null);
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
             // 초기화 안해주니까 에러남.
             String hostNickname = null;
@@ -120,11 +127,13 @@ public class GameRoomService {
     /**
      * 모든 게임방을 페이지 단위로 조회
      *
-     * @param pageable 페이징 정보
      * @return 페이징 처리된 게임방 목록
      */
     @Transactional(readOnly = true)
-    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
+    public Page<GetAllGameRoomResponseDto> getAllGameRooms() {
+
+        Pageable pageable = PageRequest.of(0, 15, Sort.by("createdAt").descending());
+
         return getAllGameRoomTimer.record(() -> gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
                 .map(gameRoom -> {
@@ -216,7 +225,7 @@ public class GameRoomService {
         LocalDateTime now = LocalDateTime.now();
         GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
 
-        ValidateRoom validateRoom = new ValidateRoom().builder()
+        ValidateRoom validateRoom = ValidateRoom.builder()
                 .participants(user.getNickname())
                 .gameRoom(savedGameRoom)
                 // 방 생성한 사람이 최초의 방장이니까 방장으로 설정
@@ -237,15 +246,14 @@ public class GameRoomService {
      */
     @Transactional
     public ParticipantInfo addParticipant(Long roomId, UserDetails userDetails) {
-        Timer.Sample addParticipantTimer = Timer.start(registry);
-
+        GameRoom gameRoom = em.find(GameRoom.class, roomId, LockModeType.PESSIMISTIC_WRITE);
         String email = userDetails.getUsername();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         String nickname = user.getNickname();
 
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+//        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
         if (gameRoom.getValidateRooms().size() >= 2) {
             throw new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage());
@@ -255,11 +263,12 @@ public class GameRoomService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_USER.getMessage());
         }
 
-        ValidateRoom validateRoom = new ValidateRoom().builder()
+        ValidateRoom validateRoom = ValidateRoom.builder()
                 .participants(nickname)
                 .gameRoom(gameRoom)
                 .build();
-        validateRoom = validateRoomRepository.save(validateRoom);
+
+        validateRoomRepository.save(validateRoom);
 
         List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomId(roomId);
 
@@ -281,7 +290,6 @@ public class GameRoomService {
 
         int hostPoint = hostInfo.getPoints();
 
-        addParticipantTimer.stop(registry.timer("addParticipant.time"));
         return new ParticipantInfo(participant, host, participantPoint, hostPoint, user.getImageUrl(), hostInfo.getImageUrl());
     }
 
@@ -295,6 +303,7 @@ public class GameRoomService {
     @Transactional
     public void removeParticipant(Long roomId, Principal participant) {
         Timer.Sample removeParticipantTimer = Timer.start(registry);
+        em.find(GameRoom.class, roomId, LockModeType.PESSIMISTIC_WRITE);
 
         String email = participant.getName();
         User user = userRepository.findByEmail(email)
@@ -331,10 +340,10 @@ public class GameRoomService {
             return;
         }
 
-        // 사용자의 닉네임을 기준으로 모든 게임방 참여 정보를 조회
-        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
-        // 검색된 모든 참여 정보를 삭제
-        validateRoomRepository.deleteAll(validateRooms);
+//        // 사용자의 닉네임을 기준으로 모든 게임방 참여 정보를 조회
+//        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
+//        // 검색된 모든 참여 정보를 삭제
+//        validateRoomRepository.deleteAll(validateRooms);
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
         removeSessionTimer.stop(registry.timer("removeSession.time"));

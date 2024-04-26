@@ -74,10 +74,6 @@ public class User extends Timestamped {
         this.email = email;
     }
 
-    public void setPoints(int point) {
-        this.points = point;
-    }
-
     public void incrementWins() {
         this.wins++;
     }
@@ -87,6 +83,14 @@ public class User extends Timestamped {
     }
 
     public void updatePoint(int point) {
-        this.points += point;
+        this.points = this.points + point;
+    }
+
+    public void decreasePoints(int point) {
+        this.points = Math.max(this.points - point, 0);
+    }
+
+    public void updatePassword(String resetPassword) {
+        this.password = resetPassword;
     }
 }

@@ -12,18 +12,20 @@ public class GameDto {
     public static class StartRoundResponse {
         private String gameState;
         private int round;
-        private PlayerInfo playerOneInfo;
-        private PlayerInfo playerTwoInfo;
+        private User playerOne;
+        private User playerTwo;
+        private Card otherCard;
         private Turn turn;
         private int firstBet;
         private int roundPot;
 
         public StartRoundResponse(String gameState, int round, User playerOne, User playerTwo,
-                                  Card playerOneCard, Card playerTwoCard, Turn turn, int firstBet) {
+                                  Card otherCard, Turn turn, int firstBet) {
             this.gameState = gameState;
             this.round = round;
-            this.playerOneInfo = new PlayerInfo(playerOne, playerOneCard);
-            this.playerTwoInfo = new PlayerInfo(playerTwo, playerTwoCard);
+            this.playerOne = playerOne;
+            this.playerTwo = playerTwo;
+            this.otherCard = otherCard;
             this.turn = turn;
             this.firstBet = firstBet;
             this.roundPot = firstBet * 2;
@@ -36,16 +38,16 @@ public class GameDto {
         private String nowState;
         private String nextState;
         private int round;
-        private Card otherCard;
+        private Card myCard;
         private User roundWinner;
         private User roundLoser;
         private int roundPot;
 
-        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card otherCard) {
+        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card myCard) {
             this.nowState = nowState;
             this.nextState = nextState;
             this.round = round;
-            this.otherCard = otherCard;
+            this.myCard = myCard;
             this.roundWinner = roundWinner;
             this.roundLoser = roundLoser;
             this.roundPot = roundPot;
