@@ -62,7 +62,6 @@ public class EndGameService {
             GameResult gameResult = determineGameResult(game);
             gameResultTimer.stop(registry.timer("roundResult.time"));
 
-
             Card myCard = null;
 
             if (email.equals(game.getPlayerOne().getEmail())) {
@@ -74,7 +73,6 @@ public class EndGameService {
             }
 
             log.info("myCard : {}", myCard);
-
 
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
             Timer.Sample roundPointsTimer = Timer.start(registry);
@@ -138,6 +136,7 @@ public class EndGameService {
             return new GameResult(playerOne, playerTwo);
         }
 
+        log.info("game = {}, playerOne = {}, playerTwo = {}", game, playerOne, playerTwo);
         GameResult result = getGameResult(game, playerOne, playerTwo);
 
         log.info("Game result determined: winnerId={}, loserId={}", result.getWinner(), result.getLoser());
