@@ -26,7 +26,7 @@ public class GameValidator {
 
     @Transactional
     public synchronized Game initializeOrRetrieveGame(GameRoom gameRoom) {
-        Game game = gameRoom.getCurrentGame();
+        Game game = repositoryHolder.gameRepository.findByGameRoom(gameRoom);
 
         if (game == null) {
             List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
@@ -44,9 +44,9 @@ public class GameValidator {
 
             User playerOne = repositoryHolder.userRepository.findByNickname(host);
             User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
-            gameRoom.startNewGame(playerOne, playerTwo);
-            repositoryHolder.gameRoomRepository.save(gameRoom);
-            game = gameRoom.getCurrentGame();
+
+            game = new Game(playerOne, playerTwo);
+            gameRoom.startNewGame(game);
         }
 
         return game;

@@ -55,6 +55,14 @@ public class EndGameService {
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
 
+            /* 라운드 승자 패자 결정
+            승자에게 라운드 포인트 할당
+            라운드 포인트 값 가져오기*/
+            Timer.Sample gameResultTimer = Timer.start(registry);
+            GameResult gameResult = determineGameResult(game);
+            gameResultTimer.stop(registry.timer("roundResult.time"));
+
+
             Card myCard = null;
 
             if (email.equals(game.getPlayerOne().getEmail())) {
@@ -67,12 +75,6 @@ public class EndGameService {
 
             log.info("myCard : {}", myCard);
 
-            /* 라운드 승자 패자 결정
-            승자에게 라운드 포인트 할당
-            라운드 포인트 값 가져오기*/
-            Timer.Sample gameResultTimer = Timer.start(registry);
-            GameResult gameResult = determineGameResult(game);
-            gameResultTimer.stop(registry.timer("roundResult.time"));
 
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
             Timer.Sample roundPointsTimer = Timer.start(registry);

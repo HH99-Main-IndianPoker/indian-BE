@@ -1,5 +1,6 @@
 package com.service.indianfrog.domain.game.entity;
 
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -14,6 +15,10 @@ public class Game {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "room_id")
+    private GameRoom gameRoom;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING) // Enum 타입을 저장
