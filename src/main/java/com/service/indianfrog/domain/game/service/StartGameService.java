@@ -53,7 +53,7 @@ public class StartGameService {
             Game game = gameRoom.getCurrentGame();
             log.info("Game : {}", game.getId());
 
-            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game, email));
+            performRoundStartTimer.record(() -> performRoundStart(game, email));
             Card card = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwoCard() : game.getPlayerOneCard();
 
             log.info("라운드 시작 작업 수행 완료.");
@@ -65,13 +65,13 @@ public class StartGameService {
 
             log.info("StartRoundResponse 반환 중.");
 
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, firstBet);
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount());
         });
     }
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public int performRoundStart(Game game, String email) {
+    public synchronized void performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
         // 마지막 실행 시간을 저장하는 변수
@@ -79,21 +79,19 @@ public class StartGameService {
         game.incrementRound();
         log.info("라운드가 {}로 증가됨.", game.getRound());
 
-        int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
-        log.info("초기 배팅금액 {}로 설정됨.", betAmount);
-
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        playerOne.decreasePoints(betAmount);
-        playerTwo.decreasePoints(betAmount);
+        if (game.getBetAmount() == 0){
 
-        game.setBetAmount(betAmount);
-        game.setPot(betAmount * 2);
+            int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
+            log.info("초기 배팅금액 {}로 설정됨.", betAmount);
 
-        if (game.getRound() == 1) {
-            initializeTurnForGame(game);
-            log.info("첫 라운드에 턴 초기화 됨.");
+            playerOne.decreasePoints(betAmount);
+            playerTwo.decreasePoints(betAmount);
+
+            game.setBetAmount(betAmount);
+            game.setPot(betAmount * 2);
         }
 
         List<Card> availableCards = prepareAvailableCards(game);
@@ -103,7 +101,10 @@ public class StartGameService {
         log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
         log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
-        return betAmount;
+        if (game.getRound() == 1) {
+            initializeTurnForGame(game);
+            log.info("첫 라운드에 턴 초기화 됨.");
+        }
     }
 
     @Transactional
