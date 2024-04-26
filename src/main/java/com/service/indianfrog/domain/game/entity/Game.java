@@ -49,6 +49,8 @@ public class Game {
     private boolean checkStatus;
     private boolean raiseStatus;
 
+    private long lastExecuted;
+
     // Constructor and methods
     public Game(User playerOne, User playerTwo) {
         this.playerOne = playerOne;
@@ -65,7 +67,12 @@ public class Game {
     }
 
     public void incrementRound() {
+        long now = System.currentTimeMillis(); // 현재 시간
+        if (now - lastExecuted < 5000) { // 마지막 실행 후 5초가 지나지 않았다면
+            return; // 메소드 실행 중단
+        }
         this.round++;
+        lastExecuted = now;
     }
 
     public void setPlayerOneCard(Card card) {

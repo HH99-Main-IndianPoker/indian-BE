@@ -8,6 +8,5 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface GameRoomRepository extends JpaRepository<GameRoom, Long>{
     @Query("SELECT gr FROM GameRoom gr LEFT JOIN FETCH gr.validateRooms WHERE gr.roomId = :gameRoomId")
-    @Lock(LockModeType.PESSIMISTIC_READ)
     GameRoom findByRoomId(Long gameRoomId);
 }

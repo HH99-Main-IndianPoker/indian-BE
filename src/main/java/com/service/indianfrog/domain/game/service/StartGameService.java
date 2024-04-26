@@ -28,6 +28,7 @@ public class StartGameService {
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
 
+
     public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
@@ -70,6 +71,7 @@ public class StartGameService {
     public int performRoundStart(Game game, String name) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
+        // 마지막 실행 시간을 저장하는 변수
 
         game.incrementRound();
         log.info("라운드가 {}로 증가됨.", game.getRound());
