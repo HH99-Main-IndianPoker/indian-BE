@@ -18,12 +18,14 @@ public class GameTurnService {
     private final Map<Long, Turn> gameTurns = new ConcurrentHashMap<>();
 
     public void setTurn(Long gameId, Turn turn) {
-        gameTurns.put(gameId, turn);
+        gameTurns.computeIfAbsent(gameId, k -> turn);
     }
 
     public Turn getTurn(Long gameId) {
         return gameTurns.get(gameId);
     }
 
-
+    public void removeTurn(Long gameId) {
+        gameTurns.remove(gameId);
+    }
 }

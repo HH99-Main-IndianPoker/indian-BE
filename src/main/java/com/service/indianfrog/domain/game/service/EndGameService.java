@@ -211,6 +211,7 @@ public class EndGameService {
         int loserTotalPoints = gameLoser.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
 
         /* 게임 데이터 초기화*/
+        gameTurnService.removeTurn(game.getId());
         game.resetGame();
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
@@ -223,6 +224,9 @@ public class EndGameService {
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
         players.add(gameResult.getWinner());
         players.add(gameResult.getLoser());
+
+        /* 기존 턴 삭제*/
+        gameTurnService.removeTurn(game.getId());
 
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);
