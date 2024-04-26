@@ -95,7 +95,7 @@ public class StartGameService {
         }
 
         List<Card> availableCards = prepareAvailableCards(game);
-        assignRandomCardsToPlayers(game, availableCards, email);
+        assignRandomCardsToPlayers(game, availableCards);
         log.info("플레이어에게 카드 할당됨.");
 
         log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
@@ -124,11 +124,8 @@ public class StartGameService {
         return new ArrayList<>(allCards);
     }
 
-    private void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
-        /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
-         * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
-        Collections.shuffle(availableCards);
-        Card card;
+    private void assignRandomCardsToPlayers(Game game) {
+        Card card = game.;
         if (email.equals(game.getPlayerOne().getEmail())) {
             card = availableCards.get(1);
             game.setPlayerTwoCard(card);

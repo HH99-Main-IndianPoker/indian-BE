@@ -1,6 +1,8 @@
 package com.service.indianfrog.domain.game.service;
 
 import com.service.indianfrog.domain.game.dto.GameStatus;
+import com.service.indianfrog.domain.game.entity.Card;
+import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
@@ -17,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
-import java.util.List;
+import java.util.*;
 
 import static com.service.indianfrog.global.exception.ErrorCode.INSUFFICIENT_POINTS;
 
@@ -60,6 +62,7 @@ public class ReadyService {
 
             if (validateRooms.size() == 2) {
                 gameValidator.gameValidate(gameRoom);
+                firstCardShuffle(gameRoom.getCurrentGame());
                 return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
             }
 
@@ -77,5 +80,30 @@ public class ReadyService {
 
     private boolean checkReadyPoints(User user) {
         return user.getPoints() > 0;
+    }
+
+    private void firstCardShuffle(Game game) {
+        /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
+         * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
+        List<Card> availableCards = prepareAvailableCards(game);
+        Collections.shuffle(availableCards);
+
+        Card playerOneCard = availableCards.get(0);
+        Card playerTwoCard = availableCards.get(1);
+
+        game.setPlayerOneCard(playerOneCard);
+        game.setPlayerTwoCard(playerTwoCard);
+
+        game.addUsedCard(playerOneCard);
+        game.addUsedCard(playerTwoCard);
+    }
+
+    private List<Card> prepareAvailableCards(Game game) {
+        /* 사용한 카드 목록과 전체 카드 목록을 가져옴
+         * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
+        Set<Card> usedCards = game.getUsedCards();
+        Set<Card> allCards = EnumSet.allOf(Card.class); // 성능 개선 여지 있음
+        allCards.removeAll(usedCards);
+        return new ArrayList<>(allCards);
     }
 }
