@@ -40,7 +40,7 @@ public class StartGameService {
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public StartRoundResponse startRound(Long gameRoomId, String email) {
+    public synchronized StartRoundResponse startRound(Long gameRoomId, String email) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
             log.info("게임룸 검증 및 검색 중.");
@@ -72,7 +72,7 @@ public class StartGameService {
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public int performRoundStart(Game game, String email) {
+    public synchronized int performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
         // 마지막 실행 시간을 저장하는 변수
@@ -108,7 +108,7 @@ public class StartGameService {
     }
 
     @Transactional
-    public int calculateInitialBet(User playerOne, User playerTwo) {
+    public synchronized int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
         int minPoints = Math.min(playerOnePoints, playerTwoPoints);
@@ -119,7 +119,7 @@ public class StartGameService {
         return Math.min(fivePercentOfMinPoint, 2000);
     }
 
-    public List<Card> prepareAvailableCards(Game game) {
+    public synchronized List<Card> prepareAvailableCards(Game game) {
         /* 사용한 카드 목록과 전체 카드 목록을 가져옴
          * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
         Set<Card> usedCards = game.getUsedCards();
@@ -149,7 +149,7 @@ public class StartGameService {
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public void initializeTurnForGame(Game game) {
+    public synchronized void initializeTurnForGame(Game game) {
         List<User> players = new ArrayList<>();
         players.add(game.getPlayerOne());
         players.add(game.getPlayerTwo());
