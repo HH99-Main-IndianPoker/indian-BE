@@ -71,6 +71,7 @@ public class StartGameService {
     }
 
     @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public int performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
@@ -128,7 +129,8 @@ public class StartGameService {
     }
 
     @Transactional
-    public void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public synchronized void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
         /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
          * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
         Collections.shuffle(availableCards);
@@ -146,6 +148,7 @@ public class StartGameService {
     }
 
     @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public void initializeTurnForGame(Game game) {
         List<User> players = new ArrayList<>();
         players.add(game.getPlayerOne());

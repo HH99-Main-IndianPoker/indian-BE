@@ -97,6 +97,7 @@ public class EndGameService {
 
     /* 게임 종료 로직*/
     @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public EndGameResponse endGame(Long gameRoomId) {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
@@ -123,7 +124,9 @@ public class EndGameService {
 
     /* 검증 메서드 필드*/
     /* 라운드 승자, 패자 선정 메서드 */
-    private GameResult determineGameResult(Game game) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    public GameResult determineGameResult(Game game) {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
@@ -139,7 +142,9 @@ public class EndGameService {
         return result;
     }
 
-    private GameResult getGameResult(Game game, User playerOne, User playerTwo) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    public GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
 
@@ -159,7 +164,9 @@ public class EndGameService {
     }
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
-    private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public void assignRoundPointsToWinner(Game game, GameResult gameResult) {
         User winner = gameResult.getWinner();
 
         int pointsToAdd = game.getPot();
@@ -198,7 +205,9 @@ public class EndGameService {
     }
 
     /* 게임 결과 처리 메서드*/
-    private GameResult processGameResults(Game game) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public GameResult processGameResults(Game game) {
         int playerOneTotalPoints = game.getPlayerOneRoundPoints();
         int playerTwoTotalPoints = game.getPlayerTwoRoundPoints();
 
@@ -220,7 +229,9 @@ public class EndGameService {
     }
 
     /* 1라운드 이후 턴 설정 메서드 */
-    private void initializeTurnForGame(Game game, GameResult gameResult) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public void initializeTurnForGame(Game game, GameResult gameResult) {
         List<User> players = new ArrayList<>();
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/

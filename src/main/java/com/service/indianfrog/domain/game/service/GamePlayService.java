@@ -13,7 +13,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.LockModeType;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ public class GamePlayService {
     }
 
     @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
         return totalGamePlayTimer.record(() -> {
             log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
@@ -62,7 +65,9 @@ public class GamePlayService {
         });
     }
 
-    private ActionDto performCheckAction(Game game, User user, Turn turn) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public ActionDto performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
         Timer.Sample checkTimer = Timer.start(registry);
         log.info("Check action: currentPlayer={}, user={}, currentPot={}, betAmount={}",
@@ -94,7 +99,9 @@ public class GamePlayService {
                 .build();
     }
 
-    private ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
         Timer.Sample raiseTimer = Timer.start(registry);
         int userPoints = user.getPoints();
         log.info("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
@@ -124,7 +131,9 @@ public class GamePlayService {
                 .build();
     }
 
-    private ActionDto performDieAction(Game game, User user) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public ActionDto performDieAction(Game game, User user) {
         Timer.Sample dieTimer = Timer.start(registry);
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
@@ -155,7 +164,9 @@ public class GamePlayService {
                 .build();
     }
 
-    private ActionDto gameEnd(User user, Game game) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public ActionDto gameEnd(User user, Game game) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
 
         int betPoint = user.getPoints() > 0 ? game.getBetAmount() : 0;
