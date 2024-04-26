@@ -30,7 +30,6 @@ public class StartGameService {
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
 
-
     public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
