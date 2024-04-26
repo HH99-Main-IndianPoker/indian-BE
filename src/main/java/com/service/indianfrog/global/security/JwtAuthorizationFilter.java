@@ -68,7 +68,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             }
 
             Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
-
+            log.error("카카오토큰님 여기를 지나가나여?");
             try {
                 setAuthentication(info.getSubject());
             } catch (Exception e) {

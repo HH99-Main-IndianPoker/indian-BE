@@ -45,8 +45,8 @@ springdoc:
 jwt:
   secret:
     key:
-      access: ${secret.key.access}
-      refresh: ${secret.key.refresh}
+      access: ${jwt.secret.key.access}
+      refresh: ${jwt.secret.key.refresh}
 
 cloud:
   aws:

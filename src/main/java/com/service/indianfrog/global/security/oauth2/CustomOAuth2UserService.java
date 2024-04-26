@@ -2,6 +2,10 @@ package com.service.indianfrog.global.security.oauth2;
 
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -11,11 +15,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -39,13 +38,15 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
          * OAuth2Attribute의 속성값들을 Map으로 반환 받는다.*/
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         String userNameAttributeName = userRequest.getClientRegistration()
-                .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
-
+            .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
         OAuth2Attribute oAuth2Attribute =
-                OAuth2Attribute.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
+            OAuth2Attribute.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
         Map<String, Object> memberAttribute = oAuth2Attribute.convertToMap();
+
+        log.debug("OAuth2 Provider: {}", registrationId);
+        log.debug("User Attributes: {}", memberAttribute);
 
 
         /*
@@ -53,33 +54,34 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         이메일로 가입된 회원인지 조회한다.*/
         String email = (String) memberAttribute.get("email");
         Optional<User> findMember = userRepository.findByEmail(email);
+        log.debug("Existing user email: {}", email);
 
         if (findMember.isEmpty()) {
             /*회원이 존재하지 않을경우, memberAttribute의 exist 값을 false로 넣어준다.
              *회원의 권한(회원이 존재하지 않으므로 기본권한인 ROLE_USER를 넣어준다), 회원속성, 속성이름을 이용해 DefaultOAuth2User 객체를 생성해 반환한다. */
-
+            log.debug("No existing user found, creating new user with email: {}", email);
             memberAttribute.put("exist", false);
 
             userRepository.save(User.builder()
-                    .email(email)
-                    .password(UUID.randomUUID().toString())
-                    .nickname(email)
+                .email(email)
+                .password(UUID.randomUUID().toString())
+                .nickname(email)
 //                    .authority(AuthorityType.USER)
-                    .build());
+                .build());
             return new DefaultOAuth2User(
-                    Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                    memberAttribute, "email");
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+                memberAttribute, "email");
         }
 
         /*
          * 회원이 존재할경우, memberAttribute의 exist 값을 true로 넣어준다.
          * 회원의 권한과, 회원속성, 속성이름을 이용해 DefaultOAuth2User 객체를 생성해 반환한다.*/
-
+        log.debug("User found: {}", findMember.get());
         memberAttribute.put("exist", true);
 
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_".concat("USER"))),
-                memberAttribute, "email");
+            Collections.singleton(new SimpleGrantedAuthority("ROLE_".concat("USER"))),
+            memberAttribute, "email");
     }
     //findMember.get().getAuthority().toString() ->userㅇㅔ 기입
 }

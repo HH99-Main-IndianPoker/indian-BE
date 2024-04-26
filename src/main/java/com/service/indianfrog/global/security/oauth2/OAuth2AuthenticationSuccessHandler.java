@@ -1,22 +1,19 @@
 package com.service.indianfrog.global.security.oauth2;
 
 import com.service.indianfrog.global.jwt.JwtUtil;
-import com.service.indianfrog.global.security.UserDetailsImpl;
 import com.service.indianfrog.global.security.dto.GeneratedToken;
-import com.service.indianfrog.global.security.filter.CustomResponseUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.net.URLEncoder;
 
 @Component
 @Slf4j
@@ -29,7 +26,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+        Authentication authentication) throws IOException, ServletException {
         /*
          * OAuth2User로 캐스팅하여 인증된 사용자 정보를 가져온다.
          * 사용자 이메일을 가져온다.
@@ -43,35 +41,27 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         boolean isExist = oAuth2User.getAttribute("exist");
         String role = oAuth2User.getAuthorities().stream().
-                findFirst() // 첫번째 Role을 찾아온다.
-                .orElseThrow(IllegalAccessError::new) // 존재하지 않을 시 예외를 던진다.
-                .getAuthority(); // Role을 가져온다.
+            findFirst() // 첫번째 Role을 찾아온다.
+            .orElseThrow(IllegalAccessError::new) // 존재하지 않을 시 예외를 던진다.
+            .getAuthority(); // Role을 가져온다.
 
+        // 회원이 존재하지 않는 경우
 
-        // 회원이 존재할경우
-        if (isExist) {
+        GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
+        setResponseTokens(response, tokens);
 
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
-            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+        response.sendRedirect("https://indianfrog.com/");
+    }
 
-            String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
-            Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
-            response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
+    /*TODO set localstorage를 하는가에대해서 물어보기*/
+    private void setResponseTokens(HttpServletResponse response, GeneratedToken tokens)
+        throws UnsupportedEncodingException {
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
+        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
-            response.sendRedirect("https://indianfrog.com/");
-        } else {
-            // 새로 생성된 사용자의 토큰 생성 및 전달
-            GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
-            response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-            response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-
-            String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
-            Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
-            response.addCookie(refreshTokenCookie);
-
-            response.sendRedirect("https://indianfrog.com/");
-        }
+        String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
+        Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
+        response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
     }
 
     private Cookie createCookie(String key, String value) {

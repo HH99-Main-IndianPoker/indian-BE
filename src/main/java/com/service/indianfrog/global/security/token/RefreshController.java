@@ -41,4 +41,8 @@ public class RefreshController {
         tokenService.republishAccessTokenWithRotate(accessToken, request, response);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    public void init() {
+
+    }
 }
