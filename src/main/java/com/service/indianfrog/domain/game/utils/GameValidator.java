@@ -34,7 +34,7 @@ public class GameValidator {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     public synchronized Game initializeOrRetrieveGame(GameRoom gameRoom) {
 
-        if (!repositoryHolder.gameRoomRepository.existsByCurrentGame(gameRoom.getCurrentGame())) {
+        if (!repositoryHolder.gameRepository.existsByGameRoom(gameRoom)) {
             log.info("game is null");
 
             List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
@@ -53,11 +53,11 @@ public class GameValidator {
             User playerOne = repositoryHolder.userRepository.findByNickname(host);
             User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
 
-            Game game = new Game(playerOne, playerTwo);
+            Game game = Game.builder().playerOne(playerOne).playerTwo(playerTwo).gameRoom(gameRoom).build();
+
+            repositoryHolder.gameRepository.save(game);
 
             gameRoom.startNewGame(game);
-
-            repositoryHolder.gameRoomRepository.save(gameRoom);
         }
 
         log.info("game is not null");

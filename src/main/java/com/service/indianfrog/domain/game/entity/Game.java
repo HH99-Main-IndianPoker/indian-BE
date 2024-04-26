@@ -3,6 +3,7 @@ package com.service.indianfrog.domain.game.entity;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import java.util.Set;
 
 @Entity
 @Getter
+@Table(name = "game")
 public class Game {
 
     @Id
@@ -57,9 +59,11 @@ public class Game {
     private long lastExecuted;
 
     // Constructor and methods
-    public Game(User playerOne, User playerTwo) {
+    @Builder
+    public Game(User playerOne, User playerTwo, GameRoom gameRoom) {
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
+        this.gameRoom = gameRoom;
         this.usedCards = new HashSet<>();
     }
 
