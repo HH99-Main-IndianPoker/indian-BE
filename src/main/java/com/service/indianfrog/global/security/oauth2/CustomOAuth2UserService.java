@@ -45,17 +45,21 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         Map<String, Object> memberAttribute = oAuth2Attribute.convertToMap();
 
+        log.debug("OAuth2 Provider: {}", registrationId);
+        log.debug("User Attributes: {}", memberAttribute);
+
 
         /*
         *  사용자 email 정보를 가져온다.
         이메일로 가입된 회원인지 조회한다.*/
         String email = (String) memberAttribute.get("email");
         Optional<User> findMember = userRepository.findByEmail(email);
+        log.debug("Existing user email: {}", email);
 
         if (findMember.isEmpty()) {
             /*회원이 존재하지 않을경우, memberAttribute의 exist 값을 false로 넣어준다.
              *회원의 권한(회원이 존재하지 않으므로 기본권한인 ROLE_USER를 넣어준다), 회원속성, 속성이름을 이용해 DefaultOAuth2User 객체를 생성해 반환한다. */
-
+            log.debug("No existing user found, creating new user with email: {}", email);
             memberAttribute.put("exist", false);
 
             userRepository.save(User.builder()
@@ -72,7 +76,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         /*
          * 회원이 존재할경우, memberAttribute의 exist 값을 true로 넣어준다.
          * 회원의 권한과, 회원속성, 속성이름을 이용해 DefaultOAuth2User 객체를 생성해 반환한다.*/
-
+        log.debug("User found: {}", findMember.get());
         memberAttribute.put("exist", true);
 
         return new DefaultOAuth2User(

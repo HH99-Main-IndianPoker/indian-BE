@@ -1,48 +1,47 @@
 package com.service.indianfrog.global.security.oauth2;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 @RestController
+@Slf4j
 public class Oauth2ProxyController {
 
     @Autowired
     private RestTemplate restTemplate;
 
-    @GetMapping("/oauth2/url/{service}")
-    public ResponseEntity<Object> proxyRequest(@PathVariable String service) {
-        String url = determineUrl(service);
-        if (url.isEmpty()) {
-            return ResponseEntity.badRequest().body("Unsupported service");
-        }
-
-        // 외부 서비스를 호출합니다.
+    // Naver OAuth2 URL 요청
+    @GetMapping("/oauth2/url/naver")
+    public ResponseEntity<Object> naverOAuth2Url() {
+        String url = "https://api.indianfrog.com/oauth2/authorization/naver";
         return ResponseEntity.ok(new UrlResponse(url));
     }
 
-    private String determineUrl(String service) {
-        switch (service) {
-            case "naver":
-//                return "http://localhost:8081/oauth2/authorization/naver";
-                return "https://api.indianfrog.com/oauth2/authorization/naver";
-            case "kakao":
-//                return "http://localhost:8081/oauth2/authorization/kakao";
-                return "https://api.indianfrog.com/oauth2/authorization/kakao";
-            case "google":
-//                return "http://localhost:8081/oauth2/authorization/google";
-                return "https://api.indianfrog.com/oauth2/authorization/google";
-            default:
-                return "";
-        }
+    // Kakao OAuth2 URL 요청
+    @GetMapping("/oauth2/url/kakao")
+    public ResponseEntity<Object> kakaoOAuth2Url() {
+        log.debug("Requesting Kakao OAuth2 URL");
+//        String url = "http://127.0.0.1:8081/oauth2/authorization/kakao";
+        String url = "https://api.indianfrog.com/oauth2/authorization/kakao";
+        log.debug("Redirecting to Kakao authorization page at {}", url);
+        return ResponseEntity.ok(new UrlResponse(url));
     }
 
+    // Google OAuth2 URL 요청
+    @GetMapping("/oauth2/url/google")
+    public ResponseEntity<Object> googleOAuth2Url() {
+        String url = "https://api.indianfrog.com/oauth2/authorization/google";
+        return ResponseEntity.ok(new UrlResponse(url));
+    }
+    // URL Response 클래스
     private static class UrlResponse {
-
         private String url;
 
         public UrlResponse(String url) {
