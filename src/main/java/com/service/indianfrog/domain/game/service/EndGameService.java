@@ -106,8 +106,10 @@ public class EndGameService {
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
             Timer.Sample gameResultTimer = Timer.start(registry);
+            log.info("processGameResults 시작");
             GameResult gameResult = processGameResults(game);
             gameResultTimer.stop(registry.timer("endGameResult.time"));
+            log.info("processGameResults 완료");
 
             GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
 
@@ -130,6 +132,7 @@ public class EndGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
+        log.info("게임 결과 결정");
         if (game.getFoldedUser() != null && game.getFoldedUser().equals(playerOne)) {
             return new GameResult(playerTwo, playerOne);
         } else if(game.getFoldedUser() != null && game.getFoldedUser().equals(playerTwo)){
