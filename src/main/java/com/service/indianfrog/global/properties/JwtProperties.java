@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 @Setter
 @Component
 public class JwtProperties {
-    @Value("${jwt.secret.key.access}")
+    @Value("${secret.key.access}")
     private String access;
-    @Value("${jwt.secret.key.refresh}")
+    @Value("${secret.key.refresh}")
     private String refresh;
 }
