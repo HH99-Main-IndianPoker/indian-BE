@@ -36,9 +36,8 @@ public class GameRoom extends Timestamped {
     private Set<ValidateRoom> validateRooms = new HashSet<>();
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "current_game_id")
+    @JoinColumn(name = "game_id")
     private Game currentGame;
-
 
     @Enumerated(EnumType.STRING)
     private GameState gameState;
@@ -57,8 +56,8 @@ public class GameRoom extends Timestamped {
 
     }
 
-    public void startNewGame(User playerOne, User playerTwo) {
-        this.currentGame = new Game(playerOne, playerTwo);
+    public void startNewGame(Game game) {
+        this.currentGame = game;
     }
 
     // 게임을 종료할 때 호출하는 메서드입니다.
