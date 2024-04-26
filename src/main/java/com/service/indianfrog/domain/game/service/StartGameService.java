@@ -69,7 +69,9 @@ public class StartGameService {
         });
     }
 
-    private int performRoundStart(Game game, String email) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public int performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
         // 마지막 실행 시간을 저장하는 변수
@@ -95,7 +97,7 @@ public class StartGameService {
         }
 
         List<Card> availableCards = prepareAvailableCards(game);
-        assignRandomCardsToPlayers(game, availableCards);
+        assignRandomCardsToPlayers(game, availableCards, email);
         log.info("플레이어에게 카드 할당됨.");
 
         log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
@@ -104,7 +106,9 @@ public class StartGameService {
         return betAmount;
     }
 
-    private int calculateInitialBet(User playerOne, User playerTwo) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
         int minPoints = Math.min(playerOnePoints, playerTwoPoints);
@@ -124,8 +128,8 @@ public class StartGameService {
         return new ArrayList<>(allCards);
     }
 
-    private void assignRandomCardsToPlayers(Game game) {
-        Card card = game.;
+    private void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
+        Card card;
         if (email.equals(game.getPlayerOne().getEmail())) {
             card = availableCards.get(1);
             game.setPlayerTwoCard(card);
