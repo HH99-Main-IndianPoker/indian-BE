@@ -6,7 +6,9 @@ import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,9 @@ import java.util.List;
 public class GameValidator {
     /* 생성자를 통한 필드 주입 */
     private final RepositoryHolder repositoryHolder;
+
+    @PersistenceContext
+    private EntityManager em;
 
     public GameValidator(RepositoryHolder repositoryHolder) {
         this.repositoryHolder = repositoryHolder;
@@ -34,7 +39,9 @@ public class GameValidator {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     public synchronized Game initializeOrRetrieveGame(GameRoom gameRoom) {
 
-        if (repositoryHolder.gameRepository.existsByGameRoom(gameRoom) == false) {
+//        gameRoom = em.find(GameRoom.class, gameRoom.getRoomId(), LockModeType.PESSIMISTIC_WRITE);
+
+        if (!repositoryHolder.gameRepository.existsByGameRoom(gameRoom)) {
             log.info("game is null : {}", repositoryHolder.gameRepository.existsByGameRoom(gameRoom));
 
             List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
