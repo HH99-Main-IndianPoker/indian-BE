@@ -6,10 +6,12 @@ import com.service.indianfrog.global.security.JwtAuthenticationFilter;
 import com.service.indianfrog.global.security.JwtAuthorizationFilter;
 import com.service.indianfrog.global.security.UserDetailsServiceImpl;
 import com.service.indianfrog.global.security.oauth2.CustomOAuth2UserService;
+import com.service.indianfrog.global.security.oauth2.MyAuthenticationFailureHandler;
 import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.service.indianfrog.global.security.token.TokenBlacklistService;
 import com.service.indianfrog.global.security.token.TokenService;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +32,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
@@ -37,19 +40,22 @@ public class WebSecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler customSuccessHandler;
+    private final MyAuthenticationFailureHandler authenticationFailureHandler;
     private final UserRepository userRepository;
     private final TokenBlacklistService tokenBlacklistService;
 
     public WebSecurityConfig(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService,
         AuthenticationConfiguration authenticationConfiguration,
         CustomOAuth2UserService customOAuth2UserService,
-        OAuth2AuthenticationSuccessHandler customSuccessHandler, UserRepository userRepository,
+        OAuth2AuthenticationSuccessHandler customSuccessHandler,
+        MyAuthenticationFailureHandler authenticationFailureHandler, UserRepository userRepository,
         TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.authenticationConfiguration = authenticationConfiguration;
         this.customOAuth2UserService = customOAuth2UserService;
         this.customSuccessHandler = customSuccessHandler;
+        this.authenticationFailureHandler = authenticationFailureHandler;
         this.userRepository = userRepository;
         this.tokenBlacklistService = tokenBlacklistService;
     }
@@ -125,6 +131,7 @@ public class WebSecurityConfig {
                 .oauth2Login((oauth2) -> oauth2
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))// OAuth2 로그인 성공 이후 사용자 정보를 가져올 때 설정 담당
+//                        .failureHandler(authenticationFailureHandler)
                         .successHandler(customSuccessHandler));// OAuth2 로그인 성공 시, 후작업을 진행할 UserService 인터페이스 구현체 등록
 
         http.authorizeHttpRequests((authorizeHttpRequests) ->
@@ -132,7 +139,9 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
                     .permitAll() // resources 접근 허용 설정
-                    .requestMatchers("/", "/user/**", "/login/**", "/oauth2/**", "/token/**", "/**")
+                    .requestMatchers("/", "/user/**",
+                        "/login/**", "/oauth2/**", "/token/**"
+                        , "/**", "/indian-frog-management/prometheus/**", "/error/**", "/monitoring/grafana/**")
                     .permitAll() // 메인 페이지 요청 허가
                     .requestMatchers("/ws/**").permitAll() // WebSocket 경로 허가
                     .requestMatchers("/topic/**").permitAll() // WebSocket 메시지 브로커 경로 허가

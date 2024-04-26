@@ -20,6 +20,7 @@ public enum ErrorCode {
     NOT_FOUND_HOST("방장을 찾지 못했습니다."),
     INSUFFICIENT_POINTS("포인트가 부족해 게임을 할 수 없습니다."),
     EMAIL_SEND_FAILURE("이메일이 발송되지 않았습니다. 이메일을 다시 확인하세요."),
+    OAUTH2_AUTHENTICATION_FAIL("OAuth2인증실패"),
     PASSWORD_NOT_CORRECT("패스워드가 일치하지 않습니다.")
     ;
 
