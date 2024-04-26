@@ -52,7 +52,7 @@ public class ReadyService {
             validateRoom.revert(validateRoom.isReady());
 
             Timer.Sample getValidateRoomTimer = Timer.start(registry);
-            List<ValidateRoom> validateRooms = validateRoomRepository.findAllByReadyTrue();
+            List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomAndReadyTrue(gameRoom);
             getValidateRoomTimer.stop(registry.timer("readyValidate.time"));
 
             if (validateRooms.size() == 2) {
