@@ -39,7 +39,7 @@ public class StartGameService {
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public StartRoundResponse startRound(Long gameRoomId, String email) {
+    public synchronized StartRoundResponse startRound(Long gameRoomId, String email) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
             log.info("게임룸 검증 및 검색 중.");
