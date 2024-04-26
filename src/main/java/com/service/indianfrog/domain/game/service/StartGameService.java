@@ -27,6 +27,8 @@ public class StartGameService {
     private final GameTurnService gameTurnService;
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
+    private long lastAssign;
+
 
 
     public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
@@ -86,20 +88,25 @@ public class StartGameService {
         playerOne.updatePoint(betAmount);
         playerTwo.updatePoint(betAmount);
 
-        game.setBetAmount(0);
+        game.setBetAmount(betAmount);
         game.setPot(betAmount * 2);
-
-        List<Card> availableCards = prepareAvailableCards(game);
-        assignRandomCardsToPlayers(game, availableCards, name);
-        log.info("플레이어에게 카드 할당됨.");
-
-        log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
-        log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
         if (game.getRound() == 1) {
             initializeTurnForGame(game);
             log.info("첫 라운드에 턴 초기화 됨.");
         }
+
+        List<Card> availableCards = prepareAvailableCards(game);
+        long now = System.currentTimeMillis(); // 현재 시간
+        if (now - lastAssign < 5000) { // 마지막 실행 후 5초가 지나지 않았다면
+            return betAmount; // 메소드 실행 중단
+        }
+        assignRandomCardsToPlayers(game, availableCards, name);
+        lastAssign = now;
+        log.info("플레이어에게 카드 할당됨.");
+
+        log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
+        log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
         return betAmount;
     }
@@ -116,7 +123,6 @@ public class StartGameService {
         return Math.min(fivePercentOfMinPoint, 2000);
     }
 
-    @Transactional
     public List<Card> prepareAvailableCards(Game game) {
         /* 사용한 카드 목록과 전체 카드 목록을 가져옴
          * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
