@@ -81,7 +81,7 @@ public class GamePlayService {
         game.updatePot(game.getBetAmount());
         game.updateCheck();
         turn.nextTurn();
-        log.info("First turn check completed, moving to next turn " + turn.getPlayers().toString());
+        log.info("First turn check completed, moving to next turn " + turn.getCurrentPlayer());
 
         checkTimer.stop(registry.timer("playCheck.time"));
         return ActionDto.builder()
@@ -158,9 +158,8 @@ public class GamePlayService {
     private ActionDto gameEnd(User user, Game game) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
 
-        int point = user.getPoints();
-        user.decreasePoints(game.getBetAmount());
-        int betPoint = user.getPoints() > 0 ? game.getBetAmount() : point;
+        int betPoint = user.getPoints() > 0 ? game.getBetAmount() : 0;
+        user.decreasePoints(betPoint);
         game.updatePot(betPoint);
 
         log.info("Check completed, game state updated: newPot={}, newUserPoints={}", game.getPot(), user.getPoints());

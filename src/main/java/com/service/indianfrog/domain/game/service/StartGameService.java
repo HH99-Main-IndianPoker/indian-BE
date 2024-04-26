@@ -84,9 +84,8 @@ public class StartGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        // 이거 왜 유저 포인트 - betAmount 하는 걸까?
-        playerOne.updatePoint(betAmount);
-        playerTwo.updatePoint(betAmount);
+        playerOne.decreasePoints(betAmount);
+        playerTwo.decreasePoints(betAmount);
 
         game.setBetAmount(betAmount);
         game.setPot(betAmount * 2);
