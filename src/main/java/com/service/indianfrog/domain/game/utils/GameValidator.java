@@ -58,11 +58,9 @@ public class GameValidator {
             gameRoom.startNewGame(game);
 
             repositoryHolder.gameRoomRepository.save(gameRoom);
-
-            log.info("game : {}", gameRoom.getCurrentGame().getId());
         }
 
-        log.info("game : {}", gameRoom.getCurrentGame().getId());
+        log.info("game is not null");
 
         return repositoryHolder.gameRepository.findByGameRoom(gameRoom);
     }
