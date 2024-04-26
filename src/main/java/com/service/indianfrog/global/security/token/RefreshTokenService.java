@@ -63,7 +63,7 @@ public class RefreshTokenService {
         Claims claims;
         try {
             tokenBlacklistService.blackListToken(token);
-            claims = jwtUtil.getUserInfoFromToken(accessToken.substring(7));
+            claims = jwtUtil.getUserInfoFromToken(token);
         } catch (ExpiredJwtException e) {
             claims = e.getClaims(); // 만료된 토큰에서도 사용자 정보를 추출
         }
