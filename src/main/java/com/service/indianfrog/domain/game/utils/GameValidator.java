@@ -24,7 +24,9 @@ public class GameValidator {
         this.repositoryHolder = repositoryHolder;
     }
 
-    public GameRoom validateAndRetrieveGameRoom(Long gameRoomId) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    public synchronized GameRoom validateAndRetrieveGameRoom(Long gameRoomId) {
         return repositoryHolder.gameRoomRepository.findByRoomId(gameRoomId);
     }
 
@@ -52,7 +54,9 @@ public class GameValidator {
             User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
 
             Game game = new Game(playerOne, playerTwo);
+
             gameRoom.startNewGame(game);
+
             repositoryHolder.gameRoomRepository.save(gameRoom);
 
             log.info("game : {}", gameRoom.getCurrentGame().getId());
@@ -60,7 +64,7 @@ public class GameValidator {
 
         log.info("game : {}", gameRoom.getCurrentGame().getId());
 
-        return gameRoom.getCurrentGame();
+        return repositoryHolder.gameRepository.findByGameRoom(gameRoom);
     }
 
     public User findUserByNickname(String nickname) {
