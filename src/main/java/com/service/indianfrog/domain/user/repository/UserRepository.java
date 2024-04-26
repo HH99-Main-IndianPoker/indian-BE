@@ -1,6 +1,5 @@
 package com.service.indianfrog.domain.user.repository;
 
-import com.service.indianfrog.domain.ranking.dto.Ranking.*;
 import com.service.indianfrog.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
