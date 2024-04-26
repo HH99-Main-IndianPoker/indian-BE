@@ -6,6 +6,8 @@ import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,10 +27,10 @@ public class GameValidator {
     }
 
     @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public synchronized Game initializeOrRetrieveGame(GameRoom gameRoom) {
-        Game game = repositoryHolder.gameRepository.findByGameRoom(gameRoom);
 
-        if (game == null) {
+        if (!repositoryHolder.gameRoomRepository.existsByCurrentGame(gameRoom.getCurrentGame())) {
             List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
 
             String host = validateRooms.stream()
@@ -45,11 +47,11 @@ public class GameValidator {
             User playerOne = repositoryHolder.userRepository.findByNickname(host);
             User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
 
-            game = new Game(playerOne, playerTwo);
+            Game game = new Game(playerOne, playerTwo);
             gameRoom.startNewGame(game);
         }
 
-        return game;
+        return gameRoom.getCurrentGame();
     }
 
     public User findUserByNickname(String nickname) {
