@@ -6,14 +6,14 @@ import lombok.Getter;
 
 @Getter
 public class GameInfo {
-    private Card playerCard;
+    private Card otherCard;
     private String currentPlayer;
     private int firstBet;
     private int roundPot;
     private int round;
 
-    public GameInfo(Card playerCard, Turn turn, int firstBet, int pot, int round) {
-        this.playerCard = playerCard;
+    public GameInfo(Card otherCard, Turn turn, int firstBet, int pot, int round) {
+        this.otherCard = otherCard;
         this.currentPlayer = turn.getCurrentPlayer();
         this.firstBet = firstBet;
         this.roundPot = pot;

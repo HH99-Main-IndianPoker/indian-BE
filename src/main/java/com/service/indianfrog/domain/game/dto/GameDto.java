@@ -12,18 +12,20 @@ public class GameDto {
     public static class StartRoundResponse {
         private String gameState;
         private int round;
-        private PlayerInfo playerOneInfo;
-        private PlayerInfo playerTwoInfo;
+        private User playerOne;
+        private User playerTwo;
+        private Card otherCard;
         private Turn turn;
         private int firstBet;
         private int roundPot;
 
         public StartRoundResponse(String gameState, int round, User playerOne, User playerTwo,
-                                  Card playerOneCard, Card playerTwoCard, Turn turn, int firstBet) {
+                                  Card otherCard, Turn turn, int firstBet) {
             this.gameState = gameState;
             this.round = round;
-            this.playerOneInfo = new PlayerInfo(playerOne, playerOneCard);
-            this.playerTwoInfo = new PlayerInfo(playerTwo, playerTwoCard);
+            this.playerOne = playerOne;
+            this.playerTwo = playerTwo;
+            this.otherCard = otherCard;
             this.turn = turn;
             this.firstBet = firstBet;
             this.roundPot = firstBet * 2;

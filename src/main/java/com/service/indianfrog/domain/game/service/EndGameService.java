@@ -56,9 +56,13 @@ public class EndGameService {
 
             if (email.equals(game.getPlayerOne().getEmail())) {
                 myCard = game.getPlayerOneCard();
-            } else if(email.equals(game.getPlayerTwo().getEmail())){
+            }
+
+            if(email.equals(game.getPlayerTwo().getEmail())){
                 myCard = game.getPlayerTwoCard();
             }
+
+            log.info("myCard : {}", myCard);
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -135,6 +139,9 @@ public class EndGameService {
     private GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
+
+        log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
+        log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
         /* 카드 숫자가 같으면 1번 덱의 카드를 가진 플레이어가 승리*/
         GameResult result;

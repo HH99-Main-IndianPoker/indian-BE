@@ -5,7 +5,6 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
-import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
@@ -26,24 +25,20 @@ public class StartGameService {
     /* 생성자를 통한 필드 주입 */
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
-    private final GameRepository gameRepository;
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRepository gameRepository, MeterRegistry registry) {
+    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
-        this.gameRepository = gameRepository;
         this.totalRoundStartTimer = registry.timer("totalRoundStart.time");
         this.performRoundStartTimer = registry.timer("performRoundStart.time");
     }
 
     @Transactional
-    public StartRoundResponse startRound(Long gameRoomId) {
+    public StartRoundResponse startRound(Long gameRoomId, String name) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
-
-
             log.info("게임룸 검증 및 검색 중.");
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             log.info("게임룸 검증 및 검색 완료.");
@@ -55,15 +50,10 @@ public class StartGameService {
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
             log.info("게임 초기화 또는 검색 완료.");
 
-
-
-            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game));
+            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game, name));
+            Card card = name.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwoCard() : game.getPlayerOneCard();
 
             log.info("라운드 시작 작업 수행 완료.");
-
-            gameValidator.saveGameRoomState(gameRoom);
-            log.info("게임룸 상태 저장 완료.");
-
             int round = game.getRound();
 
             log.info("게임의 현재 턴 가져오는 중.");
@@ -71,12 +61,13 @@ public class StartGameService {
             log.info("현재 턴 가져옴.");
 
             log.info("StartRoundResponse 반환 중.");
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(),
-                    game.getPlayerOneCard(), game.getPlayerTwoCard(), turn, firstBet);
+
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, firstBet);
         });
     }
 
-    private int performRoundStart(Game game) {
+    @Transactional
+    public int performRoundStart(Game game, String name) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
@@ -97,10 +88,11 @@ public class StartGameService {
         game.setPot(betAmount * 2);
 
         List<Card> availableCards = prepareAvailableCards(game);
-        assignRandomCardsToPlayers(game, availableCards);
+        assignRandomCardsToPlayers(game, availableCards, name);
         log.info("플레이어에게 카드 할당됨.");
 
-        gameRepository.save(game);
+        log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
+        log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
         if (game.getRound() == 1) {
             initializeTurnForGame(game);
@@ -110,7 +102,8 @@ public class StartGameService {
         return betAmount;
     }
 
-    private int calculateInitialBet(User playerOne, User playerTwo) {
+    @Transactional
+    public int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
         int minPoints = Math.min(playerOnePoints, playerTwoPoints);
@@ -121,7 +114,8 @@ public class StartGameService {
         return Math.min(fivePercentOfMinPoint, 2000);
     }
 
-    private List<Card> prepareAvailableCards(Game game) {
+    @Transactional
+    public List<Card> prepareAvailableCards(Game game) {
         /* 사용한 카드 목록과 전체 카드 목록을 가져옴
          * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
         Set<Card> usedCards = game.getUsedCards();
@@ -130,22 +124,29 @@ public class StartGameService {
         return new ArrayList<>(allCards);
     }
 
-    private void assignRandomCardsToPlayers(Game game, List<Card> availableCards) {
+    @Transactional
+    public void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
         /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
          * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
         Collections.shuffle(availableCards);
+        Card card;
 
-        Card playerOneCard = availableCards.get(0);
-        Card playerTwoCard = availableCards.get(1);
+        if (email.equals(game.getPlayerOne().getEmail())) {
+            card = availableCards.get(1);
+            game.setPlayerTwoCard(card);
+            game.addUsedCard(card);
+        }
 
-        game.setPlayerOneCard(playerOneCard);
-        game.setPlayerTwoCard(playerTwoCard);
+        if (email.equals(game.getPlayerTwo().getEmail())) {
+            card = availableCards.get(0);
+            game.setPlayerOneCard(card);
+            game.addUsedCard(card);
+        }
 
-        game.addUsedCard(playerOneCard);
-        game.addUsedCard(playerTwoCard);
     }
 
-    private void initializeTurnForGame(Game game) {
+    @Transactional
+    public void initializeTurnForGame(Game game) {
         List<User> players = new ArrayList<>();
         players.add(game.getPlayerOne());
         players.add(game.getPlayerTwo());

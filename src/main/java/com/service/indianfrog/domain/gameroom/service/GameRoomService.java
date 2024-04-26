@@ -45,16 +45,15 @@ public class GameRoomService {
 
     @PersistenceContext
     private EntityManager em;
-
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
-    private Pattern pattern;
-    private SessionMappingStorage sessionMappingStorage;
+    private final SessionMappingStorage sessionMappingStorage;
     private final Timer getGameRoomTimer;
     private final Timer getValidateRoomsTimer;
     private final Timer getAllGameRoomTimer;
     private final MeterRegistry registry;
+    private Pattern pattern;
 
     public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
                            SessionMappingStorage sessionMappingStorage, MeterRegistry registry) {
@@ -89,7 +88,7 @@ public class GameRoomService {
             ValidateRoom host = validateRooms.stream()
                     .filter(ValidateRoom::isHost)
                     .findFirst()
-                    .orElse(null);
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
             // 초기화 안해주니까 에러남.
             String hostNickname = null;
@@ -226,7 +225,7 @@ public class GameRoomService {
         LocalDateTime now = LocalDateTime.now();
         GameRoom savedGameRoom = gameRoomRepository.save(gameRoomDto.toEntity());
 
-        ValidateRoom validateRoom = new ValidateRoom().builder()
+        ValidateRoom validateRoom = ValidateRoom.builder()
                 .participants(user.getNickname())
                 .gameRoom(savedGameRoom)
                 // 방 생성한 사람이 최초의 방장이니까 방장으로 설정
@@ -264,11 +263,12 @@ public class GameRoomService {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_USER.getMessage());
         }
 
-        ValidateRoom validateRoom = new ValidateRoom().builder()
+        ValidateRoom validateRoom = ValidateRoom.builder()
                 .participants(nickname)
                 .gameRoom(gameRoom)
                 .build();
-        validateRoom = validateRoomRepository.save(validateRoom);
+
+        validateRoomRepository.save(validateRoom);
 
         List<ValidateRoom> validateRooms = validateRoomRepository.findAllByGameRoomRoomId(roomId);
 
