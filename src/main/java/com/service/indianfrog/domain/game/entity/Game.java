@@ -1,7 +1,9 @@
 package com.service.indianfrog.domain.game.entity;
 
+import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.HashSet;
@@ -9,11 +11,16 @@ import java.util.Set;
 
 @Entity
 @Getter
+@Table(name = "game")
 public class Game {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "room_id")
+    private GameRoom gameRoom;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING) // Enum 타입을 저장
@@ -49,10 +56,14 @@ public class Game {
     private boolean checkStatus;
     private boolean raiseStatus;
 
+    private long lastExecuted;
+
     // Constructor and methods
-    public Game(User playerOne, User playerTwo) {
+    @Builder
+    public Game(User playerOne, User playerTwo, GameRoom gameRoom) {
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
+        this.gameRoom = gameRoom;
         this.usedCards = new HashSet<>();
     }
 
@@ -65,7 +76,12 @@ public class Game {
     }
 
     public void incrementRound() {
+        long now = System.currentTimeMillis(); // 현재 시간
+        if (now - lastExecuted < 5000) { // 마지막 실행 후 5초가 지나지 않았다면
+            return; // 메소드 실행 중단
+        }
         this.round++;
+        lastExecuted = now;
     }
 
     public void setPlayerOneCard(Card card) {

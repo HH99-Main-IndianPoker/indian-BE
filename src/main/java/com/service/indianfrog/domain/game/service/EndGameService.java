@@ -14,7 +14,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.LockModeType;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,24 +47,13 @@ public class EndGameService {
 
     /* 라운드 종료 로직*/
     @Transactional
-    public EndRoundResponse endRound(Long gameRoomId, String email) {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public synchronized EndRoundResponse endRound(Long gameRoomId, String email) {
         return totalRoundEndTimer.record(() -> {
             log.info("Ending round for gameRoomId={}", gameRoomId);
 
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
-
-            Card myCard = null;
-
-            if (email.equals(game.getPlayerOne().getEmail())) {
-                myCard = game.getPlayerOneCard();
-            }
-
-            if(email.equals(game.getPlayerTwo().getEmail())){
-                myCard = game.getPlayerTwoCard();
-            }
-
-            log.info("myCard : {}", myCard);
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -70,6 +61,20 @@ public class EndGameService {
             Timer.Sample gameResultTimer = Timer.start(registry);
             GameResult gameResult = determineGameResult(game);
             gameResultTimer.stop(registry.timer("roundResult.time"));
+
+
+            Card myCard = null;
+
+            if (email.equals(game.getPlayerOne().getEmail())) {
+                myCard = game.getPlayerOneCard();
+            }
+
+            if(email.equals(game.getPlayerTwo().getEmail())) {
+                myCard = game.getPlayerTwoCard();
+            }
+
+            log.info("myCard : {}", myCard);
+
 
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
             Timer.Sample roundPointsTimer = Timer.start(registry);
@@ -94,7 +99,8 @@ public class EndGameService {
 
     /* 게임 종료 로직*/
     @Transactional
-    public EndGameResponse endGame(Long gameRoomId) {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public synchronized EndGameResponse endGame(Long gameRoomId) {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
@@ -120,7 +126,9 @@ public class EndGameService {
 
     /* 검증 메서드 필드*/
     /* 라운드 승자, 패자 선정 메서드 */
-    private GameResult determineGameResult(Game game) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    public synchronized GameResult determineGameResult(Game game) {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
@@ -136,7 +144,9 @@ public class EndGameService {
         return result;
     }
 
-    private GameResult getGameResult(Game game, User playerOne, User playerTwo) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    public synchronized GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
 
@@ -156,7 +166,9 @@ public class EndGameService {
     }
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
-    private void assignRoundPointsToWinner(Game game, GameResult gameResult) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public synchronized void assignRoundPointsToWinner(Game game, GameResult gameResult) {
         User winner = gameResult.getWinner();
 
         int pointsToAdd = game.getPot();
@@ -195,7 +207,9 @@ public class EndGameService {
     }
 
     /* 게임 결과 처리 메서드*/
-    private GameResult processGameResults(Game game) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public synchronized GameResult processGameResults(Game game) {
         int playerOneTotalPoints = game.getPlayerOneRoundPoints();
         int playerTwoTotalPoints = game.getPlayerTwoRoundPoints();
 
@@ -217,7 +231,9 @@ public class EndGameService {
     }
 
     /* 1라운드 이후 턴 설정 메서드 */
-    private void initializeTurnForGame(Game game, GameResult gameResult) {
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public synchronized void initializeTurnForGame(Game game, GameResult gameResult) {
         List<User> players = new ArrayList<>();
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
