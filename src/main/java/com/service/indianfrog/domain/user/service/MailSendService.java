@@ -5,6 +5,7 @@ import com.service.indianfrog.global.exception.RestApiException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,9 @@ public class MailSendService {
             message.setTo(to);
             message.setSubject(subject);
             message.setText(content);
+//            ClassPathResource imageResource = new ClassPathResource("images/test.png");
+//            message.addAttachment("test.png",imageResource);
+
             javaMailSender.send(mimeMessage);
         } catch (MessagingException e) {
             log.error("이메일 전송 실패");
