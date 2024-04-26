@@ -11,11 +11,10 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
 
-    @Query(value = "SELECT infp.user.image_url, DENSE_RANK() OVER (ORDER BY points DESC) AS ranking, nickname, points " +
+    @Query(value = "SELECT infp.user.image_url, ROW_NUMBER() OVER (ORDER BY points DESC) AS ranking, nickname, points " +
             "FROM infp.user " +
             "LIMIT 100", nativeQuery = true)
     List<Object[]> findUsersWithRank();
-
 
     Optional<User> findByEmail(String email);
 
