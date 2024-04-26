@@ -2,6 +2,7 @@ package com.service.indianfrog.domain.game.service;
 
 import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.entity.GameState;
+import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
@@ -28,14 +29,16 @@ public class ReadyService {
     private final UserRepository userRepository;
     private final MeterRegistry registry;
     private final Timer totalGameReadyTimer;
+    private final GameValidator gameValidator;
 
     public ReadyService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository,
-                        UserRepository userRepository, MeterRegistry registry) {
+                        UserRepository userRepository, MeterRegistry registry, GameValidator gameValidator) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
         this.registry = registry;
         this.totalGameReadyTimer = registry.timer("totalReady.time");
+        this.gameValidator = gameValidator;
     }
 
     @Transactional
@@ -56,6 +59,7 @@ public class ReadyService {
             getValidateRoomTimer.stop(registry.timer("readyValidate.time"));
 
             if (validateRooms.size() == 2) {
+                gameValidator.gameValidate(gameRoom);
                 return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
             }
 

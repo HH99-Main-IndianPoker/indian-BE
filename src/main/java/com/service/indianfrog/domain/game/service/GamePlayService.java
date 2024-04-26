@@ -45,7 +45,7 @@ public class GamePlayService {
         return totalGamePlayTimer.record(() -> {
             log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            Game game = gameRoom.getCurrentGame();
             User user = gameValidator.findUserByNickname(gameBetting.getNickname());
             Turn turn = gameTurnService.getTurn(game.getId());
 

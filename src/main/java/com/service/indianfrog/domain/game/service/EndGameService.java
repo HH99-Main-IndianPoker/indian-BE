@@ -53,7 +53,7 @@ public class EndGameService {
             log.info("Ending round for gameRoomId={}", gameRoomId);
 
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            Game game = gameRoom.getCurrentGame();
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -104,7 +104,7 @@ public class EndGameService {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
+            Game game = gameRoom.getCurrentGame();
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
             Timer.Sample gameResultTimer = Timer.start(registry);
