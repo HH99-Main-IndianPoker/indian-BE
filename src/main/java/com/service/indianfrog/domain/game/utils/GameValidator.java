@@ -25,7 +25,7 @@ public class GameValidator {
     }
 
     @Transactional
-    public Game initializeOrRetrieveGame(GameRoom gameRoom) {
+    public synchronized Game initializeOrRetrieveGame(GameRoom gameRoom) {
         Game game = gameRoom.getCurrentGame();
 
         if (game == null) {
