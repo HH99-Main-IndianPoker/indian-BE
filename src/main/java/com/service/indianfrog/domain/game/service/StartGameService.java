@@ -89,7 +89,7 @@ public class StartGameService {
             playerTwo.decreasePoints(betAmount);
 
             game.setBetAmount(0);
-            game.setPot(betAmount * 2);
+            game.updatePot(betAmount * 2);
         }
 
         if(game.getRound() > 1) {
