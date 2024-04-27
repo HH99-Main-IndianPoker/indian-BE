@@ -65,7 +65,7 @@ public class StartGameService {
 
             log.info("StartRoundResponse 반환 중.");
 
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount());
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount(), game.getPot());
         });
     }
 
