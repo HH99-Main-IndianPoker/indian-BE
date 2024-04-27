@@ -4,7 +4,6 @@ import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.utils.GameValidator;
-import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -80,8 +79,6 @@ public class GameSessionService {
             return finalState;
         } else {
             log.info("Conflicting choices in gameRoomId={}, defaulting to ENTER state", gameRoomId);
-            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-            gameRoom.endCurrentGame();
             return GameState.ENTER;
         }
     }

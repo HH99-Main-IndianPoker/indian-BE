@@ -4,6 +4,7 @@ import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.UserChoice;
+import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.game.service.GameSessionService;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;

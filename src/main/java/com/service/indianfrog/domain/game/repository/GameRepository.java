@@ -6,5 +6,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GameRepository extends JpaRepository<Game, Long> {
     boolean existsByGameRoom(GameRoom gameRoom);
-    void deleteAllByGameRoomRoomId(Long gameRoomId);
 }

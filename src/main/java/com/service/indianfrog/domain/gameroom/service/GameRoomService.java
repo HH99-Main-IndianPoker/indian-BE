@@ -1,6 +1,5 @@
 package com.service.indianfrog.domain.gameroom.service;
 
-import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
@@ -17,6 +16,7 @@ import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
@@ -39,7 +39,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import io.micrometer.core.instrument.Timer;
 
 @Service
 @Slf4j
@@ -89,10 +88,10 @@ public class GameRoomService {
                     validateRoomRepository.findAllValidateRoomsByRoomId(roomId));
 
             // 방장 정보 추출
-            ValidateRoom host = validateRooms.stream()
+            ValidateRoom host = validateRooms != null ? validateRooms.stream()
                     .filter(ValidateRoom::isHost)
                     .findFirst()
-                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage())) : null;
 
             // 초기화 안해주니까 에러남.
             String hostNickname = null;
@@ -110,10 +109,10 @@ public class GameRoomService {
             String participantImageUrl = null;
 
             // 다른 참가자 찾기
-            ValidateRoom participant = validateRooms.stream()
+            ValidateRoom participant = validateRooms != null ? validateRooms.stream()
                     .filter(v -> !v.isHost()) // 방장 제외
                     .findFirst()
-                    .orElse(null);
+                    .orElse(null) : null;
 
             if (participant != null) {
                 participantNickname = participant.getParticipants();
@@ -122,7 +121,7 @@ public class GameRoomService {
             }
 
             // 게임방 정보와 참가자 정보 반환
-            return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getGameState(), validateRooms.size(),
+            return new GetGameRoomResponseDto(gameRoom.getRoomId(), gameRoom.getRoomName(), gameRoom.getGameState(), validateRooms != null ? validateRooms.size() : 0,
                     hostNickname, hostPoints, hostImageUrl, participantNickname, participantPoints, participantImageUrl);
         });
     }
@@ -316,14 +315,21 @@ public class GameRoomService {
 
         //특정 게임방에있는 특정 참가자 찾기
         ValidateRoom validateRoom = validateRoomRepository.findByGameRoomRoomIdAndParticipants(roomId, nickname);
+        GameRoom gameRoom = gameRoomRepository.findByRoomId(roomId);
 
         if (validateRoomRepository.countByGameRoomRoomId(roomId) == 1) {
             validateRoomRepository.delete(validateRoom);
+            if(gameRoomRepository.existsByCurrentGame(gameRoom.getCurrentGame())){
+                gameRepository.delete(gameRoom.getCurrentGame());
+            }
             gameRoomRepository.deleteById(roomId);
         }
 
         if (validateRoomRepository.countByGameRoomRoomId(roomId) == 2) {
             validateRoomRepository.delete(validateRoom);
+            if(gameRoomRepository.existsByCurrentGame(gameRoom.getCurrentGame())){
+                gameRepository.delete(gameRoom.getCurrentGame());
+            }
             ValidateRoom newHost = validateRoomRepository.findByGameRoomRoomId(roomId);
             newHost.updateHost();
         }
@@ -351,9 +357,5 @@ public class GameRoomService {
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
         removeSessionTimer.stop(registry.timer("removeSession.time"));
-    }
-
-    public void removeGame(Long gameRoomId) {
-        gameRepository.deleteAllByGameRoomRoomId(gameRoomId);
     }
 }
