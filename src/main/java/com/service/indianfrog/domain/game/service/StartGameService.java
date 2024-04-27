@@ -39,7 +39,7 @@ public class StartGameService {
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public synchronized StartRoundResponse startRound(Long gameRoomId, String email) {
+    public StartRoundResponse startRound(Long gameRoomId, String email) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
             log.info("게임룸 검증 및 검색 중.");
@@ -49,11 +49,11 @@ public class StartGameService {
             gameRoom.updateGameState(GameState.START);
             log.info("게임 상태를 START로 업데이트 함.");
 
-            log.info("게임 초기화 또는 검색 중.");
-            Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
-            log.info("게임 초기화 또는 검색 완료.");
+            log.info("게임 검색중.");
+            Game game = gameRoom.getCurrentGame();
+            log.info("Game : {}", game.getId());
 
-            int firstBet = performRoundStartTimer.record(() -> performRoundStart(game, email));
+            performRoundStartTimer.record(() -> performRoundStart(game, email));
             Card card = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwoCard() : game.getPlayerOneCard();
 
             log.info("라운드 시작 작업 수행 완료.");
@@ -65,49 +65,52 @@ public class StartGameService {
 
             log.info("StartRoundResponse 반환 중.");
 
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, firstBet);
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount());
         });
     }
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public synchronized int performRoundStart(Game game, String email) {
+    public synchronized void performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
-        // 마지막 실행 시간을 저장하는 변수
 
         game.incrementRound();
         log.info("라운드가 {}로 증가됨.", game.getRound());
 
-        int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
-        log.info("초기 배팅금액 {}로 설정됨.", betAmount);
-
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        playerOne.decreasePoints(betAmount);
-        playerTwo.decreasePoints(betAmount);
+        if (game.getBetAmount() == 0){
+            int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
+            log.info("초기 배팅금액 {}로 설정됨.", betAmount);
 
-        game.setBetAmount(betAmount);
-        game.setPot(betAmount * 2);
+            playerOne.decreasePoints(betAmount);
+            playerTwo.decreasePoints(betAmount);
+
+            game.setBetAmount(betAmount);
+            game.setPot(betAmount * 2);
+        }
+
+        if(game.getRound() > 1) {
+            List<Card> availableCards = prepareAvailableCards(game);
+            Collections.shuffle(availableCards);
+            assignRandomCardsToPlayers(game, availableCards, email);
+
+            log.info("플레이어에게 카드 할당됨.");
+            log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
+            log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
+        }
 
         if (game.getRound() == 1) {
             initializeTurnForGame(game);
             log.info("첫 라운드에 턴 초기화 됨.");
         }
-
-        List<Card> availableCards = prepareAvailableCards(game);
-        assignRandomCardsToPlayers(game, availableCards, email);
-        log.info("플레이어에게 카드 할당됨.");
-
-        log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
-        log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
-
-        return betAmount;
     }
 
     @Transactional
-    public synchronized int calculateInitialBet(User playerOne, User playerTwo) {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
         int minPoints = Math.min(playerOnePoints, playerTwoPoints);
@@ -118,7 +121,7 @@ public class StartGameService {
         return Math.min(fivePercentOfMinPoint, 2000);
     }
 
-    public synchronized List<Card> prepareAvailableCards(Game game) {
+    private List<Card> prepareAvailableCards(Game game) {
         /* 사용한 카드 목록과 전체 카드 목록을 가져옴
          * 전체 카드 목록에서 사용한 카드 목록을 제외하고 남은 카드 목록을 반환한다*/
         Set<Card> usedCards = game.getUsedCards();
@@ -127,12 +130,7 @@ public class StartGameService {
         return new ArrayList<>(allCards);
     }
 
-    @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public synchronized void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
-        /* 카드를 섞은 후 플레이어에게 각각 한장 씩 제공
-         * 플레이어에게 제공한 카드는 사용한 카드목록에 포함되어 다음 라운드에서는 사용되지 않는다*/
-        Collections.shuffle(availableCards);
+    private void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
         Card card;
         if (email.equals(game.getPlayerOne().getEmail())) {
             card = availableCards.get(1);
@@ -146,9 +144,7 @@ public class StartGameService {
         }
     }
 
-    @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public synchronized void initializeTurnForGame(Game game) {
+    private void initializeTurnForGame(Game game) {
         List<User> players = new ArrayList<>();
         players.add(game.getPlayerOne());
         players.add(game.getPlayerTwo());
