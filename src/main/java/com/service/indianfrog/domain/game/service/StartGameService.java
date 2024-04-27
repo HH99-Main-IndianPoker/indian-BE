@@ -81,14 +81,14 @@ public class StartGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        if (game.getBetAmount() == 0){
+        if (game.getPot() == 0){
             int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
             log.info("초기 배팅금액 {}로 설정됨.", betAmount);
 
             playerOne.decreasePoints(betAmount);
             playerTwo.decreasePoints(betAmount);
 
-            game.setBetAmount(betAmount);
+            game.setBetAmount(0);
             game.setPot(betAmount * 2);
         }
 
