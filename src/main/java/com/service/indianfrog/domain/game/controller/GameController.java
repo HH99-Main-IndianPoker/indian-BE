@@ -5,6 +5,7 @@ import com.service.indianfrog.domain.game.dto.GameDto.EndGameResponse;
 import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
 import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
 import com.service.indianfrog.domain.game.service.*;
+import com.service.indianfrog.global.exception.RestApiException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -65,7 +66,7 @@ public class GameController {
                     case "ACTION" ->
                             gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
                     case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, userChoices);
-                    default -> throw new IllegalStateException("Unexpected value: " + gameState);
+                    default -> throw new RestApiException(gameState);
                 };
                 // 공통 메시지 전송
                 String destination = "/topic/gameRoom/" + gameRoomId;

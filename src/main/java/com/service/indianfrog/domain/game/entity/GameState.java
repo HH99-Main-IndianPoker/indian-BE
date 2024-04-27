@@ -27,7 +27,9 @@ public enum GameState {
     LEAVE("LEAVE"),
     GAME_END("GAME_END"),
     USER_CHOICE("USER_CHOICE"),
-    ALONE("ALONE");
+    ALONE("ALONE"),
+    WAIT("WAIT")
+    ;
 
     private final String gameState;
 

@@ -55,7 +55,7 @@ public class GameSessionService {
             saveChoiceTimer.stop(registry.timer("saveChoice.time"));
             log.debug("Current game choices: {}", gameChoices.get(gameRoomId));
 
-            /* 모든 유저의 선택이 완료되었는지 확인*/
+            /* 모든 유저의 선택이 완료되었는지 확인 */
             if (gameChoices.get(gameRoomId).size() == 2) {
                 GameStatus status = new GameStatus(gameRoomId, nickname, determineActionAndProceed(gameRoomId));
                 log.info("All user choices received for gameRoomId={}, proceeding with action", gameRoomId);
@@ -63,7 +63,7 @@ public class GameSessionService {
             }
 
             log.info("Waiting for other player's choices in gameRoomId={}", gameRoomId);
-            return "다른 플레이어의 선택을 기다려주세요";
+            return new GameStatus(gameRoomId, nickname, GameState.WAIT);
         });
     }
 
