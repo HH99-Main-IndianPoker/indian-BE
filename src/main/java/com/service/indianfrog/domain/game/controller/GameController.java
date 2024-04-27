@@ -1,9 +1,12 @@
 package com.service.indianfrog.domain.game.controller;
 
-import com.service.indianfrog.domain.game.dto.*;
-import com.service.indianfrog.domain.game.dto.GameDto.EndGameResponse;
-import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
-import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.service.indianfrog.domain.game.dto.GameBetting;
+import com.service.indianfrog.domain.game.dto.GameRequest;
+import com.service.indianfrog.domain.game.dto.GameStatus;
+import com.service.indianfrog.domain.game.dto.UserChoices;
+import com.service.indianfrog.domain.game.redis.RedisRequestManager;
 import com.service.indianfrog.domain.game.service.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -21,21 +24,16 @@ import java.security.Principal;
 public class GameController {
 
     private final SimpMessageSendingOperations messagingTemplate;
-    private final StartGameService startGameService;
-    private final GamePlayService gamePlayService;
-    private final EndGameService endGameService;
-    private final GameSessionService gameSessionService;
     private final ReadyService readyService;
+    private final RedisRequestManager redisRequestManager;
+    private final ObjectMapper objectMapper;
 
-    public GameController(SimpMessageSendingOperations messagingTemplate,
-                          StartGameService startGameService, GamePlayService gamePlayService,
-                          EndGameService endGameService, GameSessionService gameSessionService, ReadyService readyService) {
+    public GameController(SimpMessageSendingOperations messagingTemplate, ReadyService readyService,
+                          RedisRequestManager redisRequestManager, ObjectMapper objectMapper) {
         this.messagingTemplate = messagingTemplate;
-        this.startGameService = startGameService;
-        this.gamePlayService = gamePlayService;
-        this.endGameService = endGameService;
-        this.gameSessionService = gameSessionService;
         this.readyService = readyService;
+        this.redisRequestManager = redisRequestManager;
+        this.objectMapper = objectMapper;
     }
 
 
@@ -51,108 +49,18 @@ public class GameController {
 
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
-                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices, Principal principal) {
+                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices, Principal principal) throws JsonProcessingException {
 
-        log.info("gameState -> {}", gameState);
+        /* 요청을 Redis Sorted Set에 저장*/
+        String email = principal.getName();
+        GameRequest request = new GameRequest(gameRoomId, gameState, email, gameBetting, userChoices);
+        String requestJson = objectMapper.writeValueAsString(request);
 
-        switch (gameState) {
-            case "START"-> {
-                StartRoundResponse response = startGameService.startRound(gameRoomId, principal.getName());
-                sendUserGameMessage(response, principal); // 유저별 메시지 전송
-            }
-            case "ACTION", "USER_CHOICE" -> {
-                Object response = switch (gameState) {
-                    case "ACTION" ->
-                            gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
-                    case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, userChoices);
-                    default -> throw new IllegalStateException("Unexpected value: " + gameState);
-                };
-                // 공통 메시지 전송
-                String destination = "/topic/gameRoom/" + gameRoomId;
-                messagingTemplate.convertAndSend(destination, response);
-            }
-            case "END" -> {
-                EndRoundResponse response = endGameService.endRound(gameRoomId, principal.getName());
-                sendUserEndRoundMessage(response, principal);
-            }
-            case "GAME_END" -> {
-                EndGameResponse response = endGameService.endGame(gameRoomId);
-                sendUserEndGameMessage(response, principal);
-            }
+        redisRequestManager.enqueueRequest(gameRoomId.toString(), requestJson);
+        log.info("Request for gameState: {} in gameRoom: {} has been enqueued", gameState, gameRoomId);
 
-            default -> throw new IllegalStateException("Invalid game state: " + gameState);
-        }
+        /* 요청을 순서대로 실행*/
+        redisRequestManager.processRequests(gameRoomId.toString());
+        log.info("processRequests 완료");
     }
-
-    private void sendUserEndRoundMessage(EndRoundResponse response, Principal principal) {
-
-        log.info("who are you? -> {}", principal.getName());
-        log.info("player's Card : {}", response.getMyCard());
-
-       try {
-        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endRoundInfo", new EndRoundInfo(
-                        response.getNowState(),
-                        response.getNextState(),
-                        response.getRound(),
-                        response.getRoundWinner().getNickname(),
-                        response.getRoundLoser().getNickname(),
-                        response.getRoundPot(),
-                        response.getMyCard()));
-                log.info("Message sent successfully.");
-            }
-            catch (Exception e) {
-            log.error("Failed to send message", e);
-        }
-
-    }
-
-    private void sendUserEndGameMessage(EndGameResponse response, Principal principal) {
-
-        log.info("who are you? -> {}", principal.getName());
-
-        try {
-            messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endGameInfo", new EndGameInfo(
-                        response.getNowState(),
-                        response.getNextState(),
-                        response.getGameWinner().getNickname(),
-                        response.getGameLoser().getNickname(),
-                        response.getWinnerPot(),
-                        response.getLoserPot()));
-                log.info("Message sent successfully.");
-        } catch (Exception e) {
-            log.error("Failed to send message", e);
-        }
-    }
-
-    private void sendUserGameMessage(StartRoundResponse response, Principal principal) {
-        /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
-        log.info("who are you? -> {}", principal.getName());
-        log.info(response.getGameState(), response.getTurn().toString());
-        String playerOne = response.getPlayerOne().getEmail();
-        String playerTwo = response.getPlayerTwo().getEmail();
-        try {
-            if (principal.getName().equals(playerOne)) {
-                messagingTemplate.convertAndSendToUser(playerOne, "/queue/gameInfo", new GameInfo(
-                        response.getOtherCard(),
-                        response.getTurn(),
-                        response.getFirstBet(),
-                        response.getRoundPot(),
-                        response.getRound()));
-                log.info("Message sent successfully.");
-            }
-
-            if (principal.getName().equals(playerTwo)) {
-                messagingTemplate.convertAndSendToUser(playerTwo, "/queue/gameInfo", new GameInfo(
-                        response.getOtherCard(),
-                        response.getTurn(),
-                        response.getFirstBet(),
-                        response.getRoundPot(),
-                        response.getRound()));
-                log.info("Message sent successfully.");
-            }
-        } catch (Exception e) {
-            log.error("Failed to send message", e);
-        }
-    }
-
 }

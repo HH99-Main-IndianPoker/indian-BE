@@ -41,13 +41,14 @@ public class GamePlayService {
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
+    public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting) {
         return totalGamePlayTimer.record(() -> {
-            log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
+            log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), gameBetting.getAction());
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             Game game = gameValidator.initializeOrRetrieveGame(gameRoom);
             User user = gameValidator.findUserByNickname(gameBetting.getNickname());
             Turn turn = gameTurnService.getTurn(game.getId());
+            String action = gameBetting.getAction();
 
             /* 유저의 턴이 맞는지 확인*/
             if (!turn.getCurrentPlayer().equals(user.getNickname())) {
