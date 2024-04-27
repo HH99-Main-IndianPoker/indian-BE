@@ -84,7 +84,9 @@ public class RefreshTokenService {
         updateResponseWithTokens(response, generatedToken);
     }
 
-    private void updateResponseWithTokens(HttpServletResponse response, GeneratedToken generatedToken)
+    @Transactional
+    protected void updateResponseWithTokens(HttpServletResponse response,
+        GeneratedToken generatedToken)
         throws UnsupportedEncodingException {
         response.setHeader("Authorization", generatedToken.getAccessToken());
         String updatedRefreshToken = URLEncoder.encode(generatedToken.getRefreshToken(), "utf-8");
@@ -102,7 +104,6 @@ public class RefreshTokenService {
                     cookie.setSecure(true);
                     cookie.setMaxAge(0); // 쿠키의 최대 수명을 0으로 설정하여 즉시 만료시킵니다.
                     cookie.setHttpOnly(true); // JavaScript 접근 방지
-                    cookie.setSecure(true);
                     response.addCookie(cookie); // 수정된 쿠키를 응답에 추가합니다.
                 }
             }
