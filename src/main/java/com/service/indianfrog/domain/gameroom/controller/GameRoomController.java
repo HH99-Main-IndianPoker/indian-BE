@@ -7,8 +7,6 @@ import com.service.indianfrog.domain.gameroom.service.GameRoomService;
 import com.service.indianfrog.global.dto.ResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -106,8 +104,8 @@ public class GameRoomController {
     @MessageMapping("/{gameRoomId}/leave")
     public void leaveGame(@DestinationVariable Long gameRoomId, Principal principal) {
         //removeParticipant 메써드를 호출해서 게임방에서 principal로 받아온 사용자를 제거
-        gameRoomService.removeParticipant(gameRoomId, principal);
         gameRoomService.removeGame(gameRoomId);
+        gameRoomService.removeParticipant(gameRoomId, principal);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/leave", principal.getName());
     }
 }
