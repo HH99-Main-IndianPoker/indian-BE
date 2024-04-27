@@ -51,4 +51,3 @@ URL: https://lydian-force-d54.notion.site/6-350e72e9edbf4dc8b75263e872dc44de
 
 ## 📐 시스템 아키텍처
 
-![Blank diagram - Page 1 (11)](https://github.com/hh99-Team5/Study_diary_BE/assets/150704638/2c471bdc-9b42-48b0-9fdb-eb09e9d26c60)
