@@ -74,7 +74,6 @@ public class StartGameService {
     public synchronized void performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
-        // 마지막 실행 시간을 저장하는 변수
 
         game.incrementRound();
         log.info("라운드가 {}로 증가됨.", game.getRound());
@@ -83,7 +82,6 @@ public class StartGameService {
         User playerTwo = game.getPlayerTwo();
 
         if (game.getBetAmount() == 0){
-
             int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
             log.info("초기 배팅금액 {}로 설정됨.", betAmount);
 
@@ -94,12 +92,15 @@ public class StartGameService {
             game.setPot(betAmount * 2);
         }
 
-        List<Card> availableCards = prepareAvailableCards(game);
-        assignRandomCardsToPlayers(game, availableCards, email);
-        log.info("플레이어에게 카드 할당됨.");
+        if(game.getRound() > 1) {
+            List<Card> availableCards = prepareAvailableCards(game);
+            Collections.shuffle(availableCards);
+            assignRandomCardsToPlayers(game, availableCards, email);
 
-        log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
-        log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
+            log.info("플레이어에게 카드 할당됨.");
+            log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
+            log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
+        }
 
         if (game.getRound() == 1) {
             initializeTurnForGame(game);
