@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -52,22 +53,40 @@ public class RedisRequestManager {
 
     public void processRequests(String gameRoomId) throws JsonProcessingException {
         String key = "gameRequests:" + gameRoomId;
-
         log.info("processRequests 시작");
+
         while (true) {
+            redisTemplate.watch(key);
+            List<Object> txResults;
+
             Set<String> requests = redisTemplate.opsForZSet().range(key, 0, 0);
             if (requests != null && !requests.isEmpty()) {
                 String requestJson = requests.iterator().next();
                 GameRequest request = objectMapper.readValue(requestJson, GameRequest.class);
 
+                redisTemplate.multi();
                 log.info("executeGameRequest 시작");
-                executeGameRequest(request);
-                log.info("executeGameRequest 종료");
+                try {
+                    executeGameRequest(request);  // 이제 트랜잭션 내에서 처리
+                    redisTemplate.opsForZSet().remove(key, requestJson);
+                } catch (Exception e) {
+                    log.error("Request 처리 실패: " + e.getMessage());
+                    redisTemplate.discard();  // 트랜잭션 취소
+                    handleFailure(request, e);  // 실패 처리 메소드 호출
+                    continue;  // 요청 재처리를 위해 계속 진행
+                }
+                txResults = redisTemplate.exec();  // 트랜잭션 실행
 
-                redisTemplate.opsForZSet().remove(key, request);
-                log.info("완료된 요청 삭제");
-            } else break;
+                if (!txResults.isEmpty()) {
+                    log.info("완료된 요청 삭제");
+                } else {
+                    log.info("트랜잭션이 중단되었습니다. 다른 프로세스에서 요청이 변경되었을 수 있습니다.");
+                }
+            } else {
+                break;
+            }
         }
+        redisTemplate.unwatch();
     }
 
     private void executeGameRequest(GameRequest request) {
@@ -176,5 +195,30 @@ public class RedisRequestManager {
         } catch (Exception e) {
             log.error("Failed to send message", e);
         }
+    }
+
+    private void handleFailure(GameRequest request, Exception e) {
+        // 로그에 예외 상황을 기록
+        log.error("Failed to process request: {}, error: {}", request, e.toString());
+
+        // 재시도 로직
+        if (shouldRetry(request)) {
+            log.info("Scheduling retry for the request: {}", request);
+            enqueueRequest(request.getGameRoomId().toString(), request.toString());
+        } else {
+            log.error("No retry will be attempted for: {}", request);
+            notifyAdmin(request, e);  // 관리자에게 알림
+        }
+    }
+
+    private boolean shouldRetry(GameRequest request) {
+        // 여기에서 재시도 여부를 결정하는 로직 구현, 예를 들어 최대 재시도 횟수 확인 등
+        return true;  // 단순 예시
+    }
+
+    private void notifyAdmin(GameRequest request, Exception e) {
+        // 실패한 요청과 예외 정보를 기반으로 관리자나 개발 팀에 알림
+        log.warn("Notifying admin about the failure: {}", e.getMessage());
+        // 여기에 이메일 보내기, 슬랙 메시지 보내기 등의 로직을 구현할 수 있습니다.
     }
 }
