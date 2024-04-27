@@ -130,9 +130,9 @@ public class GameRoomService {
      * @return 페이징 처리된 게임방 목록
      */
     @Transactional(readOnly = true)
-    public Page<GetAllGameRoomResponseDto> getAllGameRooms() {
+    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(0, 15, Sort.by("createdAt").descending());
+        //Pageable pageable = PageRequest.of(0, 15, Sort.by("createdAt").descending());
 
         return getAllGameRoomTimer.record(() -> gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
