@@ -319,7 +319,7 @@ public class GameRoomService {
 
         if (validateRoomRepository.countByGameRoomRoomId(roomId) == 1) {
             validateRoomRepository.delete(validateRoom);
-            if(gameRoomRepository.existsByCurrentGame(gameRoom.getCurrentGame())){
+            if(gameRoom.getCurrentGame() != null) {
                 gameRepository.delete(gameRoom.getCurrentGame());
             }
             gameRoomRepository.deleteById(roomId);
@@ -327,7 +327,7 @@ public class GameRoomService {
 
         if (validateRoomRepository.countByGameRoomRoomId(roomId) == 2) {
             validateRoomRepository.delete(validateRoom);
-            if(gameRoomRepository.existsByCurrentGame(gameRoom.getCurrentGame())){
+            if(gameRoom.getCurrentGame() != null) {
                 gameRepository.delete(gameRoom.getCurrentGame());
             }
             ValidateRoom newHost = validateRoomRepository.findByGameRoomRoomId(roomId);
