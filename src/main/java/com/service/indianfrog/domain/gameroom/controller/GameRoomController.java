@@ -8,6 +8,7 @@ import com.service.indianfrog.global.dto.ResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -41,7 +42,7 @@ public class GameRoomController {
      * @return 조회된 게임 방의 페이징된 목록
      */
     @GetMapping // 전체페이지 조회
-    public ResponseDto<Page<GetAllGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15) Pageable pageable) {
+    public ResponseDto<Page<GetAllGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<GetAllGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
         return ResponseDto.success("모든 게임방 조회 기능", gameRooms);
     }
