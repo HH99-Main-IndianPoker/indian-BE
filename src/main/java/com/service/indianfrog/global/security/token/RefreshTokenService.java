@@ -102,6 +102,7 @@ public class RefreshTokenService {
                     cookie.setValue(""); // 쿠키의 값을 비웁니다.
                     cookie.setPath("/"); // 쿠키의 경로를 설정합니다. 생성할 때의 경로와 일치해야 합니다.
                     cookie.setSecure(true);
+                    cookie.setAttribute("SameSite", "None");
                     cookie.setMaxAge(0); // 쿠키의 최대 수명을 0으로 설정하여 즉시 만료시킵니다.
                     cookie.setHttpOnly(true); // JavaScript 접근 방지
                     response.addCookie(cookie); // 수정된 쿠키를 응답에 추가합니다.
