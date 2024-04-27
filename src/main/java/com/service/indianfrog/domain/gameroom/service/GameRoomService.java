@@ -1,5 +1,7 @@
 package com.service.indianfrog.domain.gameroom.service;
 
+import com.service.indianfrog.domain.game.entity.Game;
+import com.service.indianfrog.domain.game.repository.GameRepository;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetAllGameRoomResponseDto;
@@ -48,6 +50,7 @@ public class GameRoomService {
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
     private final UserRepository userRepository;
+    private final GameRepository gameRepository;
     private final SessionMappingStorage sessionMappingStorage;
     private final Timer getGameRoomTimer;
     private final Timer getValidateRoomsTimer;
@@ -55,11 +58,12 @@ public class GameRoomService {
     private final MeterRegistry registry;
     private Pattern pattern;
 
-    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
+    public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository, GameRepository gameRepository,
                            SessionMappingStorage sessionMappingStorage, MeterRegistry registry) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
+        this.gameRepository = gameRepository;
         this.sessionMappingStorage = sessionMappingStorage;
         this.getGameRoomTimer = registry.timer("getGameRoomById.time");
         this.getValidateRoomsTimer = registry.timer("getParticipant.time");
@@ -347,5 +351,9 @@ public class GameRoomService {
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
         removeSessionTimer.stop(registry.timer("removeSession.time"));
+    }
+
+    public void removeGame(Long gameRoomId) {
+        gameRepository.deleteAllByGameRoomRoomId(gameRoomId);
     }
 }

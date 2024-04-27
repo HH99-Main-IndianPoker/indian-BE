@@ -107,6 +107,7 @@ public class GameRoomController {
     public void leaveGame(@DestinationVariable Long gameRoomId, Principal principal) {
         //removeParticipant 메써드를 호출해서 게임방에서 principal로 받아온 사용자를 제거
         gameRoomService.removeParticipant(gameRoomId, principal);
+        gameRoomService.removeGame(gameRoomId);
         messagingTemplate.convertAndSend("/topic/gameRoom/" + gameRoomId + "/leave", principal.getName());
     }
 }
