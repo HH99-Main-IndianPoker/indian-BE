@@ -7,7 +7,6 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
-import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
@@ -23,7 +22,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +33,6 @@ import java.util.List;
 @Service
 public class EndGameService {
 
-    private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
@@ -47,9 +44,8 @@ public class EndGameService {
     @PersistenceContext
     private EntityManager em;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
+    public EndGameService(GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
                           MeterRegistry registry) {
-        this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
@@ -164,7 +160,6 @@ public class EndGameService {
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_READ)
     public GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
@@ -178,7 +173,7 @@ public class EndGameService {
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
-        } 
+        }
 
         if (playerOneCard.getNumber() == playerTwoCard.getNumber()) {
             result = playerOneCard.getDeckNumber() == 1 ?
@@ -190,7 +185,6 @@ public class EndGameService {
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public void assignRoundPointsToWinner(Game game, GameResult gameResult) {
         User winner = gameResult.getWinner();
 
@@ -231,7 +225,6 @@ public class EndGameService {
 
     /* 게임 결과 처리 메서드*/
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public GameResult processGameResults(Game game) {
         int playerOneTotalPoints = game.getPlayerOneRoundPoints();
         int playerTwoTotalPoints = game.getPlayerTwoRoundPoints();
@@ -250,17 +243,11 @@ public class EndGameService {
         /* 게임 데이터 초기화*/
         game.resetGame();
 
-        if (game.getRound() == 0){
-            em.remove(game);
-            em.flush();
-        }
-
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
     }
 
     /* 1라운드 이후 턴 설정 메서드 */
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public void initializeTurnForGame(Game game, GameResult gameResult) {
         List<User> players = new ArrayList<>();
 
