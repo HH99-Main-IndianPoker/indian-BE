@@ -25,10 +25,10 @@ public enum Card {
     DECK2_CARD9(2, 9),
     DECK2_CARD10(2, 10);
 
-    private final int number;
     private final int deckNumber;
+    private final int number;
 
-    Card(int number, int deckNumber) {
+    Card(int deckNumber, int number) {
         this.number = number;
         this.deckNumber = deckNumber;
     }

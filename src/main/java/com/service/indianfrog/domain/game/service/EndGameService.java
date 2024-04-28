@@ -73,7 +73,6 @@ public class EndGameService {
             GameResult gameResult = determineGameResult(game);
             gameResultTimer.stop(registry.timer("roundResult.time"));
 
-
             Card myCard = null;
 
             if (email.equals(game.getPlayerOne().getEmail())) {
@@ -169,14 +168,18 @@ public class EndGameService {
         log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
         /* 카드 숫자가 같으면 1번 덱의 카드를 가진 플레이어가 승리*/
-        GameResult result;
+        GameResult result = null;
+
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
-        } else {
+        } 
+
+        if (playerOneCard.getNumber() == playerTwoCard.getNumber()) {
             result = playerOneCard.getDeckNumber() == 1 ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
+
         return result;
     }
 
