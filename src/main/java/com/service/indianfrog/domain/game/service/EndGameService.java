@@ -9,8 +9,13 @@ import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
+import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.repository.UserRepository;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +38,8 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
+    private final ValidateRoomRepository validateRoomRepository;
+    private final UserRepository userRepository;
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
@@ -40,11 +47,13 @@ public class EndGameService {
     @PersistenceContext
     private EntityManager em;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
-                           MeterRegistry registry) {
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
+                          MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
+        this.validateRoomRepository = validateRoomRepository;
+        this.userRepository = userRepository;
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
@@ -66,7 +75,6 @@ public class EndGameService {
             Timer.Sample gameResultTimer = Timer.start(registry);
             GameResult gameResult = determineGameResult(game);
             gameResultTimer.stop(registry.timer("roundResult.time"));
-
 
             Card myCard = null;
 
@@ -105,10 +113,15 @@ public class EndGameService {
     /* 게임 종료 로직*/
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public EndGameResponse endGame(Long gameRoomId) {
+    public EndGameResponse endGame(Long gameRoomId, String email) {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+            validateRoom.resetReady();
 
             Game game = gameRoom.getCurrentGame();
 
@@ -125,7 +138,7 @@ public class EndGameService {
                     gameRoomId, gameResult.getWinner(), gameResult.getLoser());
 
             /* 유저 선택 상태 반환 */
-            return new EndGameResponse("GAME_END", "USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
+            return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
                     gameResult.getWinnerPot(), gameResult.getLoserPot());
         });
     }
@@ -160,14 +173,18 @@ public class EndGameService {
         log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
         /* 카드 숫자가 같으면 1번 덱의 카드를 가진 플레이어가 승리*/
-        GameResult result;
+        GameResult result = null;
+
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
-        } else {
+        } 
+
+        if (playerOneCard.getNumber() == playerTwoCard.getNumber()) {
             result = playerOneCard.getDeckNumber() == 1 ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
+
         return result;
     }
 
@@ -231,10 +248,12 @@ public class EndGameService {
         int loserTotalPoints = gameLoser.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
 
         /* 게임 데이터 초기화*/
-//        game.resetGame();
+        game.resetGame();
 
-        em.remove(game);
-        em.flush();
+        if (game.getRound() == 0){
+            em.remove(game);
+            em.flush();
+        }
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
     }
