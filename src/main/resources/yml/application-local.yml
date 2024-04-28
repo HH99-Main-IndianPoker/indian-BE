@@ -47,11 +47,10 @@ spring:
 springdoc:
   show-login-endpoint: true
 
-jwt:
-  secret:
-    key:
-      access: ${secret.key.access}
-      refresh: ${secret.key.refresh}
+secret:
+  key:
+    access: ${jwt.secret.key.access}
+    refresh: ${jwt.secret.key.refresh}
 
 cloud:
   aws:

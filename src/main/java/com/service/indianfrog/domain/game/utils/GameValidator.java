@@ -32,41 +32,35 @@ public class GameValidator {
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public synchronized Game initializeOrRetrieveGame(GameRoom gameRoom) {
+    public synchronized void gameValidate(GameRoom gameRoom) {
 
-        if (!repositoryHolder.gameRepository.existsByGameRoom(gameRoom)) {
-            log.info("game is null : {}", repositoryHolder.gameRepository.existsByGameRoom(gameRoom));
+        log.info("game is null : {}", repositoryHolder.gameRepository.existsByGameRoom(gameRoom));
 
-            List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
+        List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
 
-            String host = validateRooms.stream()
-                    .filter(ValidateRoom::isHost)
-                    .map(ValidateRoom::getParticipants)
-                    .findFirst()
-                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-            String participant = validateRooms.stream()
-                    .filter(p -> !p.isHost())
-                    .map(ValidateRoom::getParticipants)
-                    .findFirst()
-                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        String host = validateRooms.stream()
+                .filter(ValidateRoom::isHost)
+                .map(ValidateRoom::getParticipants)
+                .findFirst()
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        String participant = validateRooms.stream()
+                .filter(p -> !p.isHost())
+                .map(ValidateRoom::getParticipants)
+                .findFirst()
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-            User playerOne = repositoryHolder.userRepository.findByNickname(host);
-            User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
+        User playerOne = repositoryHolder.userRepository.findByNickname(host);
+        User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
 
-            Game game = Game.builder().playerOne(playerOne).playerTwo(playerTwo).gameRoom(gameRoom).build();
+        Game game = Game.builder().playerOne(playerOne).playerTwo(playerTwo).gameRoom(gameRoom).build();
 
-            repositoryHolder.gameRepository.save(game);
+        repositoryHolder.gameRepository.save(game);
 
-            gameRoom.startNewGame(game);
-        }
+        gameRoom.startNewGame(game);
+}
 
-        log.info("game is not null");
-
-        return repositoryHolder.gameRepository.findByGameRoom(gameRoom);
-    }
-
-    public User findUserByNickname(String nickname) {
-        return repositoryHolder.userRepository.findByNickname(nickname);
+public User findUserByNickname(String nickname) {
+    return repositoryHolder.userRepository.findByNickname(nickname);
 //                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 유저입니다."));
-    }
+}
 }
