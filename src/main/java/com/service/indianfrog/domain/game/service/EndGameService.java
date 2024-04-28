@@ -14,7 +14,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,9 @@ public class EndGameService {
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
+
+    @PersistenceContext
+    private EntityManager em;
 
     public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
                            MeterRegistry registry) {
@@ -104,7 +109,18 @@ public class EndGameService {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+
             Game game = gameRoom.getCurrentGame();
+
+            if (game != null) {
+                if (gameRoom != null) {
+                    gameRoom.endCurrentGame();
+                    em.persist(gameRoom);
+                }
+
+                em.remove(game);
+                em.flush();
+            }
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
             Timer.Sample gameResultTimer = Timer.start(registry);

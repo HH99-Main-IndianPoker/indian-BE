@@ -60,6 +60,7 @@ public class GameRoom extends Timestamped {
         this.currentGame = game;
     }
 
+
     // 게임을 종료할 때 호출하는 메서드입니다.
     public void endCurrentGame() {
         this.currentGame = null;
