@@ -112,16 +112,6 @@ public class EndGameService {
 
             Game game = gameRoom.getCurrentGame();
 
-            if (game != null) {
-                if (gameRoom != null) {
-                    gameRoom.endCurrentGame();
-                    em.persist(gameRoom);
-                }
-
-                em.remove(game);
-                em.flush();
-            }
-
             /* 게임 결과 처리 및 게임 정보 초기화*/
             Timer.Sample gameResultTimer = Timer.start(registry);
             GameResult gameResult = processGameResults(game);
@@ -241,7 +231,10 @@ public class EndGameService {
         int loserTotalPoints = gameLoser.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
 
         /* 게임 데이터 초기화*/
-        game.resetGame();
+//        game.resetGame();
+
+        em.remove(game);
+        em.flush();
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
     }
