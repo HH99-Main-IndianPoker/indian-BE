@@ -9,7 +9,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,9 @@ public class GameSessionService {
     private final MeterRegistry registry;
     private final Timer totalUserChoiceTimer;
 
+    @PersistenceContext
+    private EntityManager em;
+
 
     public GameSessionService(GameValidator gameValidator, MeterRegistry registry) {
         this.gameValidator = gameValidator;
@@ -38,12 +43,13 @@ public class GameSessionService {
     private final Map<Long, Map<String, String>> gameChoices = new ConcurrentHashMap<>();
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_READ)
+//    @Lock(LockModeType.PESSIMISTIC_READ)
     public Object processUserChoices(Long gameRoomId, UserChoices choices) {
         return totalUserChoiceTimer.record(() -> {
             /* 입력 값 검증*/
             log.info("Processing user choices for gameRoomId={} with nickname={}", gameRoomId, choices.getNickname());
-            gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+//            gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_READ);
             User player = gameValidator.findUserByNickname(choices.getNickname());
             String nickname = player.getNickname();
             String choice = choices.getUserChoice().toString();
