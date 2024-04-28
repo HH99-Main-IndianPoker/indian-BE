@@ -13,7 +13,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,8 @@ public class GamePlayService {
     private final GameRepository gameRepository;
     private final MeterRegistry registry;
     private final Timer totalGamePlayTimer;
+    @PersistenceContext
+    private EntityManager em;
 
     public GamePlayService(GameValidator gameValidator, GameTurnService gameTurnService,
                            GameRepository gameRepository, MeterRegistry registry) {
@@ -40,11 +44,11 @@ public class GamePlayService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
         return totalGamePlayTimer.record(() -> {
             log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
-            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
             User user = gameValidator.findUserByNickname(gameBetting.getNickname());
             Turn turn = gameTurnService.getTurn(game.getId());
@@ -66,7 +70,7 @@ public class GamePlayService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
         Timer.Sample checkTimer = Timer.start(registry);
@@ -100,7 +104,7 @@ public class GamePlayService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
         Timer.Sample raiseTimer = Timer.start(registry);
         int userPoints = user.getPoints();
@@ -132,7 +136,7 @@ public class GamePlayService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performDieAction(Game game, User user) {
         Timer.Sample dieTimer = Timer.start(registry);
         User playerOne = game.getPlayerOne();
@@ -165,7 +169,7 @@ public class GamePlayService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto gameEnd(User user, Game game) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
 

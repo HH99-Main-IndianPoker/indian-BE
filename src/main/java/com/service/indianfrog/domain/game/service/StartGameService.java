@@ -11,7 +11,9 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,8 @@ public class StartGameService {
     private final GameTurnService gameTurnService;
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
+    @PersistenceContext
+    private EntityManager em;
 
     public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
         this.gameValidator = gameValidator;
@@ -38,12 +42,13 @@ public class StartGameService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public StartRoundResponse startRound(Long gameRoomId, String email) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
             log.info("게임룸 검증 및 검색 중.");
-            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             log.info("게임룸 검증 및 검색 완료.");
 
             gameRoom.updateGameState(GameState.START);
@@ -70,7 +75,7 @@ public class StartGameService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public synchronized void performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
@@ -109,7 +114,7 @@ public class StartGameService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();
