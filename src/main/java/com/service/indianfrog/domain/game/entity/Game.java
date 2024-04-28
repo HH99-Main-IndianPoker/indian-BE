@@ -121,9 +121,6 @@ public class Game {
     public void resetRound() {
         /* 라운드 정보 초기화
          * 베팅액, 각 플레이어 카드 정보 초기화*/
-        this.pot = 0;
-//        this.playerOneCard = null;
-//        this.playerTwoCard = null;
         this.checkStatus = false;
         this.raiseStatus = false;
     }

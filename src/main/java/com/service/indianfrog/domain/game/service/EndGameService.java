@@ -94,7 +94,7 @@ public class EndGameService {
             /* 라운드 승자가 선턴을 가지도록 설정*/
             initializeTurnForGame(game, gameResult);
 
-            /* 라운드 정보 초기화*/
+            /* 라운드 정보 초기화 */
             game.resetRound();
             log.debug("Round reset for gameRoomId={}", gameRoomId);
 
