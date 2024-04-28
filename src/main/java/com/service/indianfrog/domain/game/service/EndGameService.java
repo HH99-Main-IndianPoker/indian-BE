@@ -116,6 +116,9 @@ public class EndGameService {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
 
+            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+            validateRoom.resetReady();
+
             Game game = gameRoom.getCurrentGame();
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
@@ -126,10 +129,6 @@ public class EndGameService {
             GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
 
             CurrentGameStatus.updateGameState(GameState.READY);
-
-            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
-
-            validateRoom.resetReady();
 
             log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
                     gameRoomId, gameResult.getWinner(), gameResult.getLoser());
