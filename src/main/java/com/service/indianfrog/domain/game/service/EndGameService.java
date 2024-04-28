@@ -13,6 +13,7 @@ import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -38,6 +39,7 @@ public class EndGameService {
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
     private final ValidateRoomRepository validateRoomRepository;
+    private final UserRepository userRepository;
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
@@ -45,12 +47,13 @@ public class EndGameService {
     @PersistenceContext
     private EntityManager em;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository,
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
                           MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
+        this.userRepository = userRepository;
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
@@ -110,12 +113,14 @@ public class EndGameService {
     /* 게임 종료 로직*/
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public EndGameResponse endGame(Long gameRoomId, String user) {
+    public EndGameResponse endGame(Long gameRoomId, String email) {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
 
-            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
             validateRoom.resetReady();
 
             Game game = gameRoom.getCurrentGame();
