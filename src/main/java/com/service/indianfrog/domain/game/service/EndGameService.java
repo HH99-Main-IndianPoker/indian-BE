@@ -248,10 +248,12 @@ public class EndGameService {
         int loserTotalPoints = gameLoser.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
 
         /* 게임 데이터 초기화*/
-//        game.resetGame();
+        game.resetGame();
 
-        em.remove(game);
-        em.flush();
+        if (game.getRound() == 0){
+            em.remove(game);
+            em.flush();
+        }
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
     }
