@@ -2,7 +2,6 @@ package com.service.indianfrog.domain.game.dto;
 
 import com.service.indianfrog.domain.game.entity.Betting;
 import com.service.indianfrog.domain.game.entity.GameState;
-import com.service.indianfrog.domain.game.entity.Turn;
 import lombok.Builder;
 import lombok.Getter;
 
