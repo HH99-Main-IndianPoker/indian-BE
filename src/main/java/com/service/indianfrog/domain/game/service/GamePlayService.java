@@ -99,6 +99,7 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .previousPlayer(turn.getPreviousPlayer())
                 .myPoint(user.getPoints())
                 .build();
     }
@@ -118,6 +119,7 @@ public class GamePlayService {
                     .nowBet(0)
                     .pot(game.getPot())
                     .currentPlayer(user.getNickname())
+                    .previousPlayer(turn.getPreviousPlayer())
                     .myPoint(userPoints)
                     .build();
         }
@@ -139,6 +141,7 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .previousPlayer(turn.getPreviousPlayer())
                 .myPoint(userPoints)
                 .build();
     }
@@ -173,6 +176,7 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(winner.getNickname())
+                .previousPlayer(game.getFoldedUser().getNickname())
                 .myPoint(user.getPoints())
                 .build();
     }
@@ -197,6 +201,7 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(user.getNickname())
+                .previousPlayer(user.getNickname())
                 .myPoint(user.getPoints())
                 .build();
     }

@@ -22,4 +22,9 @@ public class Turn {
     public String getCurrentPlayer() {
         return players.get(currentPlayer);
     }
+
+    public String getPreviousPlayer(){
+        return players.get(currentPlayer - 1);
+    }
+
 }
