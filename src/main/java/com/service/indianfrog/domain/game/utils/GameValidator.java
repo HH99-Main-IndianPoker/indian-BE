@@ -66,6 +66,5 @@ public class GameValidator {
 
 public User findUserByNickname(String nickname) {
     return repositoryHolder.userRepository.findByNickname(nickname);
-//                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 유저입니다."));
 }
 }

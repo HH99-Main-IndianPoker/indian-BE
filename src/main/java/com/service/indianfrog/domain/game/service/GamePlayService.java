@@ -17,7 +17,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +50,14 @@ public class GamePlayService {
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
             User user = gameValidator.findUserByNickname(gameBetting.getNickname());
+            User other = null;
+
+            if (user.equals(game.getPlayerOne())){
+                other = game.getPlayerTwo();
+            } else if (user.equals(game.getPlayerTwo())){
+                other = game.getPlayerOne();
+            }
+
             Turn turn = gameTurnService.getTurn(game.getId());
 
             /* 유저의 턴이 맞는지 확인*/
@@ -62,27 +69,27 @@ public class GamePlayService {
             log.info("Performing {} action for user {}", action, gameBetting.getNickname());
             Betting betting = Betting.valueOf(action.toUpperCase());
             return switch (betting) {
-                case CHECK -> performCheckAction(game, user, turn);
-                case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint());
-                case DIE -> performDieAction(game, user);
+                case CHECK -> performCheckAction(game, user, turn, other);
+                case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint(), other);
+                case DIE -> performDieAction(game, user, other);
             };
         });
     }
 
     @Transactional
 //    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public ActionDto performCheckAction(Game game, User user, Turn turn) {
+    public ActionDto performCheckAction(Game game, User user, Turn turn, User other) {
         /* 유저 턴 확인*/
         Timer.Sample checkTimer = Timer.start(registry);
         log.info("Check action: currentPlayer={}, user={}, currentPot={}, betAmount={}",
                 user.getNickname(), user.getEmail(), game.getPot(), game.getBetAmount());
 
         if (game.isCheckStatus()) {
-            return gameEnd(user, game);
+            return gameEnd(user, game, other);
         }
 
         if(game.isRaiseStatus()){
-            return gameEnd(user, game);
+            return gameEnd(user, game, other);
         }
 
         /*유저 CHECK*/
@@ -100,19 +107,29 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .myPoint(user.getPoints())
+                .otherPoint(other.getPoints())
                 .build();
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
+    public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount, User other) {
         Timer.Sample raiseTimer = Timer.start(registry);
         int userPoints = user.getPoints();
-        log.info("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
+        log.info("Raise action initiated by user: {}, currentPoints={}", user.getNickname(), userPoints);
 
         if (userPoints <= 0) {
             log.info("User has insufficient points to raise");
-            return new ActionDto(GameState.ACTION, GameState.END, Betting.RAISE, 0, game.getPot(), user.getNickname());
+            return ActionDto.builder()
+                    .nowState(GameState.ACTION)
+                    .nextState(GameState.END)
+                    .actionType(Betting.RAISE)
+                    .nowBet(0)
+                    .pot(game.getPot())
+                    .currentPlayer(user.getNickname())
+                    .myPoint(userPoints)
+                    .otherPoint(other.getPoints())
+                    .build();
         }
         /* RAISE 베팅 액 설정*/
         log.info("Raise amount entered: {}", raiseAmount);
@@ -132,12 +149,14 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .myPoint(userPoints)
+                .otherPoint(other.getPoints())
                 .build();
     }
 
     @Transactional
 //    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public ActionDto performDieAction(Game game, User user) {
+    public ActionDto performDieAction(Game game, User user, User other) {
         Timer.Sample dieTimer = Timer.start(registry);
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
@@ -164,13 +183,15 @@ public class GamePlayService {
                 .actionType(Betting.DIE)
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
+                .myPoint(user.getPoints())
+                .otherPoint(other.getPoints())
                 .currentPlayer(winner.getNickname())
                 .build();
     }
 
     @Transactional
 //    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public ActionDto gameEnd(User user, Game game) {
+    public ActionDto gameEnd(User user, Game game, User other) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
 
         int betPoint = user.getPoints() > 0 ? game.getBetAmount() : 0;
@@ -188,6 +209,8 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(user.getNickname())
+                .myPoint(user.getPoints())
+                .otherPoint(other.getPoints())
                 .build();
     }
 }
