@@ -65,7 +65,7 @@ public class StartGameService {
 
             log.info("StartRoundResponse 반환 중.");
 
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount());
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount(), game.getPot());
         });
     }
 
@@ -81,15 +81,15 @@ public class StartGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        if (game.getBetAmount() == 0){
+        if (game.getPot() == 0){
             int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
             log.info("초기 배팅금액 {}로 설정됨.", betAmount);
 
             playerOne.decreasePoints(betAmount);
             playerTwo.decreasePoints(betAmount);
 
-            game.setBetAmount(betAmount);
-            game.setPot(betAmount * 2);
+            game.setBetAmount(0);
+            game.updatePot(betAmount * 2);
         }
 
         if(game.getRound() > 1) {
