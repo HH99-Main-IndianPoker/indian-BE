@@ -9,8 +9,12 @@ import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
+import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +37,7 @@ public class EndGameService {
     private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
+    private final ValidateRoomRepository validateRoomRepository;
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
@@ -40,11 +45,12 @@ public class EndGameService {
     @PersistenceContext
     private EntityManager em;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
-                           MeterRegistry registry) {
+    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository,
+                          MeterRegistry registry) {
         this.gameValidator = gameValidator;
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
+        this.validateRoomRepository = validateRoomRepository;
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
@@ -105,7 +111,7 @@ public class EndGameService {
     /* 게임 종료 로직*/
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public EndGameResponse endGame(Long gameRoomId) {
+    public EndGameResponse endGame(Long gameRoomId, String user) {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
@@ -121,11 +127,15 @@ public class EndGameService {
 
             CurrentGameStatus.updateGameState(GameState.READY);
 
+            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user).orElseThrow(() -> new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage()));
+
+            validateRoom.resetReady();
+
             log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
                     gameRoomId, gameResult.getWinner(), gameResult.getLoser());
 
             /* 유저 선택 상태 반환 */
-            return new EndGameResponse("GAME_END", "USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
+            return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
                     gameResult.getWinnerPot(), gameResult.getLoserPot());
         });
     }
