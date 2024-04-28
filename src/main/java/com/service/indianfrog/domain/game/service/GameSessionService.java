@@ -49,7 +49,7 @@ public class GameSessionService {
             /* 입력 값 검증*/
             log.info("Processing user choices for gameRoomId={} with nickname={}", gameRoomId, choices.getNickname());
 //            gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-            em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_READ);
+            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_READ);
             User player = gameValidator.findUserByNickname(choices.getNickname());
             String nickname = player.getNickname();
             String choice = choices.getUserChoice().toString();
