@@ -84,7 +84,6 @@ public class EndGameService {
 
             log.info("myCard : {}", myCard);
 
-
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
             Timer.Sample roundPointsTimer = Timer.start(registry);
             assignRoundPointsToWinner(game, gameResult);
