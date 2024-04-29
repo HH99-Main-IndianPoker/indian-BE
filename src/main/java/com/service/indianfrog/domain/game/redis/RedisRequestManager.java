@@ -19,8 +19,8 @@ import java.util.Set;
 @Service
 public class RedisRequestManager {
     /* 동시 요청을 관리하기 위한 요청 관리 클래스
-    * Redis Sorted Set을 사용하여 요청에 대한 우선 순위를 설정하고 우선 순위에 따라 요청이 처리되도록 설정
-    * GameController에 요청을 보내면 요청을 Sorted Set에 저장 후 우선 순위에 따라 각 게임 서비스 로직 호출*/
+     * Redis Sorted Set을 사용하여 요청에 대한 우선 순위를 설정하고 우선 순위에 따라 요청이 처리되도록 설정
+     * GameController에 요청을 보내면 요청을 Sorted Set에 저장 후 우선 순위에 따라 각 게임 서비스 로직 호출*/
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -28,12 +28,10 @@ public class RedisRequestManager {
     private final StartGameService startGameService;
     private final GamePlayService gamePlayService;
     private final EndGameService endGameService;
-    private final GameSessionService gameSessionService;
 
     public RedisRequestManager(RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper,
                                SimpMessageSendingOperations messagingTemplate, StartGameService startGameService,
-                               GamePlayService gamePlayService, EndGameService endGameService,
-                               GameSessionService gameSessionService) {
+                               GamePlayService gamePlayService, EndGameService endGameService) {
 
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
@@ -41,7 +39,6 @@ public class RedisRequestManager {
         this.startGameService = startGameService;
         this.gamePlayService = gamePlayService;
         this.endGameService = endGameService;
-        this.gameSessionService = gameSessionService;
     }
 
     /* 요청을 Sorted Set에 저장*/
@@ -103,13 +100,8 @@ public class RedisRequestManager {
                 GameDto.StartRoundResponse response = startGameService.startRound(gameRoomId, request.getEmail());
                 sendUserGameMessage(response, request.getEmail());
             }
-            case "ACTION", "USER_CHOICE" -> {
-                Object response = switch (gameState) {
-                    case "ACTION" ->
-                            gamePlayService.playerAction(gameRoomId, request.getGameBetting());
-                    case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, request.getUserChoices());
-                    default -> throw new IllegalStateException("Unexpected value: " + gameState);
-                };
+            case "ACTION" -> {
+                ActionDto response = gamePlayService.playerAction(gameRoomId, request.getGameBetting());
                 String destination = "/topic/gameRoom/" + gameRoomId;
                 messagingTemplate.convertAndSend(destination, response);
             }
@@ -118,7 +110,7 @@ public class RedisRequestManager {
                 sendUserEndRoundMessage(response, request.getEmail());
             }
             case "GAME_END" -> {
-                GameDto.EndGameResponse response = endGameService.endGame(gameRoomId);
+                GameDto.EndGameResponse response = endGameService.endGame(gameRoomId, request.getEmail());
                 sendUserEndGameMessage(response, request.getEmail());
             }
 
@@ -139,10 +131,11 @@ public class RedisRequestManager {
                     response.getRoundWinner().getNickname(),
                     response.getRoundLoser().getNickname(),
                     response.getRoundPot(),
-                    response.getMyCard()));
+                    response.getMyCard(),
+                    response.getWinnerPoint(),
+                    response.getLoserPoint()));
             log.info("Message sent successfully.");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Failed to send message", e);
         }
 

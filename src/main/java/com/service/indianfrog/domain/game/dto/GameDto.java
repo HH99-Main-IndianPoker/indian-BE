@@ -20,7 +20,7 @@ public class GameDto {
         private int roundPot;
 
         public StartRoundResponse(String gameState, int round, User playerOne, User playerTwo,
-                                  Card otherCard, Turn turn, int firstBet) {
+                                  Card otherCard, Turn turn, int firstBet, int roundPot) {
             this.gameState = gameState;
             this.round = round;
             this.playerOne = playerOne;
@@ -28,8 +28,7 @@ public class GameDto {
             this.otherCard = otherCard;
             this.turn = turn;
             this.firstBet = firstBet;
-            this.roundPot = firstBet * 2;
-
+            this.roundPot = roundPot;
         }
     }
 
@@ -42,8 +41,10 @@ public class GameDto {
         private User roundWinner;
         private User roundLoser;
         private int roundPot;
+        private int winnerPoint;
+        private int loserPoint;
 
-        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card myCard) {
+        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card myCard, int winnerPoint, int loserPoint) {
             this.nowState = nowState;
             this.nextState = nextState;
             this.round = round;
@@ -51,6 +52,8 @@ public class GameDto {
             this.roundWinner = roundWinner;
             this.roundLoser = roundLoser;
             this.roundPot = roundPot;
+            this.winnerPoint = winnerPoint;
+            this.loserPoint = loserPoint;
         }
     }
 

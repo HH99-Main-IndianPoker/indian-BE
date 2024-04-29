@@ -7,16 +7,21 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
-import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
+import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
 import com.service.indianfrog.domain.user.entity.User;
+import com.service.indianfrog.domain.user.repository.UserRepository;
+import com.service.indianfrog.global.exception.ErrorCode;
+import com.service.indianfrog.global.exception.RestApiException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,18 +33,23 @@ import java.util.List;
 @Service
 public class EndGameService {
 
-    private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final GameRoomRepository gameRoomRepository;
+    private final ValidateRoomRepository validateRoomRepository;
+    private final UserRepository userRepository;
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
 
-    public EndGameService(GameValidator gameValidator, GameTurnService gameTurnService, GameRoomRepository gameRoomRepository,
-                           MeterRegistry registry) {
-        this.gameValidator = gameValidator;
+    @PersistenceContext
+    private EntityManager em;
+
+    public EndGameService(GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
+                          MeterRegistry registry) {
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
+        this.validateRoomRepository = validateRoomRepository;
+        this.userRepository = userRepository;
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
@@ -47,12 +57,12 @@ public class EndGameService {
 
     /* 라운드 종료 로직*/
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public EndRoundResponse endRound(Long gameRoomId, String email) {
         return totalRoundEndTimer.record(() -> {
             log.info("Ending round for gameRoomId={}", gameRoomId);
 
-            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
 
             /* 라운드 승자 패자 결정
@@ -83,7 +93,7 @@ public class EndGameService {
             /* 라운드 승자가 선턴을 가지도록 설정*/
             initializeTurnForGame(game, gameResult);
 
-            /* 라운드 정보 초기화*/
+            /* 라운드 정보 초기화 */
             game.resetRound();
             log.debug("Round reset for gameRoomId={}", gameRoomId);
 
@@ -91,17 +101,23 @@ public class EndGameService {
             String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard);
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard, gameResult.getWinner().getPoints(), gameResult.getLoser().getPoints());
         });
     }
 
     /* 게임 종료 로직*/
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public EndGameResponse endGame(Long gameRoomId) {
+    public EndGameResponse endGame(Long gameRoomId, String email) {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
-            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
+
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+
+            ValidateRoom validateRoom = validateRoomRepository.findByGameRoomAndParticipants(gameRoom, user.getNickname()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_USER.getMessage()));
+            validateRoom.resetReady();
+
             Game game = gameRoom.getCurrentGame();
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
@@ -119,7 +135,7 @@ public class EndGameService {
                     gameRoomId, gameResult.getWinner(), gameResult.getLoser());
 
             /* 유저 선택 상태 반환 */
-            return new EndGameResponse("GAME_END", "USER_CHOICE", gameResult.getWinner(), gameResult.getLoser(),
+            return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
                     gameResult.getWinnerPot(), gameResult.getLoserPot());
         });
     }
@@ -127,7 +143,7 @@ public class EndGameService {
     /* 검증 메서드 필드*/
     /* 라운드 승자, 패자 선정 메서드 */
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_READ)
+//    @Lock(LockModeType.PESSIMISTIC_READ)
     public GameResult determineGameResult(Game game) {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
@@ -147,7 +163,6 @@ public class EndGameService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_READ)
     public GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
@@ -156,20 +171,23 @@ public class EndGameService {
         log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
 
         /* 카드 숫자가 같으면 1번 덱의 카드를 가진 플레이어가 승리*/
-        GameResult result;
+        GameResult result = null;
+
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
-        } else {
+        }
+
+        if (playerOneCard.getNumber() == playerTwoCard.getNumber()) {
             result = playerOneCard.getDeckNumber() == 1 ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
+
         return result;
     }
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public void assignRoundPointsToWinner(Game game, GameResult gameResult) {
         User winner = gameResult.getWinner();
 
@@ -210,7 +228,6 @@ public class EndGameService {
 
     /* 게임 결과 처리 메서드*/
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public GameResult processGameResults(Game game) {
         int playerOneTotalPoints = game.getPlayerOneRoundPoints();
         int playerTwoTotalPoints = game.getPlayerTwoRoundPoints();
@@ -235,7 +252,6 @@ public class EndGameService {
 
     /* 1라운드 이후 턴 설정 메서드 */
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public void initializeTurnForGame(Game game, GameResult gameResult) {
         List<User> players = new ArrayList<>();
 
