@@ -17,7 +17,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,19 +99,29 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .previousPlayer(turn.getPreviousPlayer())
+                .myPoint(user.getPoints())
                 .build();
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
         Timer.Sample raiseTimer = Timer.start(registry);
         int userPoints = user.getPoints();
-        log.info("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
+        log.info("Raise action initiated by user: {}, currentPoints={}", user.getNickname(), userPoints);
 
         if (userPoints <= 0) {
             log.info("User has insufficient points to raise");
-            return new ActionDto(GameState.ACTION, GameState.END, Betting.RAISE, 0, game.getPot(), user.getNickname());
+            return ActionDto.builder()
+                    .nowState(GameState.ACTION)
+                    .nextState(GameState.END)
+                    .actionType(Betting.RAISE)
+                    .nowBet(0)
+                    .pot(game.getPot())
+                    .currentPlayer(user.getNickname())
+                    .previousPlayer(turn.getPreviousPlayer())
+                    .myPoint(userPoints)
+                    .build();
         }
         /* RAISE 베팅 액 설정*/
         log.info("Raise amount entered: {}", raiseAmount);
@@ -132,6 +141,8 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .previousPlayer(turn.getPreviousPlayer())
+                .myPoint(userPoints)
                 .build();
     }
 
@@ -165,6 +176,8 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(winner.getNickname())
+                .previousPlayer(game.getFoldedUser().getNickname())
+                .myPoint(user.getPoints())
                 .build();
     }
 
@@ -188,6 +201,8 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(user.getNickname())
+                .previousPlayer(user.getNickname())
+                .myPoint(user.getPoints())
                 .build();
     }
 }

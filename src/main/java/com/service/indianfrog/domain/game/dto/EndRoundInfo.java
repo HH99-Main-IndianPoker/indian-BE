@@ -13,8 +13,10 @@ public class EndRoundInfo {
     private String roundWinner;
     private String roundLoser;
     private int roundPot;
+    private int winnerPoint;
+    private int loserPoint;
 
-    public EndRoundInfo(String nowState, String nextState, int round, String roundWinner, String roundLoser, int roundPot, Card myCard) {
+    public EndRoundInfo(String nowState, String nextState, int round, String roundWinner, String roundLoser, int roundPot, Card myCard, int winnerPoint, int loserPoint) {
         this.nowState = nowState;
         this.nextState = nextState;
         this.round = round;
@@ -22,6 +24,8 @@ public class EndRoundInfo {
         this.roundWinner = roundWinner;
         this.roundLoser = roundLoser;
         this.roundPot = roundPot;
+        this.winnerPoint = winnerPoint;
+        this.loserPoint = loserPoint;
     }
 
 

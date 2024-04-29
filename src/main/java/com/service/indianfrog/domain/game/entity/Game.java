@@ -96,11 +96,6 @@ public class Game {
         this.betAmount = betAmount;
     }
 
-    // 게임 팟을 설정합니다.
-    public void setPot(int pot) {
-        this.pot = pot;
-    }
-
     public void updatePot(int point) {
         this.pot = pot + point;
     }
@@ -126,9 +121,6 @@ public class Game {
     public void resetRound() {
         /* 라운드 정보 초기화
          * 베팅액, 각 플레이어 카드 정보 초기화*/
-        this.pot = 0;
-//        this.playerOneCard = null;
-//        this.playerTwoCard = null;
         this.checkStatus = false;
         this.raiseStatus = false;
     }
@@ -154,4 +146,8 @@ public class Game {
         this.raiseStatus = true;
     }
 
+    public void startGame(User playerOne, User playerTwo) {
+        this.playerOne = playerOne;
+        this.playerTwo = playerTwo;
+    }
 }
