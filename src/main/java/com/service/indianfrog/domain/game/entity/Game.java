@@ -56,8 +56,7 @@ public class Game {
     private boolean raiseStatus;
 
     private boolean roundEnded;
-
-    private long lastExecuted;
+    private boolean roundStarted;
 
     // Constructor and methods
     @Builder
@@ -77,12 +76,7 @@ public class Game {
     }
 
     public void incrementRound() {
-        long now = System.currentTimeMillis(); // 현재 시간
-        if (now - lastExecuted < 5000) { // 마지막 실행 후 5초가 지나지 않았다면
-            return; // 메소드 실행 중단
-        }
         this.round++;
-        lastExecuted = now;
     }
 
     public void setPlayerOneCard(Card card) {
@@ -120,6 +114,7 @@ public class Game {
         this.checkStatus = false;
         this.raiseStatus = false;
         this.roundEnded = false;
+        this.roundStarted = false;
     }
 
     // 게임과 관련된 상태를 초기화하는 메서드
@@ -147,9 +142,15 @@ public class Game {
         this.playerOneRoundPoints = 0;
         this.playerTwoRoundPoints = 0;
         this.foldedUser = null;
+        this.pot = 0;
     }
 
     public void updateRoundEnded() {
         this.roundEnded = true;
     }
+
+    public void updateRoundStarted() {
+        this.roundStarted = true;
+    }
+
 }

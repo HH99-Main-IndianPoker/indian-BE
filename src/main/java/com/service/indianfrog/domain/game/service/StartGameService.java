@@ -75,7 +75,11 @@ public class StartGameService {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
-        game.incrementRound();
+        if (!game.isRoundStarted()){
+            game.incrementRound();
+            game.updateRoundStarted();
+        }
+
         log.info("라운드가 {}로 증가됨.", game.getRound());
 
         User playerOne = game.getPlayerOne();
