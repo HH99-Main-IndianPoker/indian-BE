@@ -122,7 +122,7 @@ public class EndGameService {
             validateRoom.resetReady();
 
             Game game = gameRoom.getCurrentGame();
-            em.merge(gameRoom);
+//            em.merge(gameRoom);
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
             Timer.Sample gameResultTimer = Timer.start(registry);
