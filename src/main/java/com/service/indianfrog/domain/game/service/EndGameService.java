@@ -124,21 +124,26 @@ public class EndGameService {
             Game game = gameRoom.getCurrentGame();
 //            em.merge(gameRoom);
 
-            /* 게임 결과 처리 및 게임 정보 초기화*/
-            Timer.Sample gameResultTimer = Timer.start(registry);
-            GameResult gameResult = processGameResults(game);
-            gameResultTimer.stop(registry.timer("endGameResult.time"));
+            if(game.checkAllCompleted(2)) {
 
-            GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
+                /* 게임 결과 처리 및 게임 정보 초기화*/
+                Timer.Sample gameResultTimer = Timer.start(registry);
+                GameResult gameResult = processGameResults(game);
+                gameResultTimer.stop(registry.timer("endGameResult.time"));
 
-            CurrentGameStatus.updateGameState(GameState.READY);
+                GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
 
-            log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
-                    gameRoomId, gameResult.getWinner(), gameResult.getLoser());
+                CurrentGameStatus.updateGameState(GameState.READY);
 
-            /* 유저 선택 상태 반환 */
-            return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
-                    gameResult.getWinnerPot(), gameResult.getLoserPot());
+                log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
+                        gameRoomId, gameResult.getWinner(), gameResult.getLoser());
+
+                /* 유저 선택 상태 반환 */
+                return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
+                        gameResult.getWinnerPot(), gameResult.getLoserPot());
+            } else {
+                return null;
+            }
         });
     }
 

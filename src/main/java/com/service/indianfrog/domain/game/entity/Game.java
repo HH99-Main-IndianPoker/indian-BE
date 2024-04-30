@@ -57,6 +57,7 @@ public class Game {
     private boolean raiseStatus;
 
     private long lastExecuted;
+    private int count;
 
     // Constructor and methods
     @Builder
@@ -125,17 +126,28 @@ public class Game {
         this.raiseStatus = false;
     }
 
+    public void incrementCount() {
+        this.count++;
+    }
+
+    public boolean checkAllCompleted(int totalPlayers) {
+        return this.count >= totalPlayers;
+    }
+
     // 게임과 관련된 상태를 초기화하는 메서드
     public void resetGame() {
-        /* 게임에 사용된 카드 정보,
-         * 게임에서 각 유저가 획득한 포인트,
-         * 라운드 정보 초기화*/
-        usedCards.clear();
-        this.playerOneRoundPoints = 0;
-        this.playerTwoRoundPoints = 0;
-        this.round = 0;
-        this.checkStatus = false;
-        this.raiseStatus = false;
+        if(checkAllCompleted(2)) {
+            /* 게임에 사용된 카드 정보,
+             * 게임에서 각 유저가 획득한 포인트,
+             * 라운드 정보 초기화*/
+            usedCards.clear();
+            this.playerOneRoundPoints = 0;
+            this.playerTwoRoundPoints = 0;
+            this.round = 0;
+            this.checkStatus = false;
+            this.raiseStatus = false;
+            this.count = 0;
+        }
     }
 
     public void updateCheck() {
