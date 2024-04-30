@@ -125,7 +125,6 @@ public class EndGameService {
 //            em.merge(gameRoom);
             game.incrementCount();
 
-            if(game.checkAllCompleted(2)) {
 
                 /* 게임 결과 처리 및 게임 정보 초기화*/
                 Timer.Sample gameResultTimer = Timer.start(registry);
@@ -142,9 +141,7 @@ public class EndGameService {
                 /* 유저 선택 상태 반환 */
                 return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
                         gameResult.getWinnerPot(), gameResult.getLoserPot());
-            } else {
-                return null;
-            }
+
         });
     }
 
