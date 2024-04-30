@@ -41,7 +41,6 @@ public class Game {
     private int betAmount;
 
     private int pot; // 현재 라운드의 포트
-    private int nextRoundPot; // 다음 라운드로 이월할 포트
 
     @ManyToOne(fetch = FetchType.EAGER)
     private User foldedUser;
@@ -113,11 +112,6 @@ public class Game {
         this.playerTwoRoundPoints += points;
     }
 
-    public void setNextRoundPot(int pot) {
-        // 다음 라운드로 이월할 포트 금액을 설정합니다.
-        this.nextRoundPot += pot; // 이월될 금액을 누적합니다.
-    }
-
     public void resetRound() {
         /* 라운드 정보 초기화
          * 베팅액, 각 플레이어 카드 정보 초기화*/
@@ -147,5 +141,8 @@ public class Game {
     public void startGame(User playerOne, User playerTwo) {
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
+        this.playerOneRoundPoints = 0;
+        this.playerTwoRoundPoints = 0;
+        this.foldedUser = null;
     }
 }
