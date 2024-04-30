@@ -88,7 +88,6 @@ public class EndGameService {
             log.info("myCard : {}", myCard);
 
             if (!game.isRoundEnded()) {
-                log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
                 Timer.Sample roundPointsTimer = Timer.start(registry);
                 assignRoundPointsToWinner(game, gameResult);
                 roundPointsTimer.stop(registry.timer("roundPoints.time"));
@@ -97,6 +96,8 @@ public class EndGameService {
                 initializeTurnForGame(game, gameResult);
                 game.updateRoundEnded();
             }
+
+            log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner().getNickname(), gameResult.getLoser().getNickname());
 
             int roundPot = game.getPot();
             /* 라운드 정보 초기화 */
