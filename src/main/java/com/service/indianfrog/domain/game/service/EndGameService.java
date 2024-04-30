@@ -87,7 +87,7 @@ public class EndGameService {
 
             log.info("myCard : {}", myCard);
 
-            if (!game.isRoundEnded()) {
+            if (game.isRoundEnded() == false) {
                 Timer.Sample roundPointsTimer = Timer.start(registry);
                 assignRoundPointsToWinner(game, gameResult);
                 roundPointsTimer.stop(registry.timer("roundPoints.time"));
@@ -101,12 +101,12 @@ public class EndGameService {
 
             int roundPot = game.getPot();
 
-           if(game.isRoundEnded()) {
+           if(game.isRoundEnded() == true) {
                /* 라운드 정보 초기화 */
                game.resetRound();
-           }
+               log.info("Round reset for gameRoomId={}", gameRoomId);
 
-            log.debug("Round reset for gameRoomId={}", gameRoomId);
+           }
 
             /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
             String nextState = determineGameState(game);
