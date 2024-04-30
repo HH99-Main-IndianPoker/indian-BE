@@ -64,6 +64,7 @@ public class EndGameService {
 //            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -86,7 +87,7 @@ public class EndGameService {
 
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
             Timer.Sample roundPointsTimer = Timer.start(registry);
-            assignRoundPointsToWinner(game, gameResult);
+            assignRoundPointsToWinner(game, gameResult, user);
             roundPointsTimer.stop(registry.timer("roundPoints.time"));
             int roundPot = game.getPot();
 
@@ -184,18 +185,19 @@ public class EndGameService {
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     @Transactional
-    public void assignRoundPointsToWinner(Game game, GameResult gameResult) {
+    public void assignRoundPointsToWinner(Game game, GameResult gameResult, User user) {
         User winner = gameResult.getWinner();
-
         int pointsToAdd = game.getPot();
 
-        winner.updatePoint(pointsToAdd);
-
-        if (winner.equals(game.getPlayerOne())) {
-            game.addPlayerOneRoundPoints(pointsToAdd);
-        } else {
-            game.addPlayerTwoRoundPoints(pointsToAdd);
+        if (winner.equals(user)) {
+            winner.updatePoint(pointsToAdd);
+            if (winner.equals(game.getPlayerOne())) {
+                game.addPlayerOneRoundPoints(pointsToAdd);
+            } else {
+                game.addPlayerTwoRoundPoints(pointsToAdd);
+            }
         }
+
         log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
     }
 
