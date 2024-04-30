@@ -63,9 +63,12 @@ public class StartGameService {
             Turn turn = gameTurnService.getTurn(game.getId());
             log.info("현재 턴 가져옴.");
 
+            int myPoint = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerOne().getPoints() : game.getPlayerTwo().getPoints();
+            int otherPoint = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwo().getPoints() : game.getPlayerOne().getPoints();
+
             log.info("StartRoundResponse 반환 중.");
 
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount(), game.getPot());
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount(), game.getPot(), myPoint, otherPoint);
         });
     }
 
