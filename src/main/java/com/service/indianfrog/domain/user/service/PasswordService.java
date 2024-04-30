@@ -9,7 +9,6 @@ import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
 import com.service.indianfrog.global.exception.RestApiException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,10 +39,13 @@ public class PasswordService {
         return new UserResponseDto.PasswordFindDto(true);
     }
 
+    @Transactional
     public ChangedPassDto changePassword(User user, PassChangeDto passChangeDto) {
 
         if(passwordEncoder.matches(passChangeDto.originPassword(), user.getPassword())) {
-            user.updatePassword(passwordEncoder.encode(passChangeDto.updatedPassword()));
+            User updateUser = userRepository.findByEmail(user.getEmail()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+            updateUser.updatePassword(passwordEncoder.encode(passChangeDto.updatedPassword()));
+            log.info(passChangeDto.updatedPassword());
             return new ChangedPassDto(true);
         }
         return new ChangedPassDto(false);
@@ -56,7 +58,7 @@ public class PasswordService {
 
         for(int i = 0; i < len; i++) {
             //소문자, 대문자, 숫자
-            String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
             int index = rm.nextInt(chars.length());
             sb.append(chars.charAt(index));
         }

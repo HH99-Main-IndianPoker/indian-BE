@@ -5,7 +5,6 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
-import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -15,7 +14,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,15 +25,13 @@ import java.util.*;
 public class StartGameService {
 
     /* 생성자를 통한 필드 주입 */
-    private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
     @PersistenceContext
     private EntityManager em;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
-        this.gameValidator = gameValidator;
+    public StartGameService(GameTurnService gameTurnService, MeterRegistry registry) {
         this.gameTurnService = gameTurnService;
         this.totalRoundStartTimer = registry.timer("totalRoundStart.time");
         this.performRoundStartTimer = registry.timer("performRoundStart.time");
@@ -47,7 +43,6 @@ public class StartGameService {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
             log.info("게임룸 검증 및 검색 중.");
-//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             log.info("게임룸 검증 및 검색 완료.");
 

@@ -36,31 +36,35 @@ public class GameValidator {
 
         log.info("game is null : {}", repositoryHolder.gameRepository.existsByGameRoom(gameRoom));
 
-        List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
+            List<ValidateRoom> validateRooms = repositoryHolder.validateRoomRepository.findAllByGameRoomRoomId(gameRoom.getRoomId());
 
-        String host = validateRooms.stream()
-                .filter(ValidateRoom::isHost)
-                .map(ValidateRoom::getParticipants)
-                .findFirst()
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-        String participant = validateRooms.stream()
-                .filter(p -> !p.isHost())
-                .map(ValidateRoom::getParticipants)
-                .findFirst()
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+            String host = validateRooms.stream()
+                    .filter(ValidateRoom::isHost)
+                    .map(ValidateRoom::getParticipants)
+                    .findFirst()
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+            String participant = validateRooms.stream()
+                    .filter(p -> !p.isHost())
+                    .map(ValidateRoom::getParticipants)
+                    .findFirst()
+                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
-        User playerOne = repositoryHolder.userRepository.findByNickname(host);
-        User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
+            User playerOne = repositoryHolder.userRepository.findByNickname(host);
+            User playerTwo = repositoryHolder.userRepository.findByNickname(participant);
 
-        Game game = Game.builder().playerOne(playerOne).playerTwo(playerTwo).gameRoom(gameRoom).build();
+            if (gameRoom.getCurrentGame() == null) {
+                Game game = Game.builder().playerOne(playerOne).playerTwo(playerTwo).gameRoom(gameRoom).build();
+                repositoryHolder.gameRepository.save(game);
+                gameRoom.startNewGame(game);
+            }
 
-        repositoryHolder.gameRepository.save(game);
+            if (gameRoom.getCurrentGame() != null) {
+                gameRoom.getCurrentGame().startGame(playerOne, playerTwo);
+            }
 
-        gameRoom.startNewGame(game);
-}
+    }
 
 public User findUserByNickname(String nickname) {
     return repositoryHolder.userRepository.findByNickname(nickname);
-//                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 유저입니다."));
 }
 }
