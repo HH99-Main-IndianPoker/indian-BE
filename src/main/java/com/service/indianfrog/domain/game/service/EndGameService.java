@@ -123,6 +123,7 @@ public class EndGameService {
 
             Game game = gameRoom.getCurrentGame();
 //            em.merge(gameRoom);
+            game.incrementCount();
 
             if(game.checkAllCompleted(2)) {
 
