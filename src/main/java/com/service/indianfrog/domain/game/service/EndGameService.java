@@ -132,7 +132,7 @@ public class EndGameService {
             CurrentGameStatus.updateGameState(GameState.READY);
 
             log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}, winnerPot={}, loserPot={}",
-                    gameRoomId, gameResult.getWinner(), gameResult.getLoser(), gameResult.getWinnerPot(), gameResult.getLoserPot());
+                    gameRoomId, gameResult.getWinner().getNickname(), gameResult.getLoser().getNickname(), gameResult.getWinnerPot(), gameResult.getLoserPot());
 
             /* 유저 선택 상태 반환 */
             return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
