@@ -87,7 +87,7 @@ public class EndGameService {
 
             log.info("myCard : {}", myCard);
 
-            if (game.isRoundEnded() == false) {
+            if (!game.isRoundEnded()) {
                 Timer.Sample roundPointsTimer = Timer.start(registry);
                 assignRoundPointsToWinner(game, gameResult);
                 roundPointsTimer.stop(registry.timer("roundPoints.time"));
@@ -95,18 +95,14 @@ public class EndGameService {
                 /* 라운드 승자가 선턴을 가지도록 설정*/
                 initializeTurnForGame(game, gameResult);
                 game.updateRoundEnded();
+            } else {
+                game.resetRound();
+                log.info("Round reset for gameRoomId={}", gameRoomId);
             }
 
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner().getNickname(), gameResult.getLoser().getNickname());
 
             int roundPot = game.getPot();
-
-           if(game.isRoundEnded() == true) {
-               /* 라운드 정보 초기화 */
-               game.resetRound();
-               log.info("Round reset for gameRoomId={}", gameRoomId);
-
-           }
 
             /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
             String nextState = determineGameState(game);
@@ -164,7 +160,7 @@ public class EndGameService {
 
         GameResult result = getGameResult(game, playerOne, playerTwo);
 
-        log.info("Game result determined: winnerId={}, loserId={}", result.getWinner(), result.getLoser());
+        log.info("Game result determined: winnerId={}, loserId={}", result.getWinner().getNickname(), result.getLoser().getNickname());
         return result;
     }
 
