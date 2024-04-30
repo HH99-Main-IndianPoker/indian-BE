@@ -131,8 +131,8 @@ public class EndGameService {
 
             CurrentGameStatus.updateGameState(GameState.READY);
 
-            log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}",
-                    gameRoomId, gameResult.getWinner(), gameResult.getLoser());
+            log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}, winnerPot={}, loserPot={}",
+                    gameRoomId, gameResult.getWinner(), gameResult.getLoser(), gameResult.getWinnerPot(), gameResult.getLoserPot());
 
             /* 유저 선택 상태 반환 */
             return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
@@ -231,6 +231,9 @@ public class EndGameService {
         int playerOneTotalPoints = game.getPlayerOneRoundPoints();
         int playerTwoTotalPoints = game.getPlayerTwoRoundPoints();
 
+        log.info("playerOneTotalPoint : {}", playerOneTotalPoints);
+        log.info("playerTwoTotalPoint : {}", playerTwoTotalPoints);
+
         /* 게임 승자와 패자를 정하고 각각의 정보 업데이트*/
         User gameWinner = playerOneTotalPoints > playerTwoTotalPoints ? game.getPlayerOne() : game.getPlayerTwo();
         User gameLoser = gameWinner.equals(game.getPlayerOne()) ? game.getPlayerTwo() : game.getPlayerOne();
@@ -247,8 +250,14 @@ public class EndGameService {
         int winnerTotalPoints = gameWinner.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
         int loserTotalPoints = gameLoser.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
 
+        log.info("winnerTotalPoints : {}", winnerTotalPoints);
+        log.info("loserTotalPoints : {}", loserTotalPoints);
+
         /* 게임 데이터 초기화*/
         game.resetGame();
+
+        log.info("winnerTotalPoints : {}", winnerTotalPoints);
+        log.info("loserTotalPoints : {}", loserTotalPoints);
 
         return new GameResult(gameWinner, gameLoser, winnerTotalPoints, loserTotalPoints);
     }
