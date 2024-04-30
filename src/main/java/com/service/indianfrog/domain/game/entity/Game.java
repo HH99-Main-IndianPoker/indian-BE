@@ -55,6 +55,7 @@ public class Game {
 
     private boolean checkStatus;
     private boolean raiseStatus;
+    private boolean roundEnded = false;
 
     private long lastExecuted;
 
@@ -149,5 +150,9 @@ public class Game {
     public void startGame(User playerOne, User playerTwo) {
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
+    }
+
+    public void updateRoundEnded() {
+        this.roundEnded = true;
     }
 }

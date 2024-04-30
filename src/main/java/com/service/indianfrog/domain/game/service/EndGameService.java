@@ -64,7 +64,6 @@ public class EndGameService {
 //            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
-            User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -79,25 +78,28 @@ public class EndGameService {
                 myCard = game.getPlayerOneCard();
             }
 
-            if(email.equals(game.getPlayerTwo().getEmail())) {
+            if (email.equals(game.getPlayerTwo().getEmail())) {
                 myCard = game.getPlayerTwoCard();
             }
 
             log.info("myCard : {}", myCard);
-
-            log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
-            Timer.Sample roundPointsTimer = Timer.start(registry);
-            assignRoundPointsToWinner(game, gameResult, user);
-            roundPointsTimer.stop(registry.timer("roundPoints.time"));
             int roundPot = game.getPot();
 
-            /* 라운드 승자가 선턴을 가지도록 설정*/
-            initializeTurnForGame(game, gameResult);
+            if (!game.isRoundEnded()) {
+                log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
+                Timer.Sample roundPointsTimer = Timer.start(registry);
+                assignRoundPointsToWinner(game, gameResult);
+                roundPointsTimer.stop(registry.timer("roundPoints.time"));
 
-            /* 라운드 정보 초기화 */
-            game.resetRound();
-            log.debug("Round reset for gameRoomId={}", gameRoomId);
+                /* 라운드 승자가 선턴을 가지도록 설정*/
+                initializeTurnForGame(game, gameResult);
 
+                /* 라운드 정보 초기화 */
+                game.resetRound();
+                log.debug("Round reset for gameRoomId={}", gameRoomId);
+
+                game.updateRoundEnded();
+            }
             /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
             String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
@@ -149,7 +151,7 @@ public class EndGameService {
 
         if (game.getFoldedUser() != null && game.getFoldedUser().equals(playerOne)) {
             return new GameResult(playerTwo, playerOne);
-        } else if(game.getFoldedUser() != null && game.getFoldedUser().equals(playerTwo)){
+        } else if (game.getFoldedUser() != null && game.getFoldedUser().equals(playerTwo)) {
             return new GameResult(playerOne, playerTwo);
         }
 
@@ -185,17 +187,15 @@ public class EndGameService {
 
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     @Transactional
-    public void assignRoundPointsToWinner(Game game, GameResult gameResult, User user) {
+    public void assignRoundPointsToWinner(Game game, GameResult gameResult) {
         User winner = gameResult.getWinner();
         int pointsToAdd = game.getPot();
 
-        if (winner.equals(user)) {
-            winner.updatePoint(pointsToAdd);
-            if (winner.equals(game.getPlayerOne())) {
-                game.addPlayerOneRoundPoints(pointsToAdd);
-            } else {
-                game.addPlayerTwoRoundPoints(pointsToAdd);
-            }
+        winner.updatePoint(pointsToAdd);
+        if (winner.equals(game.getPlayerOne())) {
+            game.addPlayerOneRoundPoints(pointsToAdd);
+        } else {
+            game.addPlayerTwoRoundPoints(pointsToAdd);
         }
 
         log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
