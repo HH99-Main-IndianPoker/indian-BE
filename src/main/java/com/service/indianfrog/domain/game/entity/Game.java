@@ -131,8 +131,6 @@ public class Game {
          * 게임에서 각 유저가 획득한 포인트,
          * 라운드 정보 초기화*/
         usedCards.clear();
-        this.playerOneRoundPoints = 0;
-        this.playerTwoRoundPoints = 0;
         this.round = 0;
         this.checkStatus = false;
         this.raiseStatus = false;

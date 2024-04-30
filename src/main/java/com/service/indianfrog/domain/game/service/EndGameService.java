@@ -114,7 +114,6 @@ public class EndGameService {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
             GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-//            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
 
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
@@ -122,11 +121,10 @@ public class EndGameService {
             validateRoom.resetReady();
 
             Game game = gameRoom.getCurrentGame();
-//            em.merge(gameRoom);
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
             Timer.Sample gameResultTimer = Timer.start(registry);
-            GameResult gameResult = processGameResults(game);
+            GameResult gameResult = processGameResults(game, email);
             gameResultTimer.stop(registry.timer("endGameResult.time"));
 
             GameRoom CurrentGameStatus = gameRoomRepository.findByRoomId(gameRoomId);
@@ -200,6 +198,7 @@ public class EndGameService {
         } else {
             game.addPlayerTwoRoundPoints(pointsToAdd);
         }
+
         log.info("Points assigned: winnerId={}, pointsAdded={}", winner.getNickname(), pointsToAdd);
     }
 
@@ -228,7 +227,7 @@ public class EndGameService {
 
     /* 게임 결과 처리 메서드*/
     @Transactional
-    public GameResult processGameResults(Game game) {
+    public GameResult processGameResults(Game game, String email) {
         int playerOneTotalPoints = game.getPlayerOneRoundPoints();
         int playerTwoTotalPoints = game.getPlayerTwoRoundPoints();
 
@@ -236,8 +235,13 @@ public class EndGameService {
         User gameWinner = playerOneTotalPoints > playerTwoTotalPoints ? game.getPlayerOne() : game.getPlayerTwo();
         User gameLoser = gameWinner.equals(game.getPlayerOne()) ? game.getPlayerTwo() : game.getPlayerOne();
 
-        gameWinner.incrementWins();
-        gameLoser.incrementLosses();
+        if (email.equals(gameWinner.getEmail())){
+            gameWinner.incrementWins();
+        }
+
+        if (email.equals(gameLoser.getEmail())){
+            gameLoser.incrementLosses();
+        }
 
         /* 승자와 패자의 총 획득 포인트*/
         int winnerTotalPoints = gameWinner.equals(game.getPlayerOne()) ? playerOneTotalPoints : playerTwoTotalPoints;
