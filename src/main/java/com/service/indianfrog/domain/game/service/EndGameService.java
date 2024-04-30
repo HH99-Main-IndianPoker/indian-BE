@@ -87,15 +87,18 @@ public class EndGameService {
 
             log.info("myCard : {}", myCard);
 
-            log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
-            Timer.Sample roundPointsTimer = Timer.start(registry);
-            assignRoundPointsToWinner(game, gameResult);
-            roundPointsTimer.stop(registry.timer("roundPoints.time"));
+            if (!game.isRoundEnded()) {
+                log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner(), gameResult.getLoser());
+                Timer.Sample roundPointsTimer = Timer.start(registry);
+                assignRoundPointsToWinner(game, gameResult);
+                roundPointsTimer.stop(registry.timer("roundPoints.time"));
+
+                /* 라운드 승자가 선턴을 가지도록 설정*/
+                initializeTurnForGame(game, gameResult);
+                game.updateRoundEnded();
+            }
+
             int roundPot = game.getPot();
-
-            /* 라운드 승자가 선턴을 가지도록 설정*/
-            initializeTurnForGame(game, gameResult);
-
             /* 라운드 정보 초기화 */
             game.resetRound();
             log.debug("Round reset for gameRoomId={}", gameRoomId);

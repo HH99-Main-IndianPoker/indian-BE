@@ -55,6 +55,8 @@ public class Game {
     private boolean checkStatus;
     private boolean raiseStatus;
 
+    private boolean roundEnded;
+
     private long lastExecuted;
 
     // Constructor and methods
@@ -117,6 +119,7 @@ public class Game {
          * 베팅액, 각 플레이어 카드 정보 초기화*/
         this.checkStatus = false;
         this.raiseStatus = false;
+        this.roundEnded = false;
     }
 
     // 게임과 관련된 상태를 초기화하는 메서드
@@ -144,5 +147,9 @@ public class Game {
         this.playerOneRoundPoints = 0;
         this.playerTwoRoundPoints = 0;
         this.foldedUser = null;
+    }
+
+    public void updateRoundEnded() {
+        this.roundEnded = true;
     }
 }
