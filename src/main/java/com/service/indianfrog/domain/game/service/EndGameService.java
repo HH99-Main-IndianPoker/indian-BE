@@ -7,6 +7,7 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
+import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
@@ -40,12 +41,13 @@ public class EndGameService {
     private final MeterRegistry registry;
     private final Timer totalRoundEndTimer;
     private final Timer totalGameEndTimer;
+    private final GameValidator gameValidator;
 
     @PersistenceContext
     private EntityManager em;
 
     public EndGameService(GameTurnService gameTurnService, GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
-                          MeterRegistry registry) {
+                          MeterRegistry registry,GameValidator gameValidator) {
         this.gameTurnService = gameTurnService;
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
@@ -53,6 +55,7 @@ public class EndGameService {
         this.registry = registry;
         this.totalRoundEndTimer = registry.timer("totalRoundEnd.time");
         this.totalGameEndTimer = registry.timer("totalGameEnd.time");
+        this.gameValidator = gameValidator;
     }
 
     /* 라운드 종료 로직*/
@@ -110,8 +113,8 @@ public class EndGameService {
     public EndGameResponse endGame(Long gameRoomId, String email) {
         return totalGameEndTimer.record(() -> {
             log.info("Ending game for gameRoomId={}", gameRoomId);
-//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
-            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
+            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+//            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
 
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
@@ -119,6 +122,7 @@ public class EndGameService {
             validateRoom.resetReady();
 
             Game game = gameRoom.getCurrentGame();
+//            em.merge(gameRoom);
 
             /* 게임 결과 처리 및 게임 정보 초기화*/
             Timer.Sample gameResultTimer = Timer.start(registry);
