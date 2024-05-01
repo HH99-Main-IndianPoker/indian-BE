@@ -24,20 +24,17 @@ public class GameController {
     private final StartGameService startGameService;
     private final GamePlayService gamePlayService;
     private final EndGameService endGameService;
-    private final GameSessionService gameSessionService;
     private final ReadyService readyService;
 
     public GameController(SimpMessageSendingOperations messagingTemplate,
                           StartGameService startGameService, GamePlayService gamePlayService,
-                          EndGameService endGameService, GameSessionService gameSessionService, ReadyService readyService) {
+                          EndGameService endGameService, ReadyService readyService) {
         this.messagingTemplate = messagingTemplate;
         this.startGameService = startGameService;
         this.gamePlayService = gamePlayService;
         this.endGameService = endGameService;
-        this.gameSessionService = gameSessionService;
         this.readyService = readyService;
     }
-
 
     /* pub 사용 게임 준비 */
     @MessageMapping("/gameRoom/{gameRoomId}/ready")
@@ -51,23 +48,17 @@ public class GameController {
 
     @MessageMapping("/gameRoom/{gameRoomId}/{gameState}")
     public void handleGameState(@DestinationVariable Long gameRoomId, @DestinationVariable String gameState,
-                                @Payload(required = false) GameBetting gameBetting, @Payload(required = false) UserChoices userChoices, Principal principal) {
+                                @Payload(required = false) GameBetting gameBetting, Principal principal) {
 
         log.info("gameState -> {}", gameState);
 
         switch (gameState) {
-            case "START"-> {
+            case "START" -> {
                 StartRoundResponse response = startGameService.startRound(gameRoomId, principal.getName());
                 sendUserGameMessage(response, principal); // 유저별 메시지 전송
             }
-            case "ACTION", "USER_CHOICE" -> {
-                Object response = switch (gameState) {
-                    case "ACTION" ->
-                            gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
-                    case "USER_CHOICE" -> gameSessionService.processUserChoices(gameRoomId, userChoices);
-                    default -> throw new IllegalStateException("Unexpected value: " + gameState);
-                };
-                // 공통 메시지 전송
+            case "ACTION" -> {
+                ActionDto response = gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
                 String destination = "/topic/gameRoom/" + gameRoomId;
                 messagingTemplate.convertAndSend(destination, response);
             }
@@ -76,7 +67,7 @@ public class GameController {
                 sendUserEndRoundMessage(response, principal);
             }
             case "GAME_END" -> {
-                EndGameResponse response = endGameService.endGame(gameRoomId);
+                EndGameResponse response = endGameService.endGame(gameRoomId, principal.getName());
                 sendUserEndGameMessage(response, principal);
             }
 
@@ -97,7 +88,10 @@ public class GameController {
                         response.getRoundWinner().getNickname(),
                         response.getRoundLoser().getNickname(),
                         response.getRoundPot(),
-                        response.getMyCard()));
+                        response.getMyCard(),
+                        response.getOtherCard(),
+                        response.getWinnerPoint(),
+                        response.getLoserPoint()));
                 log.info("Message sent successfully.");
             }
             catch (Exception e) {
@@ -137,7 +131,9 @@ public class GameController {
                         response.getTurn(),
                         response.getFirstBet(),
                         response.getRoundPot(),
-                        response.getRound()));
+                        response.getRound(),
+                        response.getMyPoint(),
+                        response.getOtherPoint()));
                 log.info("Message sent successfully.");
             }
 
@@ -147,7 +143,9 @@ public class GameController {
                         response.getTurn(),
                         response.getFirstBet(),
                         response.getRoundPot(),
-                        response.getRound()));
+                        response.getRound(),
+                        response.getMyPoint(),
+                        response.getOtherPoint()));
                 log.info("Message sent successfully.");
             }
         } catch (Exception e) {

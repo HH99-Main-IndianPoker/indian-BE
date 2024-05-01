@@ -5,15 +5,15 @@ import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.Turn;
-import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,25 +25,25 @@ import java.util.*;
 public class StartGameService {
 
     /* 생성자를 통한 필드 주입 */
-    private final GameValidator gameValidator;
     private final GameTurnService gameTurnService;
     private final Timer totalRoundStartTimer;
     private final Timer performRoundStartTimer;
+    @PersistenceContext
+    private EntityManager em;
 
-    public StartGameService(GameValidator gameValidator, GameTurnService gameTurnService, MeterRegistry registry) {
-        this.gameValidator = gameValidator;
+    public StartGameService(GameTurnService gameTurnService, MeterRegistry registry) {
         this.gameTurnService = gameTurnService;
         this.totalRoundStartTimer = registry.timer("totalRoundStart.time");
         this.performRoundStartTimer = registry.timer("performRoundStart.time");
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public StartRoundResponse startRound(Long gameRoomId, String email) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
             log.info("게임룸 검증 및 검색 중.");
-            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             log.info("게임룸 검증 및 검색 완료.");
 
             gameRoom.updateGameState(GameState.START);
@@ -63,33 +63,40 @@ public class StartGameService {
             Turn turn = gameTurnService.getTurn(game.getId());
             log.info("현재 턴 가져옴.");
 
+            int myPoint = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerOne().getPoints() : game.getPlayerTwo().getPoints();
+            int otherPoint = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwo().getPoints() : game.getPlayerOne().getPoints();
+
             log.info("StartRoundResponse 반환 중.");
 
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount());
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount(), game.getPot(), myPoint, otherPoint);
         });
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public synchronized void performRoundStart(Game game, String email) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
-        game.incrementRound();
+        if (!game.isRoundStarted()){
+            game.incrementRound();
+            game.updateRoundStarted();
+        }
+
         log.info("라운드가 {}로 증가됨.", game.getRound());
 
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        if (game.getBetAmount() == 0){
+        if (game.getPot() == 0){
             int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
             log.info("초기 배팅금액 {}로 설정됨.", betAmount);
 
             playerOne.decreasePoints(betAmount);
             playerTwo.decreasePoints(betAmount);
 
-            game.setBetAmount(betAmount);
-            game.setPot(betAmount * 2);
+            game.setBetAmount(0);
+            game.updatePot(betAmount * 2);
         }
 
         if(game.getRound() > 1) {
@@ -109,7 +116,7 @@ public class StartGameService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();

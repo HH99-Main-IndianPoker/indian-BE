@@ -47,4 +47,7 @@ public class ValidateRoom {
         this.host = true;
     }
 
+    public void resetReady() {
+        this.ready = false;
+    }
 }

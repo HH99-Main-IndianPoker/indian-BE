@@ -13,9 +13,10 @@ import com.service.indianfrog.domain.user.entity.User;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,8 @@ public class GamePlayService {
     private final GameRepository gameRepository;
     private final MeterRegistry registry;
     private final Timer totalGamePlayTimer;
+    @PersistenceContext
+    private EntityManager em;
 
     public GamePlayService(GameValidator gameValidator, GameTurnService gameTurnService,
                            GameRepository gameRepository, MeterRegistry registry) {
@@ -40,11 +43,10 @@ public class GamePlayService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
         return totalGamePlayTimer.record(() -> {
             log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
-            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
+            GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
             User user = gameValidator.findUserByNickname(gameBetting.getNickname());
             Turn turn = gameTurnService.getTurn(game.getId());
@@ -66,7 +68,6 @@ public class GamePlayService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
         Timer.Sample checkTimer = Timer.start(registry);
@@ -96,20 +97,31 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .previousPlayer(user.getNickname())
+                .myPoint(user.getPoints())
                 .build();
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
         Timer.Sample raiseTimer = Timer.start(registry);
         int userPoints = user.getPoints();
-        log.info("Raise action initiated by user: {}, currentPoints={}", user.getEmail(), userPoints);
+        log.info("Raise action initiated by user: {}, currentPoints={}", user.getNickname(), userPoints);
 
         if (userPoints <= 0) {
             log.info("User has insufficient points to raise");
-            return new ActionDto(GameState.ACTION, GameState.END, Betting.RAISE, 0, game.getPot(), user.getNickname());
+            return ActionDto.builder()
+                    .nowState(GameState.ACTION)
+                    .nextState(GameState.END)
+                    .actionType(Betting.RAISE)
+                    .nowBet(0)
+                    .pot(game.getPot())
+                    .currentPlayer(user.getNickname())
+                    .previousPlayer(user.getNickname())
+                    .myPoint(userPoints)
+                    .build();
         }
+
         /* RAISE 베팅 액 설정*/
         log.info("Raise amount entered: {}", raiseAmount);
 
@@ -128,11 +140,12 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
+                .previousPlayer(user.getNickname())
+                .myPoint(userPoints)
                 .build();
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performDieAction(Game game, User user) {
         Timer.Sample dieTimer = Timer.start(registry);
         User playerOne = game.getPlayerOne();
@@ -161,11 +174,12 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(winner.getNickname())
+                .previousPlayer(game.getFoldedUser().getNickname())
+                .myPoint(user.getPoints())
                 .build();
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto gameEnd(User user, Game game) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
 
@@ -184,6 +198,8 @@ public class GamePlayService {
                 .nowBet(game.getBetAmount())
                 .pot(game.getPot())
                 .currentPlayer(user.getNickname())
+                .previousPlayer(user.getNickname())
+                .myPoint(user.getPoints())
                 .build();
     }
 }
