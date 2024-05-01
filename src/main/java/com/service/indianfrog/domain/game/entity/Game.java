@@ -118,6 +118,13 @@ public class Game {
         this.playerTwoRoundPoints += points;
     }
 
+    public void losePlayerOneRoundPoints(int points) {
+        this.playerTwoRoundPoints -= points;
+    }
+    public void losePlayerTwoRoundPoints(int points) {
+        this.playerTwoRoundPoints -= points;
+    }
+
     public void setNextRoundPot(int pot) {
         // 다음 라운드로 이월할 포트 금액을 설정합니다.
         this.nextRoundPot += pot; // 이월될 금액을 누적합니다.

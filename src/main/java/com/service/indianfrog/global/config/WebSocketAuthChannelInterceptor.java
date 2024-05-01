@@ -68,7 +68,7 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
                 String errorMessage = "인증 실패. ";
                 switch (result) {
                     case EXPIRED:
-                        errorMessage += "토큰이 만료되었다네요.";
+                        errorMessage += "토큰 만료, ERROR_CODE: T452";
                         break;
                     case INVALID:
                         errorMessage += "유효하지 않는 토큰이래요...";

@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String role = "USER";
         GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
         insertInHeaderWithAccessToken(response, tokens);
-        insertSetCookieWithRefreshToken(response, tokens);
+//        insertSetCookieWithRefreshToken(response, tokens);
 
         CustomResponseUtil.success(response, points);
     }
@@ -80,23 +80,24 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         }
     }
 
-    private Cookie createCookie(String key, String value) {
+//    private Cookie createCookie(String key, String value) {
+//
+//        Cookie cookie = new Cookie(key, value);
+//        cookie.setMaxAge(24 * 60 * 60);
+//        cookie.setSecure(true); //https에 추가
+//        cookie.setAttribute("SameSite", "None");
+//        cookie.setHttpOnly(true);
+//        cookie.setPath("/");
+//        cookie.setDomain(".indianfrog.com");
+//
+//        return cookie;
+//    }
 
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24 * 60 * 60);
-        cookie.setSecure(true); //https에 추가
-        cookie.setAttribute("SameSite", "None");
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-
-        return cookie;
-    }
-
-    private void insertSetCookieWithRefreshToken(HttpServletResponse response, GeneratedToken tokens) throws UnsupportedEncodingException {
-        String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
-        Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
-        response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
-    }
+//    private void insertSetCookieWithRefreshToken(HttpServletResponse response, GeneratedToken tokens) throws UnsupportedEncodingException {
+//        String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
+//        Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);
+//        response.addCookie(refreshTokenCookie); // 쿠키를 응답에 추가
+//    }
 
     private static void insertInHeaderWithAccessToken(HttpServletResponse response, GeneratedToken tokens) {
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
