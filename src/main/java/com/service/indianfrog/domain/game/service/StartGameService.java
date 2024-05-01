@@ -63,9 +63,12 @@ public class StartGameService {
             Turn turn = gameTurnService.getTurn(game.getId());
             log.info("현재 턴 가져옴.");
 
+            int myPoint = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerOne().getPoints() : game.getPlayerTwo().getPoints();
+            int otherPoint = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwo().getPoints() : game.getPlayerOne().getPoints();
+
             log.info("StartRoundResponse 반환 중.");
 
-            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount(), game.getPot());
+            return new StartRoundResponse("ACTION", round, game.getPlayerOne(), game.getPlayerTwo(), card, turn, game.getBetAmount(), game.getPot(), myPoint, otherPoint);
         });
     }
 
@@ -75,7 +78,11 @@ public class StartGameService {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
-        game.incrementRound();
+        if (!game.isRoundStarted()){
+            game.incrementRound();
+            game.updateRoundStarted();
+        }
+
         log.info("라운드가 {}로 증가됨.", game.getRound());
 
         User playerOne = game.getPlayerOne();
