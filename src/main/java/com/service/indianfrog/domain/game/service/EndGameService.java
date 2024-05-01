@@ -144,7 +144,7 @@ public class EndGameService {
 
             /* 유저 선택 상태 반환 */
             return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
-                    gameResult.getWinnerPot(), gameResult.getLoserPot());
+                    gameResult.getWinnerPot() / 2, gameResult.getLoserPot() / 2 );
         });
     }
 
