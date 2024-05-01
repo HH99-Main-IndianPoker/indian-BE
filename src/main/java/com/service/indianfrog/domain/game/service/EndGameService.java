@@ -182,9 +182,7 @@ public class EndGameService {
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
-        }
-
-        if (playerOneCard.getNumber() == playerTwoCard.getNumber()) {
+        } else {
             result = playerOneCard.getDeckNumber() == 1 ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
