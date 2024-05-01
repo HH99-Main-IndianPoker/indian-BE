@@ -76,13 +76,16 @@ public class EndGameService {
             gameResultTimer.stop(registry.timer("roundResult.time"));
 
             Card myCard = null;
+            Card otherCard = null;
 
             if (email.equals(game.getPlayerOne().getEmail())) {
                 myCard = game.getPlayerOneCard();
+                otherCard = game.getPlayerTwoCard();
             }
 
             if(email.equals(game.getPlayerTwo().getEmail())) {
                 myCard = game.getPlayerTwoCard();
+                otherCard = game.getPlayerOneCard();
             }
 
             log.info("myCard : {}", myCard);
@@ -108,7 +111,7 @@ public class EndGameService {
             String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard, gameResult.getWinner().getPoints(), gameResult.getLoser().getPoints());
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard, otherCard, gameResult.getWinner().getPoints(), gameResult.getLoser().getPoints());
         });
     }
 

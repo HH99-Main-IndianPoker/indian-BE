@@ -42,17 +42,19 @@ public class GameDto {
         private String nextState;
         private int round;
         private Card myCard;
+        private Card otherCard;
         private User roundWinner;
         private User roundLoser;
         private int roundPot;
         private int winnerPoint;
         private int loserPoint;
 
-        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card myCard, int winnerPoint, int loserPoint) {
+        public EndRoundResponse(String nowState, String nextState, int round, User roundWinner, User roundLoser, int roundPot, Card myCard, Card otherCard, int winnerPoint, int loserPoint) {
             this.nowState = nowState;
             this.nextState = nextState;
             this.round = round;
             this.myCard = myCard;
+            this.otherCard = otherCard;
             this.roundWinner = roundWinner;
             this.roundLoser = roundLoser;
             this.roundPot = roundPot;
