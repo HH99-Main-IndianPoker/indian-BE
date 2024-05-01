@@ -118,7 +118,7 @@ public class GamePlayService {
                     .pot(game.getPot())
                     .currentPlayer(user.getNickname())
                     .previousPlayer(user.getNickname())
-                    .myPoint(userPoints)
+                    .myPoint(user.getPoints())
                     .build();
         }
 
@@ -130,7 +130,7 @@ public class GamePlayService {
         game.setBetAmount(raiseAmount);
         game.updateRaise();
         turn.nextTurn();
-        log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
+        log.info("Raise action completed: newPot={}, newBetAmount={}, afterRaisePoint={}", game.getPot(), game.getBetAmount(), user.getPoints());
 
         raiseTimer.stop(registry.timer("playRaise.time"));
         return ActionDto.builder()
@@ -141,7 +141,7 @@ public class GamePlayService {
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
                 .previousPlayer(user.getNickname())
-                .myPoint(userPoints)
+                .myPoint(user.getPoints())
                 .build();
     }
 
