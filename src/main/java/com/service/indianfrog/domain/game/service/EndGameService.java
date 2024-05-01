@@ -90,6 +90,9 @@ public class EndGameService {
 
             log.info("myCard : {}", myCard);
 
+
+            int roundPot = game.getPot();
+
             if (!game.isRoundEnded()) {
                 Timer.Sample roundPointsTimer = Timer.start(registry);
                 assignRoundPointsToWinner(game, gameResult);
@@ -104,8 +107,6 @@ public class EndGameService {
             }
 
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner().getNickname(), gameResult.getLoser().getNickname());
-
-            int roundPot = game.getPot();
 
             /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
             String nextState = determineGameState(game);
