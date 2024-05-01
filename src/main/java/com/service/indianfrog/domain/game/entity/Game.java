@@ -115,6 +115,7 @@ public class Game {
         this.raiseStatus = false;
         this.roundEnded = false;
         this.roundStarted = false;
+        this.pot = 0;
     }
 
     // 게임과 관련된 상태를 초기화하는 메서드
