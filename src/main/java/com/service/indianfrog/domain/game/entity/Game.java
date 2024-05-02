@@ -119,6 +119,7 @@ public class Game {
         this.roundStarted = false;
         this.pot = 0;
         this.cardAllocation = false;
+        this.foldedUser = null;
     }
 
     // 게임과 관련된 상태를 초기화하는 메서드
