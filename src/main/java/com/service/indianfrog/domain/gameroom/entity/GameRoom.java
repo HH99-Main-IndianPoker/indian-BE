@@ -3,13 +3,10 @@ package com.service.indianfrog.domain.gameroom.entity;
 
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
-import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.global.entity.Timestamped;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -59,6 +56,7 @@ public class GameRoom extends Timestamped {
     public void startNewGame(Game game) {
         this.currentGame = game;
     }
+
 
     // 게임을 종료할 때 호출하는 메서드입니다.
     public void endCurrentGame() {

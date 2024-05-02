@@ -61,7 +61,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         getRedirectStrategy().sendRedirect(request,response,targetUrl);
     }
 
-    /*TODO set localstorage를 하는가에대해서 물어보기*/
+
     private void setResponseRefreshTokens(HttpServletResponse response, GeneratedToken tokens)
         throws UnsupportedEncodingException {
 

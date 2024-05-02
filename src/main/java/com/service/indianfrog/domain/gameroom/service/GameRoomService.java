@@ -1,20 +1,11 @@
 package com.service.indianfrog.domain.gameroom.service;
 
-import static com.service.indianfrog.domain.gameroom.entity.QGameRoom.*;
-import static com.service.indianfrog.domain.gameroom.entity.QValidateRoom.validateRoom;
-import static com.service.indianfrog.domain.gameroom.entity.QGameRoom.gameRoom;
-import static com.service.indianfrog.domain.user.entity.QUser.user;
-
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomRequestDto.GameRoomCreateRequestDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GameRoomCreateResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetAllGameRoomResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.GameRoomResponseDto.GetGameRoomResponseDto;
 import com.service.indianfrog.domain.gameroom.dto.ParticipantInfo;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
-import com.service.indianfrog.domain.gameroom.entity.QGameRoom;
-import com.service.indianfrog.domain.gameroom.entity.QValidateRoom;
 import com.service.indianfrog.domain.gameroom.entity.ValidateRoom;
 import com.service.indianfrog.domain.gameroom.repository.GameRoomRepository;
 import com.service.indianfrog.domain.gameroom.repository.ValidateRoomRepository;
@@ -29,6 +20,14 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -37,15 +36,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -62,11 +52,9 @@ public class GameRoomService {
     private final Timer getAllGameRoomTimer;
     private final MeterRegistry registry;
     private Pattern pattern;
-    private final JPAQueryFactory jpaQueryFactory;
 
     public GameRoomService(GameRoomRepository gameRoomRepository, ValidateRoomRepository validateRoomRepository, UserRepository userRepository,
-                           SessionMappingStorage sessionMappingStorage, MeterRegistry registry,
-        JPAQueryFactory jpaQueryFactory) {
+                           SessionMappingStorage sessionMappingStorage, MeterRegistry registry) {
         this.gameRoomRepository = gameRoomRepository;
         this.validateRoomRepository = validateRoomRepository;
         this.userRepository = userRepository;
@@ -75,7 +63,6 @@ public class GameRoomService {
         this.getValidateRoomsTimer = registry.timer("getParticipant.time");
         this.getAllGameRoomTimer = registry.timer("getAllGameRoom.time");
         this.registry = registry;
-        this.jpaQueryFactory = jpaQueryFactory;
     }
 
     /**
@@ -141,9 +128,9 @@ public class GameRoomService {
      * @return 페이징 처리된 게임방 목록
      */
     @Transactional(readOnly = true)
-    public Page<GetAllGameRoomResponseDto> getAllGameRooms() {
+    public Page<GetAllGameRoomResponseDto> getAllGameRooms(Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(0, 15, Sort.by("createdAt").descending());
+        //Pageable pageable = PageRequest.of(0, 15, Sort.by("createdAt").descending());
 
         return getAllGameRoomTimer.record(() -> gameRoomRepository.findAll(pageable)
                 // 각각의 게임방 정보를 담기위해 map 사용
@@ -166,45 +153,17 @@ public class GameRoomService {
      *
      * @param roomId 삭제할 게임방 ID
      */
-//    @Transactional
-//    public void deleteGameRoom(Long roomId) {
-//        Timer.Sample deleteRoomTimer = Timer.start(registry);
-//
-//        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
-//
-//        validateRoomRepository.deleteAll(gameRoom.getValidateRooms());
-//        validateRoomRepository.flush();
-//
-//        gameRoomRepository.delete(gameRoom);
-//        gameRoomRepository.flush();
-//        deleteRoomTimer.stop(registry.timer("deleteGameRoom.time"));
-//    }
-
     @Transactional
     public void deleteGameRoom(Long roomId) {
         Timer.Sample deleteRoomTimer = Timer.start(registry);
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
-        //Find the game room first to ensure it exeists
-        GameRoom gameRoom = jpaQueryFactory.selectFrom(QGameRoom.gameRoom)
-            .where(QGameRoom.gameRoom.roomId.eq(roomId))
-            .fetchOne();
-        if (gameRoom == null) {
-            throw new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage());
-        }
+        validateRoomRepository.deleteAll(gameRoom.getValidateRooms());
+        validateRoomRepository.flush();
 
-        //Delete all validate rooms associated with the game room
-        long deletedCount = jpaQueryFactory
-            .delete(validateRoom)
-            .where(validateRoom.gameRoom.eq(gameRoom))
-            .execute();
-
-        //Now delete the game room itself
-        long gameRoomDeletedCount = jpaQueryFactory
-            .delete(QGameRoom.gameRoom)
-            .where(QGameRoom.gameRoom.roomId.eq(roomId))
-            .execute();
-
+        gameRoomRepository.delete(gameRoom);
+        gameRoomRepository.flush();
         deleteRoomTimer.stop(registry.timer("deleteGameRoom.time"));
     }
 
@@ -383,7 +342,6 @@ public class GameRoomService {
 //        List<ValidateRoom> validateRooms = validateRoomRepository.findAllByParticipants(nickname);
 //        // 검색된 모든 참여 정보를 삭제
 //        validateRoomRepository.deleteAll(validateRooms);
-
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
         removeSessionTimer.stop(registry.timer("removeSession.time"));
