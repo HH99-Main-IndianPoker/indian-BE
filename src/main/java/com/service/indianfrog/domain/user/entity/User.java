@@ -22,10 +22,6 @@ public class User extends Timestamped {
     @Column(nullable = false)
     private String password;
 
-//    @Column(name = "authority", nullable = false)
-//    @Enumerated(EnumType.STRING)
-//    private AuthorityType authority;
-
     private int points;
 
     /*
@@ -46,7 +42,6 @@ public class User extends Timestamped {
         this.points = 100;
         this.imageUrl = imageUrl;
         this.originFileName = originFileName;
-//        this.authority = authority;
     }
 
     public User() {
@@ -56,22 +51,6 @@ public class User extends Timestamped {
     public void imgUpdate(String originFileName, String imageUrl) {
         this.originFileName = originFileName;
         this.imageUrl = imageUrl;
-    }
-
-    public User(String nickname, String encodedPassword, String email, Long socialId) {
-        super();
-    }
-
-    public User(String nickname, String email, String socialId) {
-        super();
-    }
-
-    public User kakaoIdUpdate(Long socialId) {
-        return this;
-    }
-
-    public void updateInfo(String email, String oauthId) {
-        this.email = email;
     }
 
     public void incrementWins() {

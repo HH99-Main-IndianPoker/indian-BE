@@ -10,17 +10,19 @@ public class EndRoundInfo {
     private String nextState;
     private int round;
     private Card myCard;
+    private Card otherCard;
     private String roundWinner;
     private String roundLoser;
     private int roundPot;
     private int winnerPoint;
     private int loserPoint;
 
-    public EndRoundInfo(String nowState, String nextState, int round, String roundWinner, String roundLoser, int roundPot, Card myCard, int winnerPoint, int loserPoint) {
+    public EndRoundInfo(String nowState, String nextState, int round, String roundWinner, String roundLoser, int roundPot, Card myCard, Card otherCard, int winnerPoint, int loserPoint) {
         this.nowState = nowState;
         this.nextState = nextState;
         this.round = round;
         this.myCard = myCard;
+        this.otherCard = otherCard;
         this.roundWinner = roundWinner;
         this.roundLoser = roundLoser;
         this.roundPot = roundPot;

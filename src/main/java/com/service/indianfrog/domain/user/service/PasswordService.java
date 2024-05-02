@@ -42,7 +42,7 @@ public class PasswordService {
     @Transactional
     public ChangedPassDto changePassword(User user, PassChangeDto passChangeDto) {
 
-        if(passwordEncoder.matches(passChangeDto.originPassword(), user.getPassword())) {
+        if(passwordEncoder.matches(passChangeDto.originPassword(), user.getPassword()) && !passChangeDto.updatedPassword().equals(passChangeDto.originPassword())) {
             User updateUser = userRepository.findByEmail(user.getEmail()).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
             updateUser.updatePassword(passwordEncoder.encode(passChangeDto.updatedPassword()));
             log.info(passChangeDto.updatedPassword());

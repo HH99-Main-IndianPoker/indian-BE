@@ -89,6 +89,7 @@ public class GameController {
                         response.getRoundLoser().getNickname(),
                         response.getRoundPot(),
                         response.getMyCard(),
+                        response.getOtherCard(),
                         response.getWinnerPoint(),
                         response.getLoserPoint()));
                 log.info("Message sent successfully.");
@@ -130,7 +131,9 @@ public class GameController {
                         response.getTurn(),
                         response.getFirstBet(),
                         response.getRoundPot(),
-                        response.getRound()));
+                        response.getRound(),
+                        response.getMyPoint(),
+                        response.getOtherPoint()));
                 log.info("Message sent successfully.");
             }
 
@@ -140,7 +143,9 @@ public class GameController {
                         response.getTurn(),
                         response.getFirstBet(),
                         response.getRoundPot(),
-                        response.getRound()));
+                        response.getRound(),
+                        response.getMyPoint(),
+                        response.getOtherPoint()));
                 log.info("Message sent successfully.");
             }
         } catch (Exception e) {

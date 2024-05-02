@@ -46,7 +46,6 @@ public class GamePlayService {
     public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
         return totalGamePlayTimer.record(() -> {
             log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
-//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
             User user = gameValidator.findUserByNickname(gameBetting.getNickname());
@@ -69,7 +68,6 @@ public class GamePlayService {
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performCheckAction(Game game, User user, Turn turn) {
         /* 유저 턴 확인*/
         Timer.Sample checkTimer = Timer.start(registry);
@@ -120,9 +118,10 @@ public class GamePlayService {
                     .pot(game.getPot())
                     .currentPlayer(user.getNickname())
                     .previousPlayer(user.getNickname())
-                    .myPoint(userPoints)
+                    .myPoint(user.getPoints())
                     .build();
         }
+
         /* RAISE 베팅 액 설정*/
         log.info("Raise amount entered: {}", raiseAmount);
 
@@ -131,7 +130,7 @@ public class GamePlayService {
         game.setBetAmount(raiseAmount);
         game.updateRaise();
         turn.nextTurn();
-        log.info("Raise action completed: newPot={}, newBetAmount={}", game.getPot(), game.getBetAmount());
+        log.info("Raise action completed: newPot={}, newBetAmount={}, afterRaisePoint={}", game.getPot(), game.getBetAmount(), user.getPoints());
 
         raiseTimer.stop(registry.timer("playRaise.time"));
         return ActionDto.builder()
@@ -142,12 +141,11 @@ public class GamePlayService {
                 .pot(game.getPot())
                 .currentPlayer(turn.getCurrentPlayer())
                 .previousPlayer(user.getNickname())
-                .myPoint(userPoints)
+                .myPoint(user.getPoints())
                 .build();
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto performDieAction(Game game, User user) {
         Timer.Sample dieTimer = Timer.start(registry);
         User playerOne = game.getPlayerOne();
@@ -182,7 +180,6 @@ public class GamePlayService {
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public ActionDto gameEnd(User user, Game game) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
 

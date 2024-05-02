@@ -61,7 +61,6 @@ public class GameValidator {
             if (gameRoom.getCurrentGame() != null) {
                 gameRoom.getCurrentGame().startGame(playerOne, playerTwo);
             }
-
     }
 
 public User findUserByNickname(String nickname) {
