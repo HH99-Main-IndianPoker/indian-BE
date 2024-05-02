@@ -225,7 +225,7 @@ public class EndGameService {
         }
 
         /* 플레이어의 포인트가 없을 때*/
-        if (!checkPlayerPoints(game)) {
+        if (checkPlayerPoints(game) == false) {
             return "GAME_END";
         }
 
@@ -284,6 +284,6 @@ public class EndGameService {
     }
 
     private boolean checkPlayerPoints(Game game) {
-        return game.getPlayerOne().getPoints() > 0 || game.getPlayerTwo().getPoints() > 0;
+        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
     }
 }
