@@ -1,8 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
 import com.service.indianfrog.domain.game.dto.GameStatus;
-import com.service.indianfrog.domain.game.entity.Card;
-import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
@@ -19,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.List;
 
 import static com.service.indianfrog.global.exception.ErrorCode.INSUFFICIENT_POINTS;
 
