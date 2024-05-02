@@ -144,7 +144,7 @@ public class EndGameService {
 
             /* 유저 선택 상태 반환 */
             return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
-                    gameResult.getWinnerPot(), gameResult.getLoserPot());
+                    gameResult.getWinnerPot() / 2, gameResult.getLoserPot() / 2 );
         });
     }
 
@@ -182,10 +182,8 @@ public class EndGameService {
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
-        }
-
-        if (playerOneCard.getNumber() == playerTwoCard.getNumber()) {
-            result = playerOneCard.getDeckNumber() == 1 ?
+        } else {
+            result = playerOneCard.getDeckNumber() > playerTwoCard.getDeckNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
 
@@ -284,6 +282,6 @@ public class EndGameService {
     }
 
     private boolean checkPlayerPoints(Game game) {
-        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
+        return game.getPlayerOne().getPoints() > 0 || game.getPlayerTwo().getPoints() > 0;
     }
 }
