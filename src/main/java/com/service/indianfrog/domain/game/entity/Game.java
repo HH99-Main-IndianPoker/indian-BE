@@ -58,6 +58,8 @@ public class Game {
     private boolean roundEnded;
     private boolean roundStarted;
 
+    private boolean cardAllocation;
+
     // Constructor and methods
     @Builder
     public Game(User playerOne, User playerTwo, GameRoom gameRoom) {
@@ -116,6 +118,7 @@ public class Game {
         this.roundEnded = false;
         this.roundStarted = false;
         this.pot = 0;
+        this.cardAllocation = false;
     }
 
     // 게임과 관련된 상태를 초기화하는 메서드
@@ -154,4 +157,7 @@ public class Game {
         this.roundStarted = true;
     }
 
+    public void updateCardAllocation(){
+        this.cardAllocation = true;
+    }
 }
