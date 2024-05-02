@@ -99,7 +99,7 @@ public class StartGameService {
             game.updatePot(betAmount * 2);
         }
 
-        if(game.getRound() > 1) {
+        if (game.isCardAllocation() == false) {
             List<Card> availableCards = prepareAvailableCards(game);
             Collections.shuffle(availableCards);
             assignRandomCardsToPlayers(game, availableCards, email);
@@ -107,6 +107,8 @@ public class StartGameService {
             log.info("플레이어에게 카드 할당됨.");
             log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
             log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
+
+            game.updateCardAllocation();
         }
 
         if (game.getRound() == 1) {
