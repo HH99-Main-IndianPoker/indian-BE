@@ -183,7 +183,7 @@ public class EndGameService {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         } else {
-            result = playerOneCard.getDeckNumber() == 1 ?
+            result = playerOneCard.getDeckNumber() == 2 ?
                     new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
         }
 
@@ -282,6 +282,6 @@ public class EndGameService {
     }
 
     private boolean checkPlayerPoints(Game game) {
-        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
+        return game.getPlayerOne().getPoints() > 0 || game.getPlayerTwo().getPoints() > 0;
     }
 }
