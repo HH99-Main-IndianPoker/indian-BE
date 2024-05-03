@@ -82,7 +82,7 @@ public class GamePlayService {
             return gameEnd(user, game);
         }
 
-        /*유저 CHECK*/
+        /* 유저 CHECK */
         user.decreasePoints(game.getBetAmount());
         game.updatePot(game.getBetAmount());
         game.updateCheck();
@@ -122,9 +122,12 @@ public class GamePlayService {
                     .build();
         }
 
+        if (userPoints - game.getBetAmount() <= 0 || userPoints < game.getBetAmount() + raiseAmount){
+            performCheckAction(game, user, turn);
+        }
+
         /* RAISE 베팅 액 설정*/
         log.info("Raise amount entered: {}", raiseAmount);
-
         user.decreasePoints(game.getBetAmount() + raiseAmount);
         game.updatePot(game.getBetAmount() + raiseAmount);
         game.setBetAmount(raiseAmount);
