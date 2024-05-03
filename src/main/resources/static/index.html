@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Room</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+<body>
+<h2>회원가입</h2>
+<form id="registerForm">
+  이메일: <input type="email" id="registerEmail"><br>
+  비밀번호: <input type="password" id="registerPassword"><br>
+  닉네임: <input type="text" id="registerNickname"><br>
+  <button type="submit">회원가입</button>
+</form>
+
+<h2>로그인</h2>
+<form id="loginForm">
+  이메일: <input type="text" id="email"><br>
+  비밀번호: <input type="password" id="password"><br>
+  <button type="submit">로그인</button>
+  <button id="refreshToken" disabled>토큰 재발급</button>
+  <input type="button" value="Naver Login" onclick="onNaverLogin()">
+  <input type="button" value="Google Login" onclick="onGoogleLogin()">
+</form>
+
+<h2>게임방</h2>
+<button id="createRoom" disabled>게임방 생성</button>
+게임방 ID: <input type="text" id="roomId" placeholder="참여할 게임방 ID 입력"><br>
+게임방 이름: <input type="text" id="roomName" placeholder="생성할 게임방 이름 입력" disabled><br>
+<button id="joinRoom" disabled>게임방 참여</button>
+<button id="leaveRoom" disabled>게임방 나가기</button>
+
+<h2>Token Management</h2>
+<button id="refreshToken1">토큰 재발급</button>
+<script src="app.js"></script>
+
+<script>
+  const apiUrl = 'http://localhost:8081';
+
+  document.getElementById('registerForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const nickname = document.getElementById('registerNickname').value;
+
+    axios.post(`${apiUrl}/user/signup`, {email, password, nickname})
+    .then(response => {
+      alert('회원가입이 완료되었습니다. 로그인해 주세요.');
+    })
+    .catch(error => {
+      console.error('회원가입 실패', error);
+      alert('회원가입 실패');
+    });
+  });
+
+  function onNaverLogin() {
+    window.location.href = "http://localhost:8081/oauth2/authorization/naver";
+  }
+
+  function onGoogleLogin() {
+    window.location.href = "http://localhost:8081/oauth2/authorization/google";
+  }
+
+  document.getElementById('refreshToken').addEventListener('click', function () {
+    const refreshToken = localStorage.getItem('Authorization'); // Refresh token을 로컬 스토리지에서 가져옴
+    axios.post(`${apiUrl}/token/refresh`, {}, {
+      headers: {'Authorization': `${refreshToken}`} //bearer헤더를 뺐음. 123123
+    })
+    .then(response => {
+      localStorage.setItem('authToken', response.headers['authorization']); // 새로운 액세스 토큰으로 갱신
+      alert('토큰이 성공적으로 재발급 되었습니다.');
+    })
+    .catch(error => {
+      console.error('토큰 재발급 실패', error);
+      alert('토큰 재발급 실패');
+    });
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    axios.post(`${apiUrl}/user/login`, {email, password})
+    .then(response => {
+      localStorage.setItem('authToken', response.headers['authorization']);
+      localStorage.setItem('nickname', response.data.nickname);
+      document.getElementById('createRoom').disabled = false;
+      document.getElementById('roomName').disabled = false;
+      document.getElementById('joinRoom').disabled = false;
+      document.getElementById('refreshToken').disabled = false;
+      alert('로그인 성공');
+    })
+    .catch(error => alert('로그인 실패'));
+  });
+
+  document.getElementById('createRoom').addEventListener('click', function () {
+    const roomName = document.getElementById('roomName').value;
+    axios.post(`${apiUrl}/gameRoom/create`, {name: roomName}, {
+      headers: {'Authorization': localStorage.getItem('authToken')}
+    })
+    .then(response => {
+      const roomId = response.data.data.roomId; // 가정: 응답에 방 ID 포함
+      document.getElementById('roomId').value = roomId;
+      alert(`게임방 '${roomName}'이 생성되었습니다. 방 ID: ${roomId}`);
+      window.location.href = `gameRoomDetails.html?roomId=${roomId}`;
+    })
+    .catch(error => {
+      console.error('게임방 생성 실패', error);
+      alert('게임방 생성 실패');
+    });
+  });
+
+  document.getElementById('joinRoom').addEventListener('click', function () {
+    const roomId = document.getElementById('roomId').value;
+    axios.post(`${apiUrl}/gameRoom/${roomId}/join`, {}, {
+      headers: {'Authorization': localStorage.getItem('authToken')}
+    })
+    .then(response => {
+      alert(`게임방 ${roomId}에 성공적으로 참여하였습니다.`);
+      window.location.href = `gameRoomDetails.html?roomId=${roomId}`;
+    })
+    .catch(error => {
+      console.error('게임방 참여 오류:', error);
+      alert(`게임방 참여 실패: ${error.response ? error.response.data.message : '서버 응답 없음'}`);
+    });
+  });
+
+</script>
+</body>
+</html>

@@ -1,4 +1,10 @@
 spring:
+  config:
+    import:
+      - classpath:/yml/application-local.yml
+      - classpath:/yml/application-oauth.yml
+      - classpath:/yml/application-dev.yml
+      - classpath:/yml/application-monitoring.yml
   profiles:
-    active: dev
-
+    active: local
+    include: oauth

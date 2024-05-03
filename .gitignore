@@ -18,7 +18,9 @@ bin/
 !**/src/test/**/bin/
 
 ### IntelliJ IDEA ###
-application-dev.yml
+application-secret.yml
+application-oauth.yml
+application-monitoring.yml
 .idea
 *.iws
 *.iml
@@ -36,3 +38,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Querydsl ###
+/src/main/generated/
