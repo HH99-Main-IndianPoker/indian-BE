@@ -88,7 +88,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         cookie.setAttribute("SameSite", "None");
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        cookie.setDomain(".indianfrog.com");
 
         return cookie;
     }
