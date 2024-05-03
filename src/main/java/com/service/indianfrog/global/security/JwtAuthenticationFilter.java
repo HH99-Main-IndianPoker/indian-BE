@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String role = "USER";
         GeneratedToken tokens = jwtUtil.generateToken(email, role, nickname);
         insertInHeaderWithAccessToken(response, tokens);
-//        insertSetCookieWithRefreshToken(response, tokens);
+        insertSetCookieWithRefreshToken(response, tokens);
 
         CustomResponseUtil.success(response, points);
     }
