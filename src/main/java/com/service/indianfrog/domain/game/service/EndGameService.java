@@ -65,7 +65,6 @@ public class EndGameService {
         return totalRoundEndTimer.record(() -> {
             log.info("Ending round for gameRoomId={}", gameRoomId);
 
-//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
@@ -111,7 +110,7 @@ public class EndGameService {
             log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner().getNickname(), gameResult.getLoser().getNickname());
 
             /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
-            String nextState = determineGameState(game, user);
+            String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
             return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard, otherCard, gameResult.getWinner().getPoints(), gameResult.getLoser().getPoints());
@@ -213,7 +212,7 @@ public class EndGameService {
 
     /* 게임 내 라운드가 모두 종료되었는지 확인하는 메서드 */
     /* 수정 필요 - 유저 포인트가 0이 있을 때 하는 방법 */
-    private String determineGameState(Game game, User user) {
+    private String determineGameState(Game game) {
         /* 한 게임의 라운드는 현재 3라운드 까지임
          * 라운드 정보를 확인해 3 라운드일 경우 게임 종료 상태를 반환
          * 라운드 정보가 3보다 적은 경우 다음 라운드 시작을 위한 상태 반환
@@ -226,7 +225,7 @@ public class EndGameService {
         }
 
         /* 플레이어의 포인트가 없을 때 */
-        if (user.getPoints() == 0) {
+        if (game.getPlayerOne().getPoints() <= 0 || game.getPlayerTwo().getPoints() <= 0) {
             return "GAME_END";
         }
 
