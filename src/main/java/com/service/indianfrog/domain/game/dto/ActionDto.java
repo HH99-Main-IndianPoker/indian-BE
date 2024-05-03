@@ -16,9 +16,10 @@ public class ActionDto {
     int nowBet;
     int pot;
     int myPoint;
+    int otherPoint;
 
     @Builder
-    public ActionDto(GameState nowState, GameState nextState, Betting actionType, int nowBet, int pot, String currentPlayer, String previousPlayer,int myPoint){
+    public ActionDto(GameState nowState, GameState nextState, Betting actionType, int nowBet, int pot, String currentPlayer, String previousPlayer,int myPoint, int otherPoint){
         this.nowState = nowState.getGameState();
         this.nextState = nextState.getGameState();
         this.actionType = actionType.getBetting();
@@ -27,6 +28,7 @@ public class ActionDto {
         this.currentPlayer = currentPlayer;
         this.previousPlayer = previousPlayer;
         this.myPoint = myPoint;
+        this.otherPoint = otherPoint;
     }
 
 
