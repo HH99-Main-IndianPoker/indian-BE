@@ -50,6 +50,13 @@ public class GamePlayService {
             Game game = gameRoom.getCurrentGame();
             User user = gameValidator.findUserByNickname(gameBetting.getNickname());
             Turn turn = gameTurnService.getTurn(game.getId());
+            User otherUser = null;
+
+            if (user.equals(game.getPlayerTwo())) {
+                otherUser = game.getPlayerOne();
+            } else if (user.equals(game.getPlayerOne())){
+                otherUser = game.getPlayerTwo();
+            }
 
             /* 유저의 턴이 맞는지 확인*/
             if (!turn.getCurrentPlayer().equals(user.getNickname())) {
@@ -60,26 +67,26 @@ public class GamePlayService {
             log.info("Performing {} action for user {}", action, gameBetting.getNickname());
             Betting betting = Betting.valueOf(action.toUpperCase());
             return switch (betting) {
-                case CHECK -> performCheckAction(game, user, turn);
-                case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint());
-                case DIE -> performDieAction(game, user);
+                case CHECK -> performCheckAction(game, user, turn, otherUser);
+                case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint(), otherUser);
+                case DIE -> performDieAction(game, user, otherUser);
             };
         });
     }
 
     @Transactional
-    public ActionDto performCheckAction(Game game, User user, Turn turn) {
+    public ActionDto performCheckAction(Game game, User user, Turn turn, User otherUser) {
         /* 유저 턴 확인*/
         Timer.Sample checkTimer = Timer.start(registry);
         log.info("Check action: currentPlayer={}, user={}, currentPot={}, betAmount={}",
                 user.getNickname(), user.getEmail(), game.getPot(), game.getBetAmount());
 
         if (game.isCheckStatus()) {
-            return gameEnd(user, game);
+            return gameEnd(user, game, otherUser);
         }
 
         if(game.isRaiseStatus()){
-            return gameEnd(user, game);
+            return gameEnd(user, game, otherUser);
         }
 
         /* 유저 CHECK */
@@ -99,11 +106,12 @@ public class GamePlayService {
                 .currentPlayer(turn.getCurrentPlayer())
                 .previousPlayer(user.getNickname())
                 .myPoint(user.getPoints())
+                .otherPoint(otherUser.getPoints())
                 .build();
     }
 
     @Transactional
-    public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount) {
+    public ActionDto performRaiseAction(Game game, User user, Turn turn, int raiseAmount, User otherUser) {
         Timer.Sample raiseTimer = Timer.start(registry);
         int userPoints = user.getPoints();
         log.info("Raise action initiated by user: {}, currentPoints={}", user.getNickname(), userPoints);
@@ -119,11 +127,12 @@ public class GamePlayService {
                     .currentPlayer(user.getNickname())
                     .previousPlayer(user.getNickname())
                     .myPoint(user.getPoints())
+                    .otherPoint(otherUser.getPoints())
                     .build();
         }
 
         if (userPoints - game.getBetAmount() <= 0 || userPoints < game.getBetAmount() + raiseAmount){
-            performCheckAction(game, user, turn);
+            performCheckAction(game, user, turn, otherUser);
         }
 
         /* RAISE 베팅 액 설정*/
@@ -145,11 +154,12 @@ public class GamePlayService {
                 .currentPlayer(turn.getCurrentPlayer())
                 .previousPlayer(user.getNickname())
                 .myPoint(user.getPoints())
+                .otherPoint(otherUser.getPoints())
                 .build();
     }
 
     @Transactional
-    public ActionDto performDieAction(Game game, User user) {
+    public ActionDto performDieAction(Game game, User user, User otherUser) {
         Timer.Sample dieTimer = Timer.start(registry);
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
@@ -179,11 +189,12 @@ public class GamePlayService {
                 .currentPlayer(winner.getNickname())
                 .previousPlayer(game.getFoldedUser().getNickname())
                 .myPoint(user.getPoints())
+                .otherPoint(otherUser.getPoints())
                 .build();
     }
 
     @Transactional
-    public ActionDto gameEnd(User user, Game game) {
+    public ActionDto gameEnd(User user, Game game, User otherUser) {
         log.info("User points before action: {}, currentBet={}", user.getPoints(), game.getBetAmount());
 
         int betPoint = user.getPoints() > 0 ? game.getBetAmount() : 0;
@@ -203,6 +214,7 @@ public class GamePlayService {
                 .currentPlayer(user.getNickname())
                 .previousPlayer(user.getNickname())
                 .myPoint(user.getPoints())
+                .otherPoint(otherUser.getPoints())
                 .build();
     }
 }
