@@ -43,12 +43,10 @@ public class GameSessionService {
     private final Map<Long, Map<String, String>> gameChoices = new ConcurrentHashMap<>();
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_READ)
     public Object processUserChoices(Long gameRoomId, UserChoices choices) {
         return totalUserChoiceTimer.record(() -> {
             /* 입력 값 검증*/
             log.info("Processing user choices for gameRoomId={} with nickname={}", gameRoomId, choices.getNickname());
-//            gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_READ);
             User player = gameValidator.findUserByNickname(choices.getNickname());
             String nickname = player.getNickname();

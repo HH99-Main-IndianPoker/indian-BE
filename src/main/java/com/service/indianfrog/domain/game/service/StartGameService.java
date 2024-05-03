@@ -53,7 +53,7 @@ public class StartGameService {
             Game game = gameRoom.getCurrentGame();
             log.info("Game : {}", game.getId());
 
-            performRoundStartTimer.record(() -> performRoundStart(game, email));
+            performRoundStartTimer.record(() -> performRoundStart(game));
             Card card = email.equals(game.getPlayerOne().getEmail()) ? game.getPlayerTwoCard() : game.getPlayerOneCard();
 
             log.info("라운드 시작 작업 수행 완료.");
@@ -74,11 +74,11 @@ public class StartGameService {
 
     @Transactional
 //    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public synchronized void performRoundStart(Game game, String email) {
+    public synchronized void performRoundStart(Game game) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
 
-        if (!game.isRoundStarted()){
+        if (!game.isRoundStarted()) {
             game.incrementRound();
             game.updateRoundStarted();
         }
@@ -88,7 +88,7 @@ public class StartGameService {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
 
-        if (game.getPot() == 0){
+        if (game.getPot() == 0) {
             int betAmount = calculateInitialBet(game.getPlayerOne(), game.getPlayerTwo());
             log.info("초기 배팅금액 {}로 설정됨.", betAmount);
 
@@ -99,14 +99,16 @@ public class StartGameService {
             game.updatePot(betAmount * 2);
         }
 
-        if(game.getRound() > 1) {
+        if (game.isCardAllocation() == false) {
             List<Card> availableCards = prepareAvailableCards(game);
             Collections.shuffle(availableCards);
-            assignRandomCardsToPlayers(game, availableCards, email);
+            assignRandomCardsToPlayers(game, availableCards);
 
             log.info("플레이어에게 카드 할당됨.");
             log.info("{} Card : {}", playerOne.getNickname(), game.getPlayerOneCard());
             log.info("{} Card : {}", playerTwo.getNickname(), game.getPlayerTwoCard());
+
+            game.updateCardAllocation();
         }
 
         if (game.getRound() == 1) {
@@ -137,18 +139,15 @@ public class StartGameService {
         return new ArrayList<>(allCards);
     }
 
-    private void assignRandomCardsToPlayers(Game game, List<Card> availableCards, String email) {
-        Card card;
-        if (email.equals(game.getPlayerOne().getEmail())) {
-            card = availableCards.get(1);
-            game.setPlayerTwoCard(card);
-            game.addUsedCard(card);
-        }
-        if (email.equals(game.getPlayerTwo().getEmail())) {
-            card = availableCards.get(0);
-            game.setPlayerOneCard(card);
-            game.addUsedCard(card);
-        }
+    private void assignRandomCardsToPlayers(Game game, List<Card> availableCards) {
+        Card playerOneCard = availableCards.get(0);
+        Card playerTwoCard = availableCards.get(1);
+
+        game.setPlayerOneCard(playerOneCard);
+        game.setPlayerTwoCard(playerTwoCard);
+
+        game.addUsedCard(playerOneCard);
+        game.addUsedCard(playerTwoCard);
     }
 
     private void initializeTurnForGame(Game game) {
