@@ -65,9 +65,9 @@ public class EndGameService {
         return totalRoundEndTimer.record(() -> {
             log.info("Ending round for gameRoomId={}", gameRoomId);
 
-//            GameRoom gameRoom = gameValidator.validateAndRetrieveGameRoom(gameRoomId);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -94,7 +94,7 @@ public class EndGameService {
 
             int roundPot = game.getPot();
 
-            if (!game.isRoundEnded()) {
+            if (game.isRoundEnded() == false) {
                 Timer.Sample roundPointsTimer = Timer.start(registry);
                 assignRoundPointsToWinner(game, gameResult);
                 roundPointsTimer.stop(registry.timer("roundPoints.time"));
@@ -224,8 +224,8 @@ public class EndGameService {
             return "GAME_END";
         }
 
-        /* 플레이어의 포인트가 없을 때*/
-        if (checkPlayerPoints(game) == false) {
+        /* 플레이어의 포인트가 없을 때 */
+        if (game.getPlayerOne().getPoints() <= 0 || game.getPlayerTwo().getPoints() <= 0) {
             return "GAME_END";
         }
 
@@ -281,9 +281,5 @@ public class EndGameService {
 
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);
-    }
-
-    private boolean checkPlayerPoints(Game game) {
-        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
     }
 }
