@@ -202,7 +202,7 @@ public class GameRoomService {
      * @return 필터링된 메시지
      */
     public String filterMessage(String message) {
-        return (message == null || message.trim().isEmpty()) ? message : pattern.matcher(message).replaceAll("**");
+        return (message == null || message.trim().isEmpty()) ? message : pattern.matcher(message).replaceAll("(개굴)");
     }
 
 
@@ -249,9 +249,6 @@ public class GameRoomService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         String nickname = user.getNickname();
-
-//        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-//                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
 
         if (gameRoom.getValidateRooms().size() >= 2) {
             throw new RestApiException(ErrorCode.GAME_ROOM_NOW_FULL.getMessage());
