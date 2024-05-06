@@ -1,7 +1,10 @@
 package com.service.indianfrog.domain.gameroom.repository;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
