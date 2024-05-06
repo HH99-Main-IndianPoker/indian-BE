@@ -282,4 +282,9 @@ public class EndGameService {
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);
     }
+
+    private boolean checkPlayerPoints(Game game) {
+        return game.getPlayerOne().getPoints() > 0 && game.getPlayerTwo().getPoints() > 0;
+    }
+
 }

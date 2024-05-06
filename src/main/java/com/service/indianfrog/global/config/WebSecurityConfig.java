@@ -103,7 +103,8 @@ public class WebSecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
-        configuration.addAllowedOriginPattern("*");
+        configuration.addAllowedOriginPattern("https://indianfrog.com");
+        configuration.addAllowedOriginPattern("localhost:3000");
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(
             List.of("Authorization", "Set-Cookie", "Cache-Control", "Content-Type"));
@@ -152,6 +153,13 @@ public class WebSecurityConfig {
         );
 
         http.formLogin(AbstractHttpConfigurer::disable);
+        http
+            .logout(logout -> logout
+                .logoutUrl("/logout") // 로그아웃 처리할 URL 지정
+                .logoutSuccessUrl("/") // 로그아웃 성공 시 리다이렉트할 URL
+                .deleteCookies("refreshToken") // 쿠키 삭제 (예: 세션 쿠키)
+                .clearAuthentication(true) // 인증 정보 클리어
+            );
 
         // 필터 관리
         http.addFilterBefore(jwtAuthorizationFilter(), JwtAuthenticationFilter.class);
@@ -162,6 +170,4 @@ public class WebSecurityConfig {
 
         return http.build();
     }
-
-
 }

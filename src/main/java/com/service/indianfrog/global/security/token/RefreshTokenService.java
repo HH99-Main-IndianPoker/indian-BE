@@ -14,7 +14,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.security.Key;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -41,23 +40,11 @@ public class RefreshTokenService {
     private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
 
     @Transactional
-    public void removeTokens(String accessToken, HttpServletRequest request,
-        HttpServletResponse response) {
-        String jwtFromHeader = jwtUtil.getJwtFromHeader(request);
-        Claims claims = jwtUtil.getUserInfoFromToken(jwtFromHeader);
-        String email = claims.getSubject();
-        String refreshTokenKey = REFRESH_TOKEN_KEY_PREFIX + email;
-        redisTemplate.delete(refreshTokenKey);
-
-        CookieDelete(request, response);
-    }
-
-    @Transactional
     public void republishAccessTokenWithRotate(String accessToken, HttpServletRequest request,
         HttpServletResponse response) throws UnsupportedEncodingException {
         String token = jwtUtil.deletePrefix(accessToken);
         if (tokenBlacklistService.isTokenBlacklisted(token)) {
-            throw new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_REFRESH_TOKEN.getMessage());
+            throw new RestApiException(ErrorCode.IMPOSSIBLE_UPDATE_ACCESS_TOKEN.getMessage());
         }
 
         Claims claims;
@@ -71,6 +58,7 @@ public class RefreshTokenService {
         String email = claims.getSubject();
         String refreshToken = (String) redisTemplate.opsForValue()
             .get(REFRESH_TOKEN_KEY_PREFIX + email);
+        validateRefreshToken(request, refreshToken);
         if (jwtUtil.verifyRefreshToken(refreshToken) == TokenVerificationResult.EXPIRED) {
             throw new RestApiException(ErrorCode.EXPIRED_REFRESH_TOKEN.getMessage());
         }
@@ -78,13 +66,35 @@ public class RefreshTokenService {
         CookieDelete(request, response);
         User user = userRepository.findByEmail(email)
             .orElseThrow(
-                () -> new UsernameNotFoundException("User not found with email: " + email));
+                () -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         GeneratedToken generatedToken = jwtUtil.generateToken(user.getEmail(), "USER",
             user.getNickname());
         updateResponseWithTokens(response, generatedToken);
     }
 
-    private void updateResponseWithTokens(HttpServletResponse response, GeneratedToken generatedToken)
+    private void validateRefreshToken(HttpServletRequest request, String refreshToken) {
+        Cookie refreshTokenCookie = findCookie(request, "refreshToken");
+        if (refreshTokenCookie == null || !refreshTokenCookie.getValue().equals(refreshToken)) {
+            throw new RestApiException(ErrorCode.NOT_EXIST_REFRESH_TOKEN.getMessage());
+        }
+
+    }
+
+    private Cookie findCookie(HttpServletRequest request, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(cookieName)) {
+                    return cookie;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Transactional
+    protected void updateResponseWithTokens(HttpServletResponse response,
+        GeneratedToken generatedToken)
         throws UnsupportedEncodingException {
         response.setHeader("Authorization", generatedToken.getAccessToken());
         String updatedRefreshToken = URLEncoder.encode(generatedToken.getRefreshToken(), "utf-8");
@@ -100,9 +110,9 @@ public class RefreshTokenService {
                     cookie.setValue(""); // 쿠키의 값을 비웁니다.
                     cookie.setPath("/"); // 쿠키의 경로를 설정합니다. 생성할 때의 경로와 일치해야 합니다.
                     cookie.setSecure(true);
+                    cookie.setAttribute("SameSite", "None");
                     cookie.setMaxAge(0); // 쿠키의 최대 수명을 0으로 설정하여 즉시 만료시킵니다.
                     cookie.setHttpOnly(true); // JavaScript 접근 방지
-                    cookie.setSecure(true);
                     response.addCookie(cookie); // 수정된 쿠키를 응답에 추가합니다.
                 }
             }
