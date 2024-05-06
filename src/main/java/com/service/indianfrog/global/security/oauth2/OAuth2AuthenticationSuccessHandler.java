@@ -37,6 +37,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         String provider = oAuth2User.getAttribute("provider");
+        String name = oAuth2User.getAttribute("name");
         /*
          * CustomOAuth2UserService에서 셋팅한 로그인한 회원 존재 여부를 가져온다.
          * OAuth2User로 부터 Role을 얻어온다.*/
@@ -49,7 +50,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // 회원이 존재하지 않는 경우
 
-        GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
+        GeneratedToken tokens = jwtUtil.generateToken(email, role, name);
         setResponseRefreshTokens(response, tokens);
 
 

@@ -103,7 +103,8 @@ public class WebSecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
-        configuration.addAllowedOriginPattern("*");
+        configuration.addAllowedOriginPattern("https://indianfrog.com");
+        configuration.addAllowedOriginPattern("localhost:3000");
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(
             List.of("Authorization", "Set-Cookie", "Cache-Control", "Content-Type"));
