@@ -104,7 +104,7 @@ public class WebSecurityConfig {
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         configuration.addAllowedOriginPattern("https://indianfrog.com");
-        configuration.addAllowedOriginPattern("localhost:3000");
+        configuration.addAllowedOriginPattern("http://localhost:3000");
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(
             List.of("Authorization", "Set-Cookie", "Cache-Control", "Content-Type"));
