@@ -9,11 +9,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @Slf4j
@@ -35,6 +37,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         String provider = oAuth2User.getAttribute("provider");
+        String name = oAuth2User.getAttribute("name");
         /*
          * CustomOAuth2UserService에서 셋팅한 로그인한 회원 존재 여부를 가져온다.
          * OAuth2User로 부터 Role을 얻어온다.*/
@@ -47,17 +50,21 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // 회원이 존재하지 않는 경우
 
-        GeneratedToken tokens = jwtUtil.generateToken(email, role, email);
-        setResponseTokens(response, tokens);
+        GeneratedToken tokens = jwtUtil.generateToken(email, role, name);
+        setResponseRefreshTokens(response, tokens);
 
-        response.sendRedirect("https://indianfrog.com/");
+
+        String targetUrl = UriComponentsBuilder.fromUriString("https://indianfrog.com/oauth2/success")
+            .queryParam("accessToken", tokens.getAccessToken())
+            .build()
+            .encode(StandardCharsets.UTF_8)
+            .toUriString();
+        getRedirectStrategy().sendRedirect(request,response,targetUrl);
     }
 
-    /*TODO set localstorage를 하는가에대해서 물어보기*/
-    private void setResponseTokens(HttpServletResponse response, GeneratedToken tokens)
+
+    private void setResponseRefreshTokens(HttpServletResponse response, GeneratedToken tokens)
         throws UnsupportedEncodingException {
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
-        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, tokens.getAccessToken());
 
         String refreshToken = URLEncoder.encode(tokens.getRefreshToken(), "utf-8");
         Cookie refreshTokenCookie = createCookie("refreshToken", refreshToken);

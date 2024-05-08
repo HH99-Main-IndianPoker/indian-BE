@@ -23,15 +23,6 @@ public class RefreshController {
         this.tokenService = tokenService;
     }
 
-    @DeleteMapping("token/logout")
-    public ResponseDto logout(@RequestHeader("Authorization") String accessToken,
-        HttpServletRequest request, HttpServletResponse response) {
-
-        // 엑세스 토큰으로 현재 Redis 정보 삭제
-        tokenService.removeTokens(accessToken, request, response);
-        return ResponseDto.success("로그아웃 성공", null);
-    }
-
     /*
      * 로테이트시 기존 리프레시토큰 못쓰게 막아야함.*/
     @PostMapping("/token/refresh")
@@ -42,7 +33,4 @@ public class RefreshController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    public void init() {
-
-    }
 }

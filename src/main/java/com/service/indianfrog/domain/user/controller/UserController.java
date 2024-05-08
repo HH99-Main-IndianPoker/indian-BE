@@ -83,14 +83,13 @@ public class UserController implements UserControllerDocs {
 
     /*email duplicate*/
     @PostMapping("/user/email-code")
-    public ResponseDto<EmailSendResponseDto> emailSend(
+    public void emailSend(
         @RequestParam
         @NotBlank(message = "이메일을 입력해주세요.", groups = NotBlankGroup.class)
         @Email(message = "잘못된 이메일 형식입니다.", groups = EmailGroup.class)
         String email
     ) {
-        String emailCode = emailCertService.emailSend(email);
-        return ResponseDto.success("이메일 인증 코드 발송 성공", new EmailSendResponseDto(emailCode));
+        emailCertService.emailSend(email);
     }
 
     @PostMapping("/user/email-auth")

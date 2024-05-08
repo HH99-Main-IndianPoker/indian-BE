@@ -66,7 +66,8 @@ public class UserService {
     }
 
     public MyPoint getMyPoint(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User user = userRepository.findByEmail(email).orElseThrow(
+            () -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         return new MyPoint(user.getPoints());
     }
 }
