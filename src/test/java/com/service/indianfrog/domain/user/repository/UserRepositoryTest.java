@@ -29,9 +29,9 @@ class UserRepositoryTest {
     @DisplayName("이메일로 유저 찾기")
     public void findUserByEmail() throws Exception{
         //given
-        UserRequestDto.SignupUserRequestDto requestDto = new SignupUserRequestDto("asd", "asd",
-            "asd");
-        User user1 = requestDto.toEntity("asd");
+        UserRequestDto.SignupUserRequestDto requestDto = new SignupUserRequestDto("email", "password",
+            "nickname");
+        User user1 = requestDto.toEntity("password");
         userRepository.save(user1);
 
         //when
@@ -40,7 +40,7 @@ class UserRepositoryTest {
             .map(User::getEmail)
             .orElse(null);
         //then
-        assertThat(email).isEqualTo("asd");
+        assertThat(email).isEqualTo("email");
 
     }
 }
