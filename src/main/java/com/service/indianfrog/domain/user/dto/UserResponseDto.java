@@ -14,9 +14,8 @@ public class UserResponseDto {
     }
 
     public record SignupResponseDto(
-            String email,
-            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-            LocalDateTime createdAt) {
+            String email
+            ) {
     }
 
     public record GetUserResponseDto(
