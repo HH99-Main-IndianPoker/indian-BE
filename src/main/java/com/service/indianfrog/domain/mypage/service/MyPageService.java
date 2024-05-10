@@ -42,7 +42,7 @@ public class MyPageService {
     @Transactional(readOnly = true)
     public MyPageInfo getMyPage(String username) {
 
-        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User user = findUser(username);
 
         int ranking = rankingService.getUserRanking(username);
 
@@ -52,7 +52,7 @@ public class MyPageService {
     @Transactional
     public PointChange pointRecharge(String username, int point) {
 
-        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User user = findUser(username);
 
         user.updatePoint(point);
 
@@ -68,11 +68,16 @@ public class MyPageService {
         s3Service.delete(s3FileName);
         s3Service.upload(userImg, s3FileName);
 
-        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User user = findUser(username);
 
         user.imgUpdate(originFileName, s3UrlText);
 
         return new MyProfile(s3UrlText);
     }
 
+
+    private User findUser(String username) {
+        return userRepository.findByEmail(username)
+            .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+    }
 }

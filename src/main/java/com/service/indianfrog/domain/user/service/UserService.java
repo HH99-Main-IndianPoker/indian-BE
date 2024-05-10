@@ -40,7 +40,6 @@ public class UserService {
     public GetUserResponseDto getMember(String email) {
         User member = userRepository.findByEmail(email).orElseThrow(() ->
                 new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-
         return new GetUserResponseDto(member);
     }
     // 이메일 중복 체크
