@@ -75,18 +75,13 @@ public class GameRoomService {
     public GetGameRoomResponseDto getGameRoomById(Long roomId) {
         // roomId를 이용하여 해당 게임방을 조회
         return getGameRoomTimer.record(() -> {
-            GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+            GameRoom gameRoom = checkGameRoomExists(roomId);
 
             // 해당 게임방의 모든 유효성 검증방 정보를 한 번에 불러옴
             List<ValidateRoom> validateRooms = getValidateRoomsTimer.record(() ->
                     validateRoomRepository.findAllValidateRoomsByRoomId(roomId));
 
-            // 방장 정보 추출
-            ValidateRoom host = validateRooms.stream()
-                    .filter(ValidateRoom::isHost)
-                    .findFirst()
-                    .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+            ValidateRoom host = extractGameRoomHost(validateRooms);
 
             // 초기화 안해주니까 에러남.
             String hostNickname = null;
@@ -156,8 +151,7 @@ public class GameRoomService {
     @Transactional
     public void deleteGameRoom(Long roomId) {
         Timer.Sample deleteRoomTimer = Timer.start(registry);
-        GameRoom gameRoom = gameRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+        GameRoom gameRoom = checkGameRoomExists(roomId);
 
         validateRoomRepository.deleteAll(gameRoom.getValidateRooms());
         validateRoomRepository.flush();
@@ -342,5 +336,19 @@ public class GameRoomService {
         // 세션 저장소에서 해당 세션 ID를 제거
         sessionMappingStorage.removeSession(sessionId);
         removeSessionTimer.stop(registry.timer("removeSession.time"));
+    }
+
+    private GameRoom checkGameRoomExists(Long roomId) {
+        return gameRoomRepository.findById(roomId)
+            .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+    }
+
+    private static ValidateRoom extractGameRoomHost(List<ValidateRoom> validateRooms) {
+        // 방장 정보 추출
+        ValidateRoom host = validateRooms.stream()
+            .filter(ValidateRoom::isHost)
+            .findFirst()
+            .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_GAME_ROOM.getMessage()));
+        return host;
     }
 }
