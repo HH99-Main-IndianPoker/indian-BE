@@ -24,5 +24,4 @@ public class RankingController {
         return ResponseEntity.ok(rankingService.getRanking(userDetails.getUsername()));
     }
 
-
 }

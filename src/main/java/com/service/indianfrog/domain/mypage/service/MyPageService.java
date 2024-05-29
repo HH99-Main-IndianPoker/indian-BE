@@ -1,9 +1,7 @@
 package com.service.indianfrog.domain.mypage.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.service.indianfrog.domain.mypage.dto.MyPageInfo;
-import com.service.indianfrog.domain.mypage.dto.MyProfile;
-import com.service.indianfrog.domain.mypage.dto.PointChange;
+import com.service.indianfrog.domain.mypage.dto.MyPageDto.*;
 import com.service.indianfrog.domain.ranking.service.RankingService;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
@@ -15,11 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
 import java.io.IOException;
-import java.util.*;
-import java.util.List;
-import java.util.stream.IntStream;
+import java.util.UUID;
 
 @Service
 public class MyPageService {
