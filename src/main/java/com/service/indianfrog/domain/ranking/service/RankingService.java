@@ -38,8 +38,13 @@ public class RankingService {
 
         int myRanking = getUserRanking(username);
 
-        return new GetRankingInfo(rankings, user.getImageUrl(), user.getNickname(), myRanking, user.getPoints());
-
+        return new GetRankingInfo(
+                rankings,
+                user.getImageUrl(),
+                user.getNickname(),
+                myRanking,
+                user.getPoints()
+        );
     }
 
     public int getUserRanking(String username) {

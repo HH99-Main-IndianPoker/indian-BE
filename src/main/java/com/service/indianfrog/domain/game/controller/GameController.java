@@ -25,15 +25,17 @@ public class GameController {
     private final GamePlayService gamePlayService;
     private final EndGameService endGameService;
     private final ReadyService readyService;
+    private final SendUserMessageService sendUserMessageService;
 
     public GameController(SimpMessageSendingOperations messagingTemplate,
                           StartGameService startGameService, GamePlayService gamePlayService,
-                          EndGameService endGameService, ReadyService readyService) {
+                          EndGameService endGameService, ReadyService readyService, SendUserMessageService sendUserMessageService) {
         this.messagingTemplate = messagingTemplate;
         this.startGameService = startGameService;
         this.gamePlayService = gamePlayService;
         this.endGameService = endGameService;
         this.readyService = readyService;
+        this.sendUserMessageService = sendUserMessageService;
     }
 
     /* pub 사용 게임 준비 */
@@ -55,7 +57,7 @@ public class GameController {
         switch (gameState) {
             case "START" -> {
                 StartRoundResponse response = startGameService.startRound(gameRoomId, principal.getName());
-                sendUserGameMessage(response, principal); // 유저별 메시지 전송
+                sendUserMessageService.sendUserGameMessage(response, principal); // 유저별 메시지 전송
             }
             case "ACTION" -> {
                 ActionDto response = gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
@@ -64,92 +66,14 @@ public class GameController {
             }
             case "END" -> {
                 EndRoundResponse response = endGameService.endRound(gameRoomId, principal.getName());
-                sendUserEndRoundMessage(response, principal);
+                sendUserMessageService.sendUserEndRoundMessage(response, principal);
             }
             case "GAME_END" -> {
                 EndGameResponse response = endGameService.endGame(gameRoomId, principal.getName());
-                sendUserEndGameMessage(response, principal);
+                sendUserMessageService.sendUserEndGameMessage(response, principal);
             }
 
             default -> throw new IllegalStateException("Invalid game state: " + gameState);
-        }
-    }
-
-    private void sendUserEndRoundMessage(EndRoundResponse response, Principal principal) {
-
-        log.info("who are you? -> {}", principal.getName());
-        log.info("player's Card : {}", response.getMyCard());
-
-       try {
-        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endRoundInfo", new EndRoundInfo(
-                        response.getNowState(),
-                        response.getNextState(),
-                        response.getRound(),
-                        response.getRoundWinner().getNickname(),
-                        response.getRoundLoser().getNickname(),
-                        response.getRoundPot(),
-                        response.getMyCard(),
-                        response.getOtherCard(),
-                        response.getWinnerPoint(),
-                        response.getLoserPoint()));
-                log.info("Message sent successfully.");
-            }
-            catch (Exception e) {
-            log.error("Failed to send message", e);
-        }
-
-    }
-
-    private void sendUserEndGameMessage(EndGameResponse response, Principal principal) {
-
-        log.info("who are you? -> {}", principal.getName());
-
-        try {
-            messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/endGameInfo", new EndGameInfo(
-                        response.getNowState(),
-                        response.getNextState(),
-                        response.getGameWinner().getNickname(),
-                        response.getGameLoser().getNickname(),
-                        response.getWinnerPot(),
-                        response.getLoserPot()));
-                log.info("Message sent successfully.");
-        } catch (Exception e) {
-            log.error("Failed to send message", e);
-        }
-    }
-
-    private void sendUserGameMessage(StartRoundResponse response, Principal principal) {
-        /* 각 Player 에게 상대 카드 정보와 턴 정보를 전송*/
-        log.info("who are you? -> {}", principal.getName());
-        log.info(response.getGameState(), response.getTurn().toString());
-        String playerOne = response.getPlayerOne().getEmail();
-        String playerTwo = response.getPlayerTwo().getEmail();
-        try {
-            if (principal.getName().equals(playerOne)) {
-                messagingTemplate.convertAndSendToUser(playerOne, "/queue/gameInfo", new GameInfo(
-                        response.getOtherCard(),
-                        response.getTurn(),
-                        response.getFirstBet(),
-                        response.getRoundPot(),
-                        response.getRound(),
-                        response.getMyPoint(),
-                        response.getOtherPoint()));
-                log.info("Message sent successfully.");
-            }
-
-            if (principal.getName().equals(playerTwo)) {
-                messagingTemplate.convertAndSendToUser(playerTwo, "/queue/gameInfo", new GameInfo(
-                        response.getOtherCard(),
-                        response.getTurn(),
-                        response.getFirstBet(),
-                        response.getRoundPot(),
-                        response.getRound(),
-                        response.getMyPoint(),
-                        response.getOtherPoint()));
-                log.info("Message sent successfully.");
-            }
-        } catch (Exception e) {
-            log.error("Failed to send message", e);
         }
     }
 

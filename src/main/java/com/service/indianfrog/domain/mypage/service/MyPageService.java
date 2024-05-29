@@ -41,7 +41,13 @@ public class MyPageService {
 
         int ranking = rankingService.getUserRanking(username);
 
-        return new MyPageInfo(user.getNickname(), username, ranking, user.getPoints(), user.getImageUrl());
+        return new MyPageInfo(
+                user.getNickname(),
+                username,
+                ranking,
+                user.getPoints(),
+                user.getImageUrl()
+        );
     }
 
     @Transactional

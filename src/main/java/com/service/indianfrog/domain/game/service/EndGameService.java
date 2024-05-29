@@ -152,7 +152,6 @@ public class EndGameService {
     /* 검증 메서드 필드*/
     /* 라운드 승자, 패자 선정 메서드 */
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_READ)
     public GameResult determineGameResult(Game game) {
         User playerOne = game.getPlayerOne();
         User playerTwo = game.getPlayerTwo();
@@ -170,7 +169,6 @@ public class EndGameService {
     }
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public GameResult getGameResult(Game game, User playerOne, User playerTwo) {
         Card playerOneCard = game.getPlayerOneCard();
         Card playerTwoCard = game.getPlayerTwoCard();
