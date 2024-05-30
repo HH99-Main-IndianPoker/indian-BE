@@ -1,8 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
-import com.service.indianfrog.domain.game.dto.GameDto.EndGameResponse;
-import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
-import com.service.indianfrog.domain.game.dto.GameResult;
+import com.service.indianfrog.domain.game.dto.GameResponseDto.*;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
@@ -23,7 +21,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,7 +64,6 @@ public class EndGameService {
 
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
-            User user = userRepository.findByEmail(email).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
             /* 라운드 승자 패자 결정
             승자에게 라운드 포인트 할당
@@ -107,13 +103,13 @@ public class EndGameService {
                 log.info("Round reset for gameRoomId={}", gameRoomId);
             }
 
-            log.info("Round result determined: winnerId={}, loserId={}", gameResult.getWinner().getNickname(), gameResult.getLoser().getNickname());
+            log.info("Round result determined: winnerId={}, loserId={}", gameResult.winner().getNickname(), gameResult.loser().getNickname());
 
             /* 게임 상태 결정 : 다음 라운드 시작 상태 반환 or 게임 종료 상태 반환*/
             String nextState = determineGameState(game);
             log.info("Round ended for gameRoomId={}, newState={}", gameRoomId, nextState);
 
-            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.getWinner(), gameResult.getLoser(), roundPot, myCard, otherCard, gameResult.getWinner().getPoints(), gameResult.getLoser().getPoints());
+            return new EndRoundResponse("END", nextState, game.getRound(), gameResult.winner(), gameResult.loser(), roundPot, myCard, otherCard, gameResult.winner().getPoints(), gameResult.loser().getPoints());
         });
     }
 
@@ -141,11 +137,11 @@ public class EndGameService {
             CurrentGameStatus.updateGameState(GameState.READY);
 
             log.info("Game ended for gameRoomId={}, winnerId={}, loserId={}, winnerPot={}, loserPot={}",
-                    gameRoomId, gameResult.getWinner().getNickname(), gameResult.getLoser().getNickname(), gameResult.getWinnerPot(), gameResult.getLoserPot());
+                    gameRoomId, gameResult.winner().getNickname(), gameResult.loser().getNickname(), gameResult.winnerPot(), gameResult.loserPot());
 
             /* 유저 선택 상태 반환 */
-            return new EndGameResponse("GAME_END", "READY", gameResult.getWinner(), gameResult.getLoser(),
-                    gameResult.getWinnerPot() / 2, gameResult.getLoserPot() / 2 );
+            return new EndGameResponse("GAME_END", "READY", gameResult.winner(), gameResult.loser(),
+                    gameResult.winnerPot() / 2, gameResult.loserPot() / 2 );
         });
     }
 
@@ -157,14 +153,14 @@ public class EndGameService {
         User playerTwo = game.getPlayerTwo();
 
         if (game.getFoldedUser() != null && game.getFoldedUser().equals(playerOne)) {
-            return new GameResult(playerTwo, playerOne);
+            return GameResult.builder().winner(playerTwo).loser(playerOne).build();
         } else if(game.getFoldedUser() != null && game.getFoldedUser().equals(playerTwo)){
-            return new GameResult(playerOne, playerTwo);
+            return GameResult.builder().winner(playerOne).loser(playerTwo).build();
         }
 
         GameResult result = getGameResult(game, playerOne, playerTwo);
 
-        log.info("Game result determined: winnerId={}, loserId={}", result.getWinner().getNickname(), result.getLoser().getNickname());
+        log.info("Game result determined: winnerId={}, loserId={}", result.winner().getNickname(), result.loser().getNickname());
         return result;
     }
 
@@ -181,10 +177,10 @@ public class EndGameService {
 
         if (playerOneCard.getNumber() != playerTwoCard.getNumber()) {
             result = playerOneCard.getNumber() > playerTwoCard.getNumber() ?
-                    new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
+                    GameResult.builder().winner(playerOne).loser(playerTwo).build() : GameResult.builder().winner(playerTwo).loser(playerOne).build();
         } else {
             result = playerOneCard.getDeckNumber() > playerTwoCard.getDeckNumber() ?
-                    new GameResult(playerOne, playerTwo) : new GameResult(playerTwo, playerOne);
+                    GameResult.builder().winner(playerOne).loser(playerTwo).build() : GameResult.builder().winner(playerTwo).loser(playerOne).build();
         }
 
         return result;
@@ -193,7 +189,7 @@ public class EndGameService {
     /* 라운드 포인트 승자에게 할당하는 메서드*/
     @Transactional
     public void assignRoundPointsToWinner(Game game, GameResult gameResult) {
-        User winner = gameResult.getWinner();
+        User winner = gameResult.winner();
 
         int pointsToAdd = game.getPot();
 
@@ -274,8 +270,8 @@ public class EndGameService {
         List<User> players = new ArrayList<>();
 
         /* 전 라운드 승자를 해당 첫 턴으로 설정*/
-        players.add(gameResult.getWinner());
-        players.add(gameResult.getLoser());
+        players.add(gameResult.winner());
+        players.add(gameResult.loser());
 
         Turn turn = new Turn(players);
         gameTurnService.setTurn(game.getId(), turn);

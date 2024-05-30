@@ -1,6 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
-import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
+import com.service.indianfrog.domain.game.dto.GameResponseDto.*;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;

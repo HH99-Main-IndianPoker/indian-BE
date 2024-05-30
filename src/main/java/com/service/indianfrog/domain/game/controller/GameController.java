@@ -1,9 +1,8 @@
 package com.service.indianfrog.domain.game.controller;
 
-import com.service.indianfrog.domain.game.dto.*;
-import com.service.indianfrog.domain.game.dto.GameDto.EndGameResponse;
-import com.service.indianfrog.domain.game.dto.GameDto.EndRoundResponse;
-import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
+import com.service.indianfrog.domain.game.dto.ActionDto;
+import com.service.indianfrog.domain.game.dto.GameRequestDto.*;
+import com.service.indianfrog.domain.game.dto.GameResponseDto.*;
 import com.service.indianfrog.domain.game.service.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +59,7 @@ public class GameController {
                 sendUserMessageService.sendUserGameMessage(response, principal); // 유저별 메시지 전송
             }
             case "ACTION" -> {
-                ActionDto response = gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.getAction());
+                ActionDto response = gamePlayService.playerAction(gameRoomId, gameBetting, gameBetting.action());
                 String destination = "/topic/gameRoom/" + gameRoomId;
                 messagingTemplate.convertAndSend(destination, response);
             }

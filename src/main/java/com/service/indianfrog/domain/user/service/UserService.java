@@ -35,15 +35,14 @@ public class UserService {
     }
 
     // 회원 정보 조회
-
     @Transactional(readOnly = true)
     public GetUserResponseDto getMember(String email) {
         User member = userRepository.findByEmail(email).orElseThrow(() ->
                 new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         return new GetUserResponseDto(member);
     }
-    // 이메일 중복 체크
 
+    // 이메일 중복 체크
     public boolean emailCheck(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());

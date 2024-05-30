@@ -1,6 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
-import com.service.indianfrog.domain.game.dto.GameStatus;
+import com.service.indianfrog.domain.game.dto.GameResponseDto.*;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.utils.GameValidator;
