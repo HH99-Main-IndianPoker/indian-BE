@@ -25,49 +25,54 @@ public class UserService {
     // 회원가입
     @Transactional
     public SignupResponseDto signup(SignupUserRequestDto requestDto) {
-        if (userRepository.existsByEmail(requestDto.email())) {
-            throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());
-        }
-
-        if (userRepository.existsByNickname(requestDto.nickname())) {
-            throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
-        }
+        checkEmailExists(requestDto.email());
+        checkNickNameExists(requestDto.nickname());
 
         String password = passwordEncoder.encode(requestDto.password());
         User member = userRepository.save(requestDto.toEntity(password));
-        LocalDateTime now = LocalDateTime.now();
 
-        return new SignupResponseDto(member.getEmail(), now);
+        return new SignupResponseDto(member.getEmail());
     }
 
     // 회원 정보 조회
+
     @Transactional(readOnly = true)
     public GetUserResponseDto getMember(String email) {
         User member = userRepository.findByEmail(email).orElseThrow(() ->
                 new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-
         return new GetUserResponseDto(member);
     }
-
     // 이메일 중복 체크
+
     public boolean emailCheck(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());
         }
         return userRepository.existsByEmail(email);
     }
-
     // 닉네임 중복체크
+
     public boolean nicknameCheck(String nickname) {
         if (userRepository.existsByNickname(nickname)) {
             throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
         }
         return userRepository.existsByNickname(nickname);
     }
-
     public MyPoint getMyPoint(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(
             () -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
         return new MyPoint(user.getPoints());
+    }
+
+    private void checkNickNameExists(String nickName) {
+        if (userRepository.existsByNickname(nickName)) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
+        }
+    }
+
+    private void checkEmailExists(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new RestApiException(ErrorCode.ALREADY_EXIST_EMAIL.getMessage());
+        }
     }
 }

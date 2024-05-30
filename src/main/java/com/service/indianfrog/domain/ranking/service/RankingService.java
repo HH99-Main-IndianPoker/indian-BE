@@ -34,7 +34,8 @@ public class RankingService {
                 ))
                 .toList();
 
-        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User user = userRepository.findByEmail(username)
+            .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         int myRanking = getUserRanking(username);
 
@@ -55,7 +56,5 @@ public class RankingService {
 
         return IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage())) + 1;
     }
-
-
 
 }
