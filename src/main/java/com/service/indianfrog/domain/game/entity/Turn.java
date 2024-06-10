@@ -7,20 +7,21 @@ import java.util.List;
 
 @Getter
 public class Turn {
-    private List<String> players;
+    private List<String> playersNickname;
     private int currentPlayer;
 
     public Turn(List<User> players) {
-        this.players = players.stream().map(User::getNickname).toList();
+        this.playersNickname = players.stream()
+            .map(User::getNickname).toList();
         this.currentPlayer = 0;
     }
 
     public void nextTurn() {
-        this.currentPlayer = (currentPlayer + 1) % players.size();
+        this.currentPlayer = (currentPlayer + 1) % playersNickname.size();
     }
 
     public String getCurrentPlayer() {
-        return players.get(currentPlayer);
+        return playersNickname.get(currentPlayer);
     }
 
 }
