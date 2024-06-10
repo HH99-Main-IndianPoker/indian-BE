@@ -1,7 +1,7 @@
 package com.service.indianfrog.domain.ranking.service;
 
-import com.service.indianfrog.domain.ranking.dto.Ranking.GetRanking;
-import com.service.indianfrog.domain.ranking.dto.Ranking.GetRankingInfo;
+import com.service.indianfrog.domain.ranking.dto.RankingResponseDto.GetRanking;
+import com.service.indianfrog.domain.ranking.dto.RankingResponseDto.GetRankingInfo;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
@@ -39,8 +39,13 @@ public class RankingService {
 
         int myRanking = getUserRanking(username);
 
-        return new GetRankingInfo(rankings, user.getImageUrl(), user.getNickname(), myRanking, user.getPoints());
-
+        return new GetRankingInfo(
+                rankings,
+                user.getImageUrl(),
+                user.getNickname(),
+                myRanking,
+                user.getPoints()
+        );
     }
 
     public int getUserRanking(String username) {

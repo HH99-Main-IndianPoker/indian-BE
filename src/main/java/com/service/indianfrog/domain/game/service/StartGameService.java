@@ -1,6 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
-import com.service.indianfrog.domain.game.dto.GameDto.StartRoundResponse;
+import com.service.indianfrog.domain.game.dto.GameResponseDto.*;
 import com.service.indianfrog.domain.game.entity.Card;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
@@ -38,7 +38,6 @@ public class StartGameService {
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public StartRoundResponse startRound(Long gameRoomId, String email) {
         return totalRoundStartTimer.record(() -> {
             log.info("게임룸 ID로 라운드 시작: {}", gameRoomId);
@@ -73,7 +72,6 @@ public class StartGameService {
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public synchronized void performRoundStart(Game game) {
         /* 라운드 수 저장, 라운드 베팅 금액 설정, 플레이어에게 카드 지급, 플레이어 턴 설정*/
         log.info("게임 ID로 라운드 시작 작업 수행 중: {}", game.getId());
@@ -118,7 +116,6 @@ public class StartGameService {
     }
 
     @Transactional
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public int calculateInitialBet(User playerOne, User playerTwo) {
         int playerOnePoints = playerOne.getPoints();
         int playerTwoPoints = playerTwo.getPoints();

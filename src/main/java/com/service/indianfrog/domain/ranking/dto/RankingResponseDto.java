@@ -3,7 +3,7 @@ package com.service.indianfrog.domain.ranking.dto;
 
 import java.util.List;
 
-public class Ranking{
+public class RankingResponseDto {
 
     public record GetRankingInfo(
             List<GetRanking> rankings,
