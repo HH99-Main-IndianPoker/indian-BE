@@ -1,6 +1,6 @@
 package com.service.indianfrog;
 
-import com.service.indianfrog.domain.game.dto.GameStatus;
+import com.service.indianfrog.domain.game.dto.GameResponseDto.*;
 import com.service.indianfrog.domain.game.dto.UserChoices;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.entity.UserChoice;
@@ -8,10 +8,7 @@ import com.service.indianfrog.domain.game.service.GameSessionService;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
 import io.micrometer.core.instrument.MeterRegistry;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -53,7 +50,7 @@ public class GameSessionServiceTest {
         Object result2 = gameSessionService.processUserChoices(gameRoomId, choice2);
 
         assertInstanceOf(GameStatus.class, result2); // 두 번째 선택 결과가 GameStatus 여야 함
-        assertEquals(GameState.START, ((GameStatus) result2).getGameState()); // 두 번째 선택 결과 상태 검증
+        assertEquals(GameState.START, ((GameStatus) result2).gameState()); // 두 번째 선택 결과 상태 검증
     }
 
     @Test
@@ -73,7 +70,7 @@ public class GameSessionServiceTest {
         Object result = gameSessionService.processUserChoices(gameRoomId, choice2); // 두 번째 유저 선택 처리
 
         assertInstanceOf(GameStatus.class, result);
-        assertEquals(GameState.LEAVE, ((GameStatus) result).getGameState());
+        assertEquals(GameState.LEAVE, ((GameStatus) result).gameState());
     }
 
     @Test
@@ -93,6 +90,6 @@ public class GameSessionServiceTest {
         Object result = gameSessionService.processUserChoices(gameRoomId, choice2); // 두 번째 유저 선택 처리
 
         assertInstanceOf(GameStatus.class, result);
-        assertEquals(GameState.ENTER, ((GameStatus) result).getGameState());
+        assertEquals(GameState.ENTER, ((GameStatus) result).gameState());
     }
 }

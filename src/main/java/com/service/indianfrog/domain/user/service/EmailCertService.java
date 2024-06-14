@@ -20,7 +20,7 @@ public class EmailCertService {
     }
 
     @Transactional
-    public String emailSend(String email) {
+    public void emailSend(String email) {
         String certificationNumber = createCertificationNumber();
         if (emailRepository.hashKey(email)) {
             emailRepository.removeCertificationNumber(email);
@@ -30,8 +30,6 @@ public class EmailCertService {
         String subject = "인디안 개구리 : 이메일 인증번호 확인";
 
         mailSendService.sendEmail(email, subject, certificationNumber);
-
-        return certificationNumber;
     }
 
     @Transactional
