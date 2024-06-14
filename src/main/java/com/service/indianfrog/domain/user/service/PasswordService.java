@@ -57,6 +57,7 @@ public class PasswordService {
         StringBuilder sb = new StringBuilder();
 
         for(int i = 0; i < len; i++) {
+            //소문자, 대문자, 숫자
             String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
             int index = rm.nextInt(chars.length());
             sb.append(chars.charAt(index));

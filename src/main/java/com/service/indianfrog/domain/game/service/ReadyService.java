@@ -1,6 +1,6 @@
 package com.service.indianfrog.domain.game.service;
 
-import com.service.indianfrog.domain.game.dto.GameResponseDto.*;
+import com.service.indianfrog.domain.game.dto.GameStatus;
 import com.service.indianfrog.domain.game.entity.GameState;
 import com.service.indianfrog.domain.game.utils.GameValidator;
 import com.service.indianfrog.domain.gameroom.entity.GameRoom;
@@ -63,11 +63,11 @@ public class ReadyService {
                 return new GameStatus(gameRoomId, user.getNickname(), GameState.ALL_READY);
             }
 
-            if (validateRooms.size() == 1 && validateRoom.isReady()) {
+            if (validateRooms.size() == 1 && validateRoom.isReady() == true) {
                 return new GameStatus(gameRoomId, user.getNickname(), GameState.READY);
             }
 
-            if (validateRooms.size() == 1) {
+            if (validateRooms.size() == 1 && validateRoom.isReady() == false) {
                 return new GameStatus(gameRoomId, user.getNickname(), GameState.UNREADY);
             }
 

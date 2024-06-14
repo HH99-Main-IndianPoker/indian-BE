@@ -1,7 +1,7 @@
 package com.service.indianfrog.domain.ranking.service;
 
-import com.service.indianfrog.domain.ranking.dto.RankingResponseDto.GetRanking;
-import com.service.indianfrog.domain.ranking.dto.RankingResponseDto.GetRankingInfo;
+import com.service.indianfrog.domain.ranking.dto.Ranking.GetRanking;
+import com.service.indianfrog.domain.ranking.dto.Ranking.GetRankingInfo;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
 import com.service.indianfrog.global.exception.ErrorCode;
@@ -34,18 +34,12 @@ public class RankingService {
                 ))
                 .toList();
 
-        User user = userRepository.findByEmail(username)
-            .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         int myRanking = getUserRanking(username);
 
-        return new GetRankingInfo(
-                rankings,
-                user.getImageUrl(),
-                user.getNickname(),
-                myRanking,
-                user.getPoints()
-        );
+        return new GetRankingInfo(rankings, user.getImageUrl(), user.getNickname(), myRanking, user.getPoints());
+
     }
 
     public int getUserRanking(String username) {
@@ -56,5 +50,7 @@ public class RankingService {
 
         return IntStream.range(0, userList.size()).filter(i -> userList.get(i).getEmail().equals(username)).findFirst().orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_EMAIL.getMessage())) + 1;
     }
+
+
 
 }
