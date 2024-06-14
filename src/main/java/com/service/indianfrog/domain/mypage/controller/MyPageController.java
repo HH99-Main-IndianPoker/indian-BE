@@ -1,7 +1,9 @@
 package com.service.indianfrog.domain.mypage.controller;
 
 
-import com.service.indianfrog.domain.mypage.dto.MyPageDto.*;
+import com.service.indianfrog.domain.mypage.dto.MyPageInfo;
+import com.service.indianfrog.domain.mypage.dto.MyProfile;
+import com.service.indianfrog.domain.mypage.dto.PointChange;
 import com.service.indianfrog.domain.mypage.service.MyPageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

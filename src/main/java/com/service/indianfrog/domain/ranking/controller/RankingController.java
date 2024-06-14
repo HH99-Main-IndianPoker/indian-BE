@@ -1,6 +1,6 @@
 package com.service.indianfrog.domain.ranking.controller;
 
-import com.service.indianfrog.domain.ranking.dto.RankingResponseDto.*;
+import com.service.indianfrog.domain.ranking.dto.Ranking.*;
 import com.service.indianfrog.domain.ranking.service.RankingService;
 import com.service.indianfrog.global.security.UserDetailsImpl;
 import org.springframework.http.ResponseEntity;
@@ -23,5 +23,6 @@ public class RankingController {
     public ResponseEntity<GetRankingInfo> getRanking(@AuthenticationPrincipal UserDetailsImpl userDetails){
         return ResponseEntity.ok(rankingService.getRanking(userDetails.getUsername()));
     }
+
 
 }

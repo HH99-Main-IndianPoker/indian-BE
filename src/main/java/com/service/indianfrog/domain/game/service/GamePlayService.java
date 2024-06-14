@@ -1,7 +1,7 @@
 package com.service.indianfrog.domain.game.service;
 
 import com.service.indianfrog.domain.game.dto.ActionDto;
-import com.service.indianfrog.domain.game.dto.GameRequestDto.*;
+import com.service.indianfrog.domain.game.dto.GameBetting;
 import com.service.indianfrog.domain.game.entity.Betting;
 import com.service.indianfrog.domain.game.entity.Game;
 import com.service.indianfrog.domain.game.entity.GameState;
@@ -45,10 +45,10 @@ public class GamePlayService {
     @Transactional
     public ActionDto playerAction(Long gameRoomId, GameBetting gameBetting, String action) {
         return totalGamePlayTimer.record(() -> {
-            log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.nickname(), action);
+            log.info("Action received: gameRoomId={}, nickname={}, action={}", gameRoomId, gameBetting.getNickname(), action);
             GameRoom gameRoom = em.find(GameRoom.class, gameRoomId, LockModeType.PESSIMISTIC_WRITE);
             Game game = gameRoom.getCurrentGame();
-            User user = gameValidator.findUserByNickname(gameBetting.nickname());
+            User user = gameValidator.findUserByNickname(gameBetting.getNickname());
             Turn turn = gameTurnService.getTurn(game.getId());
             User otherUser = null;
 
@@ -60,15 +60,15 @@ public class GamePlayService {
 
             /* 유저의 턴이 맞는지 확인*/
             if (!turn.getCurrentPlayer().equals(user.getNickname())) {
-                log.warn("It's not the turn of the user: {}", gameBetting.nickname());
+                log.warn("It's not the turn of the user: {}", gameBetting.getNickname());
                 throw new IllegalStateException("당신의 턴이 아닙니다, 선턴 유저의 행동이 끝날 때까지 기다려 주세요.");
             }
 
-            log.info("Performing {} action for user {}", action, gameBetting.nickname());
+            log.info("Performing {} action for user {}", action, gameBetting.getNickname());
             Betting betting = Betting.valueOf(action.toUpperCase());
             return switch (betting) {
                 case CHECK -> performCheckAction(game, user, turn, otherUser);
-                case RAISE -> performRaiseAction(game, user, turn, gameBetting.point(), otherUser);
+                case RAISE -> performRaiseAction(game, user, turn, gameBetting.getPoint(), otherUser);
                 case DIE -> performDieAction(game, user, otherUser);
             };
         });

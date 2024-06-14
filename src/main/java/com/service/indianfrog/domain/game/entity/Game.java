@@ -69,7 +69,7 @@ public class Game {
         this.usedCards = new HashSet<>();
     }
 
-    protected Game() {
+    public Game() {
 
     }
 

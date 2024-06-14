@@ -1,7 +1,9 @@
 package com.service.indianfrog.domain.mypage.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.service.indianfrog.domain.mypage.dto.MyPageDto.*;
+import com.service.indianfrog.domain.mypage.dto.MyPageInfo;
+import com.service.indianfrog.domain.mypage.dto.MyProfile;
+import com.service.indianfrog.domain.mypage.dto.PointChange;
 import com.service.indianfrog.domain.ranking.service.RankingService;
 import com.service.indianfrog.domain.user.entity.User;
 import com.service.indianfrog.domain.user.repository.UserRepository;
@@ -13,8 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.*;
 import java.io.IOException;
-import java.util.UUID;
+import java.util.*;
+import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 public class MyPageService {
@@ -37,23 +42,17 @@ public class MyPageService {
     @Transactional(readOnly = true)
     public MyPageInfo getMyPage(String username) {
 
-        User user = findUser(username);
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         int ranking = rankingService.getUserRanking(username);
 
-        return new MyPageInfo(
-                user.getNickname(),
-                username,
-                ranking,
-                user.getPoints(),
-                user.getImageUrl()
-        );
+        return new MyPageInfo(user.getNickname(), username, ranking, user.getPoints(), user.getImageUrl());
     }
 
     @Transactional
     public PointChange pointRecharge(String username, int point) {
 
-        User user = findUser(username);
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         user.updatePoint(point);
 
@@ -69,16 +68,11 @@ public class MyPageService {
         s3Service.delete(s3FileName);
         s3Service.upload(userImg, s3FileName);
 
-        User user = findUser(username);
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
 
         user.imgUpdate(originFileName, s3UrlText);
 
         return new MyProfile(s3UrlText);
     }
 
-
-    private User findUser(String username) {
-        return userRepository.findByEmail(username)
-            .orElseThrow(() -> new RestApiException(ErrorCode.NOT_FOUND_USER.getMessage()));
-    }
 }

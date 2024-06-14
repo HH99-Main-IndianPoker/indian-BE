@@ -42,11 +42,10 @@ public class GameRoomController {
      * @return 조회된 게임 방의 페이징된 목록
      */
     @GetMapping // 전체페이지 조회
-    public ResponseEntity<Page<GetAllGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseDto<Page<GetAllGameRoomResponseDto>> getAllGameRooms(@PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<GetAllGameRoomResponseDto> gameRooms = gameRoomService.getAllGameRooms(pageable);
-        return ResponseEntity.ok(gameRooms);
+        return ResponseDto.success("모든 게임방 조회 기능", gameRooms);
     }
-
 
     /**
      * 주어진 ID를 가진 게임 방을 조회
@@ -55,9 +54,9 @@ public class GameRoomController {
      * @return 조회된 게임 방 정보
      */
     @GetMapping("/{gameRoomId}") // 특정 게임방 조회
-    public ResponseEntity<GetGameRoomResponseDto> getGameRoomById(@PathVariable Long gameRoomId) {
+    public ResponseDto<GetGameRoomResponseDto> getGameRoomById(@PathVariable Long gameRoomId) {
         GetGameRoomResponseDto gameRoom = gameRoomService.getGameRoomById(gameRoomId);
-        return ResponseEntity.ok(gameRoom);
+        return ResponseDto.success("게임방 조회 기능", gameRoom);
     }
 
 
@@ -69,9 +68,9 @@ public class GameRoomController {
      * @return 생성된 게임 방 정보
      */
     @PostMapping("/create") //채널인터셉터로 인증된 사용자의 인증정보 사용하여 방생성
-    public ResponseEntity<GameRoomCreateResponseDto> createGameRoom(@RequestBody GameRoomCreateRequestDto gameRoomDto, Principal principal) {
+    public ResponseDto<GameRoomCreateResponseDto> createGameRoom(@RequestBody GameRoomCreateRequestDto gameRoomDto, Principal principal) {
         GameRoomCreateResponseDto gameRoom = gameRoomService.createGameRoom(gameRoomDto, principal);
-        return ResponseEntity.ok(gameRoom);
+        return ResponseDto.success("게임방 생성 기능", gameRoom);
     }
 
     /**

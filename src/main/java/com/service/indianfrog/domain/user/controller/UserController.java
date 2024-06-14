@@ -40,10 +40,10 @@ public class UserController implements UserControllerDocs {
 
     // 회원가입
     @PostMapping("/user/signup")
-    public ResponseEntity signup(
+    public ResponseDto<SignupResponseDto> signup(
         @RequestBody @Valid SignupUserRequestDto requestDto) {
         SignupResponseDto responseDto = userService.signup(requestDto);
-        return ResponseEntity.ok(ResponseDto.success("회원가입 성공", responseDto));
+        return ResponseDto.success("회원가입 성공", responseDto);
     }
 
     @GetMapping("/user/email/check")
@@ -70,10 +70,10 @@ public class UserController implements UserControllerDocs {
 
     /*My-page*/
     @GetMapping("/member/mypage")
-    public ResponseEntity getUser(
+    public ResponseDto<GetUserResponseDto> getUser(
         @AuthenticationPrincipal UserDetailsImpl userDetails) {
         GetUserResponseDto responseDto = userService.getMember(userDetails.getUsername());
-        return ResponseEntity.ok(ResponseDto.success("회원 정보 조회 성공", responseDto));
+        return ResponseDto.success("회원 정보 조회 성공", responseDto);
     }
 
     @GetMapping("/point")
@@ -93,12 +93,12 @@ public class UserController implements UserControllerDocs {
     }
 
     @PostMapping("/user/email-auth")
-    public ResponseEntity emailAuthCheck(@RequestParam("email") String email,
+    public ResponseDto<EmailAuthResponseDto> emailAuthCheck(@RequestParam("email") String email,
         @RequestParam("emailCode")
         @NotBlank(message = "인증 코드를 입력해주세요", groups = NotBlankGroup.class)
         String emailCode) {
         boolean success = emailCertService.emailAuthCheck(email, emailCode);
-        return ResponseEntity.ok(ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success)));
+        return ResponseDto.success("이메일 인증 성공", new EmailAuthResponseDto(success));
     }
 
     @PostMapping("/user/password-code")
