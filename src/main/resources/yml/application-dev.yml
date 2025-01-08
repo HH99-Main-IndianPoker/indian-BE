@@ -58,9 +58,3 @@ cloud:
       secretKey: ${aws.credentials.secretKey}
     s3:
       bucket: ${aws.s3.bucket}
-
-
-
-
-
-
