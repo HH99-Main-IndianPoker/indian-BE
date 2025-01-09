@@ -9,7 +9,6 @@ import com.service.indianfrog.global.security.oauth2.CustomOAuth2UserService;
 import com.service.indianfrog.global.security.oauth2.MyAuthenticationFailureHandler;
 import com.service.indianfrog.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.service.indianfrog.global.security.token.TokenBlacklistService;
-import com.service.indianfrog.global.security.token.TokenService;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -40,7 +39,6 @@ public class WebSecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler customSuccessHandler;
-    private final MyAuthenticationFailureHandler authenticationFailureHandler;
     private final UserRepository userRepository;
     private final TokenBlacklistService tokenBlacklistService;
 
@@ -48,14 +46,13 @@ public class WebSecurityConfig {
         AuthenticationConfiguration authenticationConfiguration,
         CustomOAuth2UserService customOAuth2UserService,
         OAuth2AuthenticationSuccessHandler customSuccessHandler,
-        MyAuthenticationFailureHandler authenticationFailureHandler, UserRepository userRepository,
+        UserRepository userRepository,
         TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.authenticationConfiguration = authenticationConfiguration;
         this.customOAuth2UserService = customOAuth2UserService;
         this.customSuccessHandler = customSuccessHandler;
-        this.authenticationFailureHandler = authenticationFailureHandler;
         this.userRepository = userRepository;
         this.tokenBlacklistService = tokenBlacklistService;
     }
@@ -103,8 +100,11 @@ public class WebSecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
-        configuration.addAllowedOriginPattern("https://indianfrog.com");
-        configuration.addAllowedOriginPattern("http://localhost:3000");
+        configuration.setAllowedOriginPatterns(List.of(
+                "https://www.indianfrog.com",
+                "http://localhost:3000",
+                "https://api.indianfrog.com"
+        ));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(
             List.of("Authorization", "Set-Cookie", "Cache-Control", "Content-Type"));
@@ -117,7 +117,7 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // CSRF 설정
-        http.csrf((csrf) -> csrf.disable());
+        http.csrf(AbstractHttpConfigurer::disable);
 
         // 시큐리티 CORS 빈 설정
         http.cors((cors) -> cors.configurationSource(configurationSource()));
