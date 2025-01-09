@@ -96,18 +96,19 @@ public class WebSecurityConfig {
 //        return source;
 //    }
 
+    @Bean
     public CorsConfigurationSource configurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedHeader("*");
-        configuration.addAllowedMethod("*");
         configuration.setAllowedOriginPatterns(List.of(
                 "https://www.indianfrog.com",
                 "http://localhost:3000",
                 "https://api.indianfrog.com"
         ));
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(
-            List.of("Authorization", "Set-Cookie", "Cache-Control", "Content-Type"));
+                List.of("Authorization", "Set-Cookie", "Cache-Control", "Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
